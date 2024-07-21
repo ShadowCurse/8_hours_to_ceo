@@ -48,6 +48,9 @@ pub struct GameRenderLayer {
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct CircleSector(u8);
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct GameCamera;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -123,14 +126,34 @@ fn spawn_base_game(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let mesh = meshes.add(Circle { radius: 200.0 });
-    let material = materials.add(Color::srgb(0.8, 0.8, 0.8));
+    let mesh = meshes.add(CircularSector::new(200.0, std::f32::consts::FRAC_PI_8));
 
-    // Ground
+    // Sectors
+    for i in 1..9 {
+        let material = materials.add(Color::srgb(0.8 / i as f32, 0.8 / i as f32, 0.8 / i as f32));
+        let mut transform = Transform::from_xyz(0.0, 0.0, 0.0);
+        transform.rotate_local_z(std::f32::consts::FRAC_PI_4 * (i - 1) as f32);
+        commands.spawn((
+            MaterialMesh2dBundle {
+                mesh: mesh.clone().into(),
+                material,
+                transform,
+                ..default()
+            },
+            CircleSector(i),
+            game_render_layer.layer.clone(),
+            StateScoped(GlobalState::InGame),
+        ));
+    }
+
+    // Center
+    let mesh = meshes.add(Circle { radius: 180.0 });
+    let material = materials.add(Color::srgb(0.8, 0.8, 0.8));
     commands.spawn((
         MaterialMesh2dBundle {
             mesh: mesh.into(),
             material,
+            transform: Transform::from_xyz(0.0, 0.0, 1.0),
             ..default()
         },
         Wireframe2d,
