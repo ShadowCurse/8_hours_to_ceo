@@ -1,7 +1,9 @@
 use bevy::prelude::*;
 
+mod in_game;
 mod main_menu;
 
+use in_game::InGamePlugin;
 use main_menu::MainMenuPlugin;
 
 pub struct UiPlugin;
@@ -12,7 +14,7 @@ impl Plugin for UiPlugin {
             .enable_state_scoped_entities::<UiState>()
             .add_systems(PreStartup, setup_ui_style);
 
-        app.add_plugins((MainMenuPlugin,));
+        app.add_plugins((MainMenuPlugin, InGamePlugin));
     }
 }
 
@@ -36,7 +38,6 @@ pub struct UiStyle {
 fn setup_ui_style(mut commands: Commands) {
     commands.insert_resource(UiStyle {
         btn_style: Style {
-            // width: Val::Percent(150.0),
             margin: UiRect::all(Val::Percent(10.0)),
             padding: UiRect::all(Val::Percent(10.0)),
             // make text in the middle
