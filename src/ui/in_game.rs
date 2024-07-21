@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 
-use crate::{game::GameImage, GlobalState};
+use crate::{
+    game::{GameImage, GameState},
+    GlobalState,
+};
 
 use super::{spawn_button, UiState, UiStyle};
 
@@ -8,8 +11,11 @@ pub struct InGamePlugin;
 
 impl Plugin for InGamePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(UiState::InGame), in_game_setup);
-        app.add_systems(Update, button_system.run_if(in_state(UiState::InGame)));
+        app.add_systems(OnEnter(UiState::InGame), in_game_setup)
+            .add_systems(
+                Update,
+                (button_system, update_pause).run_if(in_state(UiState::InGame)),
+            );
     }
 }
 
@@ -175,5 +181,27 @@ fn button_system(
                 *color = ui_style.btn_color_normal.into();
             }
         }
+    }
+}
+
+fn update_pause(
+    game_state: Res<State<GameState>>,
+    mut pause_text: Query<&mut Text, With<PauseText>>,
+    mut local: Local<GameState>,
+) {
+    let Ok(mut pause_text) = pause_text.get_single_mut() else {
+        return;
+    };
+
+    let current_state = *game_state.get();
+    if *local != current_state {
+        let text = if current_state == GameState::Paused {
+            "Paused"
+        } else {
+            "Running"
+        };
+
+        pause_text.sections[0].value = text.into();
+        *local = current_state;
     }
 }

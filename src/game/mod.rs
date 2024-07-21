@@ -25,20 +25,19 @@ impl Plugin for GamePlugin {
             .add_systems(
                 Update,
                 (player_run, section_detect_player).run_if(in_state(GameState::Running)),
-            );
+            )
+            .add_systems(Update, game_pause.run_if(state_exists::<GameState>));
     }
 }
 
-#[derive(SubStates, Debug, Default, Clone, PartialEq, Eq, Hash)]
+#[derive(SubStates, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 #[source(GlobalState = GlobalState::InGame)]
 pub enum GameState {
     #[default]
     Preparing,
     Running,
     Battle,
-    Paused {
-        in_settings: bool,
-    },
+    Paused,
 }
 
 #[derive(Resource, Debug, Clone, PartialEq, Eq, Hash)]
@@ -240,6 +239,22 @@ fn section_detect_player(
         }
         if section.0 == previous_section_id {
             *material_handle = section_materials.default.clone();
+        }
+    }
+}
+
+fn game_pause(
+    key_input: Res<ButtonInput<KeyCode>>,
+    game_state: Res<State<GameState>>,
+    mut game_state_next: ResMut<NextState<GameState>>,
+    mut local: Local<GameState>,
+) {
+    if key_input.just_pressed(KeyCode::Space) {
+        if game_state.get() == &GameState::Paused {
+            game_state_next.set(*local);
+        } else {
+            *local = *game_state.get();
+            game_state_next.set(GameState::Paused);
         }
     }
 }
