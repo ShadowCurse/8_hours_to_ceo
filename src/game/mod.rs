@@ -21,7 +21,8 @@ impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.add_sub_state::<GameState>()
             .add_systems(Startup, setup_game)
-            .add_systems(OnEnter(GameState::Running), spawn_base_game);
+            .add_systems(OnEnter(GameState::Running), spawn_base_game)
+            .add_systems(Update, player_run.run_if(in_state(GameState::Running)));
     }
 }
 
@@ -48,6 +49,12 @@ pub struct GameRenderLayer {
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct GameCamera;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Player;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq)]
+pub struct PlayerSpeed(f32);
 
 fn setup_game(
     mut commands: Commands,
@@ -119,6 +126,7 @@ fn spawn_base_game(
     let mesh = meshes.add(Circle { radius: 200.0 });
     let material = materials.add(Color::srgb(0.8, 0.8, 0.8));
 
+    // Ground
     commands.spawn((
         MaterialMesh2dBundle {
             mesh: mesh.into(),
@@ -133,6 +141,7 @@ fn spawn_base_game(
     let mesh = meshes.add(Circle { radius: 20.0 });
     let material = materials.add(Color::srgb(0.1, 0.9, 0.2));
 
+    // Player
     commands.spawn((
         MaterialMesh2dBundle {
             mesh: mesh.into(),
@@ -140,8 +149,23 @@ fn spawn_base_game(
             transform: Transform::from_xyz(0.0, 220.0, 0.0),
             ..default()
         },
+        Player,
+        PlayerSpeed(0.1),
         Wireframe2d,
         game_render_layer.layer.clone(),
         StateScoped(GlobalState::InGame),
     ));
+}
+
+fn player_run(time: Res<Time>, mut player: Query<(&PlayerSpeed, &mut Transform)>) {
+    let Ok((speed, mut transform)) = player.get_single_mut() else {
+        return;
+    };
+
+    let to_center = transform.translation;
+    let rotation = Quat::from_rotation_z(-speed.0 * time.delta_seconds());
+    let rotated = rotation * to_center;
+
+    transform.translation = rotated;
+    transform.rotation *= rotation;
 }
