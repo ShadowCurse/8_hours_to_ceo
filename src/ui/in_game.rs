@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::GlobalState;
+use crate::{game::GameImage, GlobalState};
 
 use super::{spawn_button, UiState, UiStyle};
 
@@ -25,7 +25,10 @@ enum InGameButton {
     MainMenu,
 }
 
-fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
+pub const UI_TOP_SIZE: f32 = 10.0;
+pub const UI_RIGHT_SIZE: f32 = 30.0;
+
+fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>, game_image: Res<GameImage>) {
     // Root node
     commands
         .spawn(NodeBundle {
@@ -45,7 +48,7 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                 .spawn(NodeBundle {
                     style: Style {
                         width: Val::Percent(100.0),
-                        height: Val::Percent(10.0),
+                        height: Val::Percent(UI_TOP_SIZE),
                         flex_direction: FlexDirection::Row,
                         ..Default::default()
                     },
@@ -56,7 +59,7 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                     builder
                         .spawn(NodeBundle {
                             style: Style {
-                                width: Val::Percent(70.0),
+                                width: Val::Percent(100.0 - UI_RIGHT_SIZE),
                                 flex_direction: FlexDirection::Row,
                                 align_items: AlignItems::Center,
                                 justify_items: JustifyItems::Center,
@@ -91,7 +94,7 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                     builder
                         .spawn(NodeBundle {
                             style: Style {
-                                width: Val::Percent(30.0),
+                                width: Val::Percent(UI_RIGHT_SIZE),
                                 flex_direction: FlexDirection::Row,
                                 align_items: AlignItems::Center,
                                 justify_items: JustifyItems::Center,
@@ -112,25 +115,28 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                 .spawn(NodeBundle {
                     style: Style {
                         width: Val::Percent(100.0),
-                        height: Val::Percent(90.0),
+                        height: Val::Percent(100.0 - UI_TOP_SIZE),
                         ..Default::default()
                     },
                     ..default()
                 })
                 .with_children(|builder| {
                     // Game window + dynamic ui
-                    builder.spawn(NodeBundle {
-                        style: Style {
-                            width: Val::Percent(70.0),
-                            ..Default::default()
+                    builder.spawn((
+                        NodeBundle {
+                            style: Style {
+                                width: Val::Percent(100.0 - UI_RIGHT_SIZE),
+                                ..Default::default()
+                            },
+                            background_color: Color::NONE.into(),
+                            ..default()
                         },
-                        background_color: Color::NONE.into(),
-                        ..default()
-                    });
+                        UiImage::new(game_image.image.clone()),
+                    ));
                     // Items and spells
                     builder.spawn(NodeBundle {
                         style: Style {
-                            width: Val::Percent(30.0),
+                            width: Val::Percent(UI_RIGHT_SIZE),
                             flex_direction: FlexDirection::Column,
                             ..Default::default()
                         },

@@ -7,22 +7,27 @@
 use bevy::asset::AssetMetaCheck;
 use bevy::prelude::*;
 
+mod game;
 mod ui;
 
+use game::GamePlugin;
 use ui::UiPlugin;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins.set(AssetPlugin {
-            // Wasm builds will check for meta files (that don't exist) if this isn't set.
-            // This causes errors and even panics in web builds on itch.
-            // See https://github.com/bevyengine/bevy_github_ci_template/issues/48.
-            meta_check: AssetMetaCheck::Never,
-            ..default()
-        }))
-        .add_plugins(UiPlugin)
+        .add_plugins((
+            DefaultPlugins.set(AssetPlugin {
+                // Wasm builds will check for meta files (that don't exist) if this isn't set.
+                // This causes errors and even panics in web builds on itch.
+                // See https://github.com/bevyengine/bevy_github_ci_template/issues/48.
+                meta_check: AssetMetaCheck::Never,
+                ..default()
+            }),
+            GamePlugin,
+            UiPlugin,
+        ))
         .init_state::<GlobalState>()
-        .add_sub_state::<GameState>()
+        .enable_state_scoped_entities::<GlobalState>()
         .add_systems(Startup, setup)
         .run();
 }
@@ -32,17 +37,6 @@ pub enum GlobalState {
     #[default]
     MainMenu,
     InGame,
-}
-
-#[derive(SubStates, Debug, Default, Clone, PartialEq, Eq, Hash)]
-#[source(GlobalState = GlobalState::InGame)]
-pub enum GameState {
-    #[default]
-    Running,
-    Battle,
-    Paused {
-        in_settings: bool,
-    },
 }
 
 fn setup(mut commands: Commands) {
