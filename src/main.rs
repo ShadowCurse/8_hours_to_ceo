@@ -10,6 +10,7 @@ use bevy::prelude::*;
 mod game;
 mod ui;
 
+use bevy::sprite::Wireframe2dPlugin;
 use game::GamePlugin;
 use ui::UiPlugin;
 
@@ -23,6 +24,7 @@ fn main() {
                 meta_check: AssetMetaCheck::Never,
                 ..default()
             }),
+            Wireframe2dPlugin,
             GamePlugin,
             UiPlugin,
         ))
