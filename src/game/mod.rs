@@ -21,7 +21,7 @@ impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.add_sub_state::<GameState>()
             .add_systems(Startup, setup_game)
-            .add_systems(OnEnter(GameState::Running), spawn_base_game)
+            .add_systems(OnEnter(GameState::Preparing), spawn_base_game)
             .add_systems(
                 Update,
                 (player_run, section_detect_player).run_if(in_state(GameState::Running)),
@@ -33,6 +33,7 @@ impl Plugin for GamePlugin {
 #[source(GlobalState = GlobalState::InGame)]
 pub enum GameState {
     #[default]
+    Preparing,
     Running,
     Battle,
     Paused {
@@ -130,9 +131,10 @@ fn setup_game(
 }
 
 fn spawn_base_game(
-    mut commands: Commands,
     game_render_layer: Res<GameRenderLayer>,
+    mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
+    mut game_state: ResMut<NextState<GameState>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     let section_default_material = materials.add(Color::srgb(0.7, 0.7, 0.7));
@@ -195,6 +197,8 @@ fn spawn_base_game(
         game_render_layer.layer.clone(),
         StateScoped(GlobalState::InGame),
     ));
+
+    game_state.set(GameState::Running);
 }
 
 fn player_run(time: Res<Time>, mut player: Query<(&PlayerSpeed, &mut Transform)>) {
