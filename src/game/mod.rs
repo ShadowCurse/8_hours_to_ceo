@@ -17,17 +17,19 @@ use crate::{
 
 mod circle_sectors;
 mod enemy;
+mod inventory;
 mod items;
 
 use circle_sectors::{position_to_sector_id, SectorId, SectorsPlugin};
 use enemy::{BattleEnemy, Enemy, EnemyPlugin};
+use inventory::InventoryPlugin;
 use items::ItemsPlugin;
 
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((SectorsPlugin, EnemyPlugin, ItemsPlugin))
+        app.add_plugins((SectorsPlugin, EnemyPlugin, InventoryPlugin, ItemsPlugin))
             .add_sub_state::<GameState>()
             .add_systems(Startup, setup_game)
             .add_systems(OnEnter(GameState::Preparing), spawn_base_game)
