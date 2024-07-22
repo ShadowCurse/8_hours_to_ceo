@@ -14,6 +14,9 @@ pub struct ItemsResources {
     pub mesh_default: Handle<Mesh>,
 }
 
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Item;
+
 fn prepare_items_resources(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,

@@ -7,7 +7,11 @@ use std::f32::consts::*;
 
 use crate::GlobalState;
 
-use super::{enemy::EnemyResources, items::ItemsResources, GameRenderLayer, GameState, Player};
+use super::{
+    enemy::{Enemy, EnemyResources},
+    items::{Item, ItemsResources},
+    AttackSpeed, Damage, GameRenderLayer, GameState, Health, Player,
+};
 
 const SECTORS_NUM: u8 = 8;
 const SECTOR_GAP: f32 = PI * 2.0 / 256.0;
@@ -82,7 +86,7 @@ impl SectorType {
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct SectorId(u8);
+pub struct SectorId(pub u8);
 
 #[derive(Component, Debug, Clone, PartialEq, Eq)]
 pub struct SectorTimer(Timer);
@@ -90,7 +94,7 @@ pub struct SectorTimer(Timer);
 impl Default for SectorTimer {
     fn default() -> Self {
         // 5..10 seconds
-        let duration = 5.0 + rand::random::<f32>() * 5.0;
+        let duration = 1.0 + rand::random::<f32>() * 1.0;
         Self(Timer::from_seconds(duration, TimerMode::Repeating))
     }
 }
@@ -277,6 +281,11 @@ fn sector_spawn_things(
                             transform: t,
                             ..default()
                         },
+                        Enemy,
+                        Health(10.0),
+                        Damage(1.0),
+                        AttackSpeed::new(1.0),
+                        SectorId(id.0),
                         game_render_layer.layer.clone(),
                         StateScoped(GlobalState::InGame),
                     ));
@@ -293,6 +302,8 @@ fn sector_spawn_things(
                             transform: t,
                             ..default()
                         },
+                        Item,
+                        SectorId(id.0),
                         game_render_layer.layer.clone(),
                         StateScoped(GlobalState::InGame),
                     ));

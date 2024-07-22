@@ -19,8 +19,8 @@ mod circle_sectors;
 mod enemy;
 mod items;
 
-use circle_sectors::SectorsPlugin;
-use enemy::EnemyPlugin;
+use circle_sectors::{position_to_sector_id, SectorId, SectorsPlugin};
+use enemy::{BattleEnemy, Enemy, EnemyPlugin};
 use items::ItemsPlugin;
 
 pub struct GamePlugin;
@@ -33,7 +33,12 @@ impl Plugin for GamePlugin {
             .add_systems(OnEnter(GameState::Preparing), spawn_base_game)
             .add_systems(
                 Update,
-                (player_run, camera_follow_player).run_if(in_state(GameState::Running)),
+                (player_run, camera_follow_player, initiate_battle)
+                    .run_if(in_state(GameState::Running)),
+            )
+            .add_systems(
+                Update,
+                (battle_auto_attack, battle_end_check).run_if(in_state(GameState::Battle)),
             )
             .add_systems(
                 OnTransition {
@@ -74,6 +79,21 @@ pub struct Player;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq)]
 pub struct PlayerSpeed(f32);
+
+#[derive(Component, Debug, Clone, Copy, PartialEq)]
+pub struct Health(pub f32);
+
+#[derive(Component, Debug, Clone, Copy, PartialEq)]
+pub struct Damage(pub f32);
+
+#[derive(Component, Debug, Clone, PartialEq)]
+pub struct AttackSpeed(pub Timer);
+
+impl AttackSpeed {
+    pub fn new(seconds: f32) -> Self {
+        Self(Timer::from_seconds(seconds, TimerMode::Repeating))
+    }
+}
 
 fn setup_game(
     mut commands: Commands,
@@ -156,6 +176,9 @@ fn spawn_base_game(
         },
         Player,
         PlayerSpeed(0.1),
+        Health(100.0),
+        Damage(5.0),
+        AttackSpeed::new(0.5),
         Wireframe2d,
         game_render_layer.layer.clone(),
         StateScoped(GlobalState::InGame),
@@ -215,4 +238,92 @@ fn move_camera_default(mut camera: Query<&mut Transform, With<GameCamera>>) {
         return;
     };
     *camera_transform = Transform::default();
+}
+
+fn initiate_battle(
+    player: Query<&Transform, (With<Player>, Without<Enemy>)>,
+    enemies: Query<(Entity, &Transform, &SectorId), (With<Enemy>, Without<Player>)>,
+    mut commands: Commands,
+    mut game_sate: ResMut<NextState<GameState>>,
+) {
+    let Ok(player_transform) = player.get_single() else {
+        return;
+    };
+    let player_sector_id = position_to_sector_id(player_transform.translation);
+
+    for (enemy_entity, enemy_transform, sector_id) in enemies.iter() {
+        if sector_id.0 != player_sector_id {
+            continue;
+        }
+        if (enemy_transform.translation - player_transform.translation).length() < 30.0 {
+            // Marke enemy as the one we fight
+            commands
+                .get_entity(enemy_entity)
+                .unwrap()
+                .insert(BattleEnemy);
+
+            game_sate.set(GameState::Battle);
+        }
+    }
+}
+
+fn battle_auto_attack(
+    time: Res<Time>,
+    mut player: Query<
+        (&Damage, &mut Health, &mut AttackSpeed),
+        (With<Player>, Without<BattleEnemy>),
+    >,
+    mut enemy: Query<
+        (&Damage, &mut Health, &mut AttackSpeed),
+        (With<BattleEnemy>, Without<Player>),
+    >,
+) {
+    let Ok((player_damage, mut player_health, mut player_attack_speed)) = player.get_single_mut()
+    else {
+        return;
+    };
+
+    let Ok((enemy_damage, mut enemy_health, mut enemy_attack_speed)) = enemy.get_single_mut()
+    else {
+        return;
+    };
+
+    player_attack_speed.0.tick(time.delta());
+    enemy_attack_speed.0.tick(time.delta());
+
+    if player_attack_speed.0.finished() {
+        enemy_health.0 -= player_damage.0;
+    }
+
+    if enemy_attack_speed.0.finished() {
+        player_health.0 -= enemy_damage.0;
+    }
+}
+
+fn battle_end_check(
+    enemy: Query<(Entity, &Health), (With<BattleEnemy>, Without<Player>)>,
+    mut player: Query<(&Health, &mut AttackSpeed), (With<Player>, Without<BattleEnemy>)>,
+    mut commands: Commands,
+    mut game_state: ResMut<NextState<GameState>>,
+) {
+    let Ok((player_health, mut player_attack_speed)) = player.get_single_mut() else {
+        return;
+    };
+
+    let Ok((enemy_entity, enemy_health)) = enemy.get_single() else {
+        return;
+    };
+
+    if enemy_health.0 == 0.0 {
+        player_attack_speed.0.reset();
+        commands
+            .get_entity(enemy_entity)
+            .unwrap()
+            .despawn_recursive();
+        game_state.set(GameState::Running);
+    }
+
+    if player_health.0 == 0.0 {
+        println!("Player died...");
+    }
 }

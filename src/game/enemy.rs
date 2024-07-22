@@ -17,6 +17,12 @@ pub struct EnemyResources {
     pub mesh_default: Handle<Mesh>,
 }
 
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Enemy;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct BattleEnemy;
+
 fn prepare_enemy_resources(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
