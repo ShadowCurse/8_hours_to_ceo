@@ -13,6 +13,8 @@ const SECTORS_NUM: u8 = 8;
 const SECTOR_GAP: f32 = PI * 2.0 / 256.0;
 const SECTOR_ANGLE: f32 = PI * 2.0 / SECTORS_NUM as f32;
 const SECTOR_ANGLE_WITH_GAP: f32 = SECTOR_ANGLE - SECTOR_GAP * 2.0;
+const SECTOR_THINGS: usize = 4;
+const SECTOR_THING_GAP: f32 = SECTOR_ANGLE / 8.0;
 
 pub struct SectorsPlugin;
 
@@ -75,7 +77,7 @@ pub enum SlotType {
 }
 
 #[derive(Component, Debug, Default, Clone, PartialEq, Eq)]
-pub struct SectorSlots([Option<SlotType>; 4]);
+pub struct SectorSlots([Option<SlotType>; SECTOR_THINGS]);
 
 pub fn sector_id_to_start_angle(id: u8) -> f32 {
     id as f32 * SECTOR_ANGLE - SECTOR_ANGLE / 2.0
@@ -189,9 +191,9 @@ fn sector_spawn_things(
             if let Some(empty_slot_position) = slots.0.iter().position(|slot| slot.is_none()) {
                 slots.0[empty_slot_position] = Some(SlotType::Enemy);
 
-                let angle = sector_id_to_start_angle(id.0)
-                    + SECTOR_ANGLE / 4.0 * empty_slot_position as f32
-                    + SECTOR_ANGLE / 8.0;
+                let angle = sector_id_to_start_angle(id.0) + SECTOR_ANGLE / 2.0
+                    - SECTOR_THING_GAP / 2.0 * (SECTOR_THINGS - 1) as f32
+                    + SECTOR_THING_GAP * empty_slot_position as f32;
 
                 let mut t = Transform::from_xyz(0.0, 210.0, 0.0);
                 t.rotate_around(Vec3::ZERO, Quat::from_rotation_z(-angle));
