@@ -24,7 +24,15 @@ impl Plugin for GamePlugin {
             .add_systems(OnEnter(GameState::Preparing), spawn_base_game)
             .add_systems(
                 Update,
-                (player_run, section_detect_player).run_if(in_state(GameState::Running)),
+                (player_run, section_detect_player, camera_follow_player)
+                    .run_if(in_state(GameState::Running)),
+            )
+            .add_systems(
+                OnTransition {
+                    exited: GameState::Running,
+                    entered: GameState::Paused,
+                },
+                move_camera_default,
             )
             .add_systems(Update, game_pause.run_if(state_exists::<GameState>));
     }
@@ -191,7 +199,7 @@ fn spawn_base_game(
             ..default()
         },
         Player,
-        PlayerSpeed(0.5),
+        PlayerSpeed(0.1),
         Wireframe2d,
         game_render_layer.layer.clone(),
         StateScoped(GlobalState::InGame),
@@ -257,4 +265,28 @@ fn game_pause(
             game_state_next.set(GameState::Paused);
         }
     }
+}
+
+fn camera_follow_player(
+    player: Query<&Transform, (With<Player>, Without<GameCamera>)>,
+    mut camera: Query<&mut Transform, (Without<Player>, With<GameCamera>)>,
+) {
+    let Ok(player_transform) = player.get_single() else {
+        return;
+    };
+
+    let Ok(mut camera_transform) = camera.get_single_mut() else {
+        return;
+    };
+
+    let mut t = *player_transform;
+    t.scale = Vec3::new(0.5, 0.5, 0.5);
+    *camera_transform = t;
+}
+
+fn move_camera_default(mut camera: Query<&mut Transform, With<GameCamera>>) {
+    let Ok(mut camera_transform) = camera.get_single_mut() else {
+        return;
+    };
+    *camera_transform = Transform::default();
 }
