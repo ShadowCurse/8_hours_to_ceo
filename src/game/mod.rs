@@ -7,7 +7,7 @@ use bevy::{
         view::RenderLayers,
     },
     sprite::{MaterialMesh2dBundle, Wireframe2d},
-    window::PrimaryWindow,
+    window::{PrimaryWindow, WindowResized},
 };
 
 use crate::{
@@ -33,7 +33,12 @@ impl Plugin for GamePlugin {
             .add_systems(OnEnter(GameState::Preparing), spawn_base_game)
             .add_systems(
                 Update,
-                (player_run, camera_follow_player, initiate_battle)
+                (
+                    on_window_resize,
+                    player_run,
+                    camera_follow_player,
+                    initiate_battle,
+                )
                     .run_if(in_state(GameState::Running)),
             )
             .add_systems(
@@ -154,6 +159,22 @@ fn setup_game(
     commands.insert_resource(GameImage {
         image: image_handle,
     });
+}
+
+fn on_window_resize(
+    mut images: ResMut<Assets<Image>>,
+    mut game_image: ResMut<GameImage>,
+    mut resize_reader: EventReader<WindowResized>,
+) {
+    for e in resize_reader.read() {
+        let image = images.get_mut(&game_image.image).unwrap();
+        let size = Extent3d {
+            width: (e.width * (100.0 - UI_RIGHT_SIZE) / 100.0) as u32,
+            height: (e.height * (100.0 - UI_TOP_SIZE) / 100.0) as u32,
+            ..default()
+        };
+        image.resize(size);
+    }
 }
 
 fn spawn_base_game(
