@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    game::{GameImage, GameState},
+    game::{inventory::Inventory, GameImage, GameState},
     GlobalState,
 };
 
@@ -14,7 +14,7 @@ impl Plugin for InGamePlugin {
         app.add_systems(OnEnter(UiState::InGame), in_game_setup)
             .add_systems(
                 Update,
-                (button_system, update_pause).run_if(in_state(UiState::InGame)),
+                (button_system, update_pause, update_inventory).run_if(in_state(UiState::InGame)),
             );
     }
 }
@@ -26,6 +26,18 @@ struct CyclesText;
 struct PauseText;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+struct ActiveItemId(u8);
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+struct BackpackItemId(u8);
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+struct ActiveSpellId(u8);
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+struct BackpackSpellId(u8);
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum InGameButton {
     Settings,
     MainMenu,
@@ -34,7 +46,7 @@ enum InGameButton {
 pub const UI_TOP_SIZE: f32 = 10.0;
 pub const UI_RIGHT_SIZE: f32 = 30.0;
 
-fn spawn_inventory_button(builder: &mut ChildBuilder) {
+fn spawn_inventory_button<C: Component>(builder: &mut ChildBuilder, c: C) {
     builder
         .spawn(ButtonBundle {
             style: Style {
@@ -53,13 +65,16 @@ fn spawn_inventory_button(builder: &mut ChildBuilder) {
             ..default()
         })
         .with_children(|builder| {
-            builder.spawn(TextBundle::from_section(
-                "NaN",
-                TextStyle {
-                    font_size: 40.0,
-                    color: Color::srgb(0.2, 0.2, 0.2),
-                    ..Default::default()
-                },
+            builder.spawn((
+                TextBundle::from_section(
+                    "--",
+                    TextStyle {
+                        font_size: 40.0,
+                        color: Color::srgb(0.2, 0.2, 0.2),
+                        ..Default::default()
+                    },
+                ),
+                c,
             ));
         });
 }
@@ -204,10 +219,10 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>, game_image: Res
                                             ..default()
                                         })
                                         .with_children(|builder| {
-                                            spawn_inventory_button(builder);
-                                            spawn_inventory_button(builder);
-                                            spawn_inventory_button(builder);
-                                            spawn_inventory_button(builder);
+                                            spawn_inventory_button(builder, ActiveItemId(0));
+                                            spawn_inventory_button(builder, ActiveItemId(1));
+                                            spawn_inventory_button(builder, ActiveItemId(2));
+                                            spawn_inventory_button(builder, ActiveItemId(3));
                                         });
 
                                     // Backpack items
@@ -227,14 +242,14 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>, game_image: Res
                                             ..default()
                                         })
                                         .with_children(|builder| {
-                                            spawn_inventory_button(builder);
-                                            spawn_inventory_button(builder);
-                                            spawn_inventory_button(builder);
-                                            spawn_inventory_button(builder);
-                                            spawn_inventory_button(builder);
-                                            spawn_inventory_button(builder);
-                                            spawn_inventory_button(builder);
-                                            spawn_inventory_button(builder);
+                                            spawn_inventory_button(builder, BackpackItemId(0));
+                                            spawn_inventory_button(builder, BackpackItemId(1));
+                                            spawn_inventory_button(builder, BackpackItemId(2));
+                                            spawn_inventory_button(builder, BackpackItemId(3));
+                                            spawn_inventory_button(builder, BackpackItemId(4));
+                                            spawn_inventory_button(builder, BackpackItemId(5));
+                                            spawn_inventory_button(builder, BackpackItemId(6));
+                                            spawn_inventory_button(builder, BackpackItemId(7));
                                         });
                                 });
 
@@ -264,10 +279,10 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>, game_image: Res
                                             ..default()
                                         })
                                         .with_children(|builder| {
-                                            spawn_inventory_button(builder);
-                                            spawn_inventory_button(builder);
-                                            spawn_inventory_button(builder);
-                                            spawn_inventory_button(builder);
+                                            spawn_inventory_button(builder, ActiveSpellId(0));
+                                            spawn_inventory_button(builder, ActiveSpellId(1));
+                                            spawn_inventory_button(builder, ActiveSpellId(2));
+                                            spawn_inventory_button(builder, ActiveSpellId(3));
                                         });
 
                                     // Backpack spells
@@ -287,14 +302,14 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>, game_image: Res
                                             ..default()
                                         })
                                         .with_children(|builder| {
-                                            spawn_inventory_button(builder);
-                                            spawn_inventory_button(builder);
-                                            spawn_inventory_button(builder);
-                                            spawn_inventory_button(builder);
-                                            spawn_inventory_button(builder);
-                                            spawn_inventory_button(builder);
-                                            spawn_inventory_button(builder);
-                                            spawn_inventory_button(builder);
+                                            spawn_inventory_button(builder, BackpackSpellId(0));
+                                            spawn_inventory_button(builder, BackpackSpellId(1));
+                                            spawn_inventory_button(builder, BackpackSpellId(2));
+                                            spawn_inventory_button(builder, BackpackSpellId(3));
+                                            spawn_inventory_button(builder, BackpackSpellId(4));
+                                            spawn_inventory_button(builder, BackpackSpellId(5));
+                                            spawn_inventory_button(builder, BackpackSpellId(6));
+                                            spawn_inventory_button(builder, BackpackSpellId(7));
                                         });
                                 });
                         });
@@ -352,5 +367,82 @@ fn update_pause(
 
         pause_text.sections[0].value = text.into();
         *local = current_state;
+    }
+}
+
+fn update_inventory(
+    inventory: Res<Inventory>,
+    mut active_items_text: Query<
+        (&ActiveItemId, &mut Text),
+        (
+            Without<BackpackItemId>,
+            Without<ActiveSpellId>,
+            Without<BackpackSpellId>,
+        ),
+    >,
+    mut backpack_items_text: Query<
+        (&BackpackItemId, &mut Text),
+        (
+            Without<ActiveItemId>,
+            Without<ActiveSpellId>,
+            Without<BackpackSpellId>,
+        ),
+    >,
+    mut active_spells_text: Query<
+        (&ActiveSpellId, &mut Text),
+        (
+            Without<ActiveItemId>,
+            Without<BackpackItemId>,
+            Without<BackpackSpellId>,
+        ),
+    >,
+    mut backpack_spells_text: Query<
+        (&BackpackSpellId, &mut Text),
+        (
+            Without<ActiveItemId>,
+            Without<BackpackItemId>,
+            Without<ActiveSpellId>,
+        ),
+    >,
+) {
+    for (i, item) in inventory.active_items.iter().enumerate() {
+        for (id, mut text) in active_items_text.iter_mut() {
+            if id.0 == i as u8 {
+                text.sections[0].value = match item {
+                    Some(v) => format!("{v:?}"),
+                    None => "NaN".into(),
+                };
+            }
+        }
+    }
+    for (i, item) in inventory.backpack_items.iter().enumerate() {
+        for (id, mut text) in backpack_items_text.iter_mut() {
+            if id.0 == i as u8 {
+                text.sections[0].value = match item {
+                    Some(v) => format!("{v:?}"),
+                    None => "NaN".into(),
+                };
+            }
+        }
+    }
+    for (i, spell) in inventory.active_spells.iter().enumerate() {
+        for (id, mut text) in active_spells_text.iter_mut() {
+            if id.0 == i as u8 {
+                text.sections[0].value = match spell {
+                    Some(v) => format!("{v:?}"),
+                    None => "NaN".into(),
+                };
+            }
+        }
+    }
+    for (i, spell) in inventory.backpack_spells.iter().enumerate() {
+        for (id, mut text) in backpack_spells_text.iter_mut() {
+            if id.0 == i as u8 {
+                text.sections[0].value = match spell {
+                    Some(v) => format!("{v:?}"),
+                    None => "NaN".into(),
+                };
+            }
+        }
     }
 }

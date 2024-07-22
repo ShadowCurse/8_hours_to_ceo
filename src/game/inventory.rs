@@ -3,7 +3,7 @@ use bevy::prelude::*;
 pub struct InventoryPlugin;
 
 const INVENTORY_ITEMS: usize = 4;
-const INVENTORY_BACKPACK_ITEMS: usize = 4;
+const INVENTORY_BACKPACK_ITEMS: usize = 8;
 
 impl Plugin for InventoryPlugin {
     fn build(&self, app: &mut App) {
@@ -14,7 +14,7 @@ impl Plugin for InventoryPlugin {
 #[derive(Resource, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Inventory {
     pub active_items: Stack<Item, INVENTORY_ITEMS>,
-    pub backpack_item: Stack<Item, INVENTORY_BACKPACK_ITEMS>,
+    pub backpack_items: Stack<Item, INVENTORY_BACKPACK_ITEMS>,
     pub active_spells: Stack<Spell, INVENTORY_ITEMS>,
     pub backpack_spells: Stack<Spell, INVENTORY_BACKPACK_ITEMS>,
 }
@@ -23,7 +23,7 @@ impl Inventory {
     pub fn new() -> Self {
         Self {
             active_items: Stack::new(),
-            backpack_item: Stack::new(),
+            backpack_items: Stack::new(),
             active_spells: Stack::new(),
             backpack_spells: Stack::new(),
         }
@@ -37,9 +37,11 @@ pub struct Stack<T, const N: usize> {
 
 impl<T, const N: usize> Stack<T, N> {
     pub fn new() -> Self {
-        Self {
-            inner: unsafe { std::mem::MaybeUninit::zeroed().assume_init() },
+        let mut inner: [Option<T>; N] = unsafe { std::mem::MaybeUninit::zeroed().assume_init() };
+        for i in inner.iter_mut() {
+            *i = None;
         }
+        Self { inner }
     }
 
     pub fn push(&mut self, item: T) {

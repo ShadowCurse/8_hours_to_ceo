@@ -15,10 +15,10 @@ use crate::{
     GlobalState,
 };
 
-mod circle_sectors;
-mod enemy;
-mod inventory;
-mod items;
+pub mod circle_sectors;
+pub mod enemy;
+pub mod inventory;
+pub mod items;
 
 use circle_sectors::{position_to_sector_id, SectorId, SectorsPlugin};
 use enemy::{BattleEnemy, Enemy, EnemyPlugin};
