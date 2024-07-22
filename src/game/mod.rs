@@ -17,15 +17,17 @@ use crate::{
 
 mod circle_sectors;
 mod enemy;
+mod items;
 
 use circle_sectors::SectorsPlugin;
 use enemy::EnemyPlugin;
+use items::ItemsPlugin;
 
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((SectorsPlugin, EnemyPlugin))
+        app.add_plugins((SectorsPlugin, EnemyPlugin, ItemsPlugin))
             .add_sub_state::<GameState>()
             .add_systems(Startup, setup_game)
             .add_systems(OnEnter(GameState::Preparing), spawn_base_game)
