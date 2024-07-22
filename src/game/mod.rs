@@ -162,8 +162,8 @@ fn setup_game(
 }
 
 fn on_window_resize(
+    game_image: Res<GameImage>,
     mut images: ResMut<Assets<Image>>,
-    mut game_image: ResMut<GameImage>,
     mut resize_reader: EventReader<WindowResized>,
 ) {
     for e in resize_reader.read() {
