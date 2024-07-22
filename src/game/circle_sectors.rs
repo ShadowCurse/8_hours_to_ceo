@@ -65,8 +65,8 @@ pub struct SectorTimer(Timer);
 impl Default for SectorTimer {
     fn default() -> Self {
         // 5..10 seconds
-        // let duration = 5.0 + rand::random::<f32>() * 5.0;
-        Self(Timer::from_seconds(0.0, TimerMode::Repeating))
+        let duration = 5.0 + rand::random::<f32>() * 5.0;
+        Self(Timer::from_seconds(duration, TimerMode::Repeating))
     }
 }
 
