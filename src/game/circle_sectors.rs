@@ -3,12 +3,16 @@ use bevy::{
     sprite::{MaterialMesh2dBundle, Wireframe2d},
 };
 use rand::Rng;
+use std::f32::consts::*;
 
 use crate::GlobalState;
 
 use super::{enemy::EnemyResources, GameRenderLayer, GameState, Player};
 
 const SECTORS_NUM: u8 = 8;
+const SECTOR_GAP: f32 = PI * 2.0 / 256.0;
+const SECTOR_ANGLE: f32 = PI * 2.0 / SECTORS_NUM as f32;
+const SECTOR_ANGLE_WITH_GAP: f32 = SECTOR_ANGLE - SECTOR_GAP * 2.0;
 
 pub struct SectorsPlugin;
 
@@ -59,8 +63,8 @@ pub struct SectorTimer(Timer);
 impl Default for SectorTimer {
     fn default() -> Self {
         // 5..10 seconds
-        let duration = 5.0 + rand::random::<f32>() * 5.0;
-        Self(Timer::from_seconds(duration, TimerMode::Repeating))
+        // let duration = 5.0 + rand::random::<f32>() * 5.0;
+        Self(Timer::from_seconds(0.0, TimerMode::Repeating))
     }
 }
 
@@ -73,6 +77,19 @@ pub enum SlotType {
 #[derive(Component, Debug, Default, Clone, PartialEq, Eq)]
 pub struct SectorSlots([Option<SlotType>; 4]);
 
+pub fn sector_id_to_start_angle(id: u8) -> f32 {
+    id as f32 * SECTOR_ANGLE - SECTOR_ANGLE / 2.0
+}
+
+pub fn position_to_sector_id(position: Vec3) -> u8 {
+    let angle = position.angle_between(Vec3::Y);
+    let mut sector_id = ((angle / (SECTOR_ANGLE / 2.0)).floor() as u8).div_ceil(2);
+    if position.x < 0.0 && sector_id != 0 {
+        sector_id = SECTORS_NUM - sector_id;
+    }
+    sector_id
+}
+
 fn prepare_sector_resources(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -82,10 +99,8 @@ fn prepare_sector_resources(
     let material_green = materials.add(Color::srgb(0.2, 0.8, 0.2));
     let material_red = materials.add(Color::srgb(0.8, 0.2, 0.2));
     let material_orange = materials.add(Color::srgb(0.8, 0.4, 0.2));
-    let mesh_default = meshes.add(CircularSector::new(
-        200.0,
-        std::f32::consts::PI / SECTORS_NUM as f32,
-    ));
+    // CircularSector uses half_angle underneath
+    let mesh_default = meshes.add(CircularSector::new(200.0, SECTOR_ANGLE_WITH_GAP / 2.0));
 
     let circle_mesh_default = meshes.add(Circle { radius: 180.0 });
 
@@ -107,11 +122,9 @@ fn spawn_sectors(
     // Sectors
     for i in 0..SECTORS_NUM {
         let mut transform = Transform::from_xyz(0.0, 0.0, 0.0);
-        // Rotate PI/8 more to start sector at 0/12
-        transform.rotate_local_z(
-            std::f32::consts::PI / SECTORS_NUM as f32
-                + std::f32::consts::PI / SECTORS_NUM as f32 * 2.0 * i as f32,
-        );
+        let rotation = PI / (SECTORS_NUM / 2) as f32 * i as f32;
+        // Rotation happens ccw, so make it cw.
+        transform.rotate_local_z(-rotation);
         let st = SectorType::random();
         let material = match st {
             SectorType::Default => sector_resources.material_default.clone(),
@@ -154,14 +167,7 @@ fn sector_detect_player(player: Query<&Transform, With<Player>>, mut local: Loca
         return;
     };
 
-    let to_center = player_transform.translation.normalize();
-    let angle = to_center.angle_between(Vec3::Y);
-
-    let mut sector_id = (angle / (std::f32::consts::PI / (SECTORS_NUM / 2) as f32)).floor() as u8;
-
-    if 0.0 < player_transform.translation.x {
-        sector_id = SECTORS_NUM - 1 - sector_id;
-    }
+    let sector_id = position_to_sector_id(player_transform.translation);
 
     if sector_id != *local {
         println!("player is in the sector: {sector_id}");
@@ -174,29 +180,32 @@ fn sector_spawn_things(
     game_render_layer: Res<GameRenderLayer>,
     enemy_resources: Res<EnemyResources>,
     mut commands: Commands,
-    mut sectors: Query<(&SectorId, &mut SectorTimer, &mut SectorSlots)>,
+    mut sectors: Query<(&SectorId, &SectorType, &mut SectorTimer, &mut SectorSlots)>,
 ) {
-    for (id, mut timer, mut slots) in sectors.iter_mut() {
+    for (id, st, mut timer, mut slots) in sectors.iter_mut() {
         timer.0.tick(time.delta());
 
         if timer.0.finished() {
             if let Some(empty_slot_position) = slots.0.iter().position(|slot| slot.is_none()) {
                 slots.0[empty_slot_position] = Some(SlotType::Enemy);
 
-                // Take end of the sector, subtract enought for the slot and take
-                // middle of the slot.
-                let angle = (SECTORS_NUM - 1 - id.0) as f32 * std::f32::consts::PI
-                    / SECTORS_NUM as f32
-                    - std::f32::consts::PI / (SECTORS_NUM * 2) as f32 * empty_slot_position as f32
-                    - std::f32::consts::PI / (SECTORS_NUM * 4) as f32;
+                let angle = sector_id_to_start_angle(id.0)
+                    + SECTOR_ANGLE / 4.0 * empty_slot_position as f32
+                    + SECTOR_ANGLE / 8.0;
 
                 let mut t = Transform::from_xyz(0.0, 210.0, 0.0);
-                t.rotate_around(Vec3::ZERO, Quat::from_rotation_z(angle));
+                t.rotate_around(Vec3::ZERO, Quat::from_rotation_z(-angle));
 
+                let material = match st {
+                    SectorType::Default => enemy_resources.material_default.clone(),
+                    SectorType::Green => enemy_resources.material_green.clone(),
+                    SectorType::Red => enemy_resources.material_red.clone(),
+                    SectorType::Orange => enemy_resources.material_orange.clone(),
+                };
                 commands.spawn((
                     MaterialMesh2dBundle {
                         mesh: enemy_resources.mesh_default.clone().into(),
-                        material: enemy_resources.material_default.clone(),
+                        material,
                         transform: t,
                         ..default()
                     },
