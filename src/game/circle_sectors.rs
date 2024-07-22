@@ -133,6 +133,14 @@ pub fn position_to_sector_id(position: Vec3) -> u8 {
     sector_id
 }
 
+pub fn next_section_id(section_id: u8) -> u8 {
+    if section_id == SECTORS_NUM - 1 {
+        0
+    } else {
+        section_id + 1
+    }
+}
+
 fn prepare_sector_resources(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -223,11 +231,23 @@ fn sector_spawn_things(
     game_render_layer: Res<GameRenderLayer>,
     enemy_resources: Res<EnemyResources>,
     items_resources: Res<ItemsResources>,
+    player: Query<&Transform, With<Player>>,
     mut commands: Commands,
     mut sectors: Query<(&SectorId, &SectorType, &mut SectorTimer, &mut SectorSlots)>,
 ) {
+    let Ok(player_transform) = player.get_single() else {
+        return;
+    };
+    let player_sector_id = position_to_sector_id(player_transform.translation);
+    let player_next_sector_id = next_section_id(player_sector_id);
+
     for (id, st, mut timer, mut slots) in sectors.iter_mut() {
         timer.0.tick(time.delta());
+
+        // Don't spawn anything in the current and next zone
+        if id.0 == player_sector_id || id.0 == player_next_sector_id {
+            continue;
+        }
 
         if timer.0.finished() {
             if let Some(empty_slot_position) = slots.0.iter().position(|slot| slot.is_none()) {
