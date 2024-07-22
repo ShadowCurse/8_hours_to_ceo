@@ -15,15 +15,14 @@ use crate::{
     GlobalState,
 };
 
-mod sections;
-
-use sections::SectionsPlugin;
+mod circle_sectors;
+use circle_sectors::SectorsPlugin;
 
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(SectionsPlugin)
+        app.add_plugins(SectorsPlugin)
             .add_sub_state::<GameState>()
             .add_systems(Startup, setup_game)
             .add_systems(OnEnter(GameState::Preparing), spawn_base_game)
