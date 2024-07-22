@@ -149,7 +149,7 @@ fn spawn_base_game(
         MaterialMesh2dBundle {
             mesh: mesh.into(),
             material,
-            transform: Transform::from_xyz(0.0, 220.0, 0.0),
+            transform: Transform::from_xyz(0.0, 220.0, 1.0),
             ..default()
         },
         Player,
