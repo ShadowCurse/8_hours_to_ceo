@@ -36,3 +36,4 @@ strip = "debuginfo"
 
 [dependencies]
 bevy = { version = "0.14.0", features = ["dynamic_linking", "wayland"] }
+rand = "0.8.5"
