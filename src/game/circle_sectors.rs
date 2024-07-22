@@ -2,6 +2,7 @@ use bevy::{
     prelude::*,
     sprite::{MaterialMesh2dBundle, Wireframe2d},
 };
+use rand::Rng;
 
 use crate::GlobalState;
 
@@ -23,18 +24,28 @@ impl Plugin for SectorsPlugin {
 #[derive(Resource, Debug, Clone, PartialEq, Eq)]
 pub struct SectorResources {
     material_default: Handle<ColorMaterial>,
-    material_with_player: Handle<ColorMaterial>,
+    material_green: Handle<ColorMaterial>,
+    material_red: Handle<ColorMaterial>,
+    material_orange: Handle<ColorMaterial>,
     mesh_default: Handle<Mesh>,
     circle_mesh_default: Handle<Mesh>,
 }
 
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(u8)]
 pub enum SectorType {
     #[default]
     Default,
     Green,
     Red,
     Orange,
+}
+
+impl SectorType {
+    fn random() -> Self {
+        let idx: u8 = rand::thread_rng().gen_range(0..4);
+        unsafe { std::mem::transmute(idx) }
+    }
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -66,14 +77,18 @@ fn prepare_sector_resources(
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     let material_default = materials.add(Color::srgb(0.7, 0.7, 0.7));
-    let material_with_player = materials.add(Color::srgb(0.2, 0.8, 0.2));
+    let material_green = materials.add(Color::srgb(0.2, 0.8, 0.2));
+    let material_red = materials.add(Color::srgb(0.8, 0.2, 0.2));
+    let material_orange = materials.add(Color::srgb(0.8, 0.4, 0.2));
     let mesh_default = meshes.add(CircularSector::new(200.0, std::f32::consts::FRAC_PI_8));
 
     let circle_mesh_default = meshes.add(Circle { radius: 180.0 });
 
     commands.insert_resource(SectorResources {
         material_default,
-        material_with_player,
+        material_green,
+        material_red,
+        material_orange,
         mesh_default,
         circle_mesh_default,
     });
@@ -90,15 +105,22 @@ fn spawn_sectors(
         // Rotate PI/8 more to start sector at 0/12
         transform
             .rotate_local_z(std::f32::consts::FRAC_PI_8 + std::f32::consts::FRAC_PI_4 * i as f32);
+        let st = SectorType::random();
+        let material = match st {
+            SectorType::Default => sector_resources.material_default.clone(),
+            SectorType::Green => sector_resources.material_green.clone(),
+            SectorType::Red => sector_resources.material_red.clone(),
+            SectorType::Orange => sector_resources.material_orange.clone(),
+        };
         commands.spawn((
             MaterialMesh2dBundle {
                 mesh: sector_resources.mesh_default.clone().into(),
-                material: sector_resources.material_default.clone(),
+                material,
                 transform,
                 ..default()
             },
             SectorId(i),
-            SectorType::default(),
+            st,
             SectorTimer::default(),
             SectorSlots::default(),
             game_render_layer.layer.clone(),
@@ -120,11 +142,7 @@ fn spawn_sectors(
     ));
 }
 
-fn sector_detect_player(
-    sector_materials: Res<SectorResources>,
-    player: Query<&Transform, With<Player>>,
-    mut sectors: Query<(&SectorId, &mut Handle<ColorMaterial>)>,
-) {
+fn sector_detect_player(player: Query<&Transform, With<Player>>, mut local: Local<u8>) {
     let Ok(player_transform) = player.get_single() else {
         return;
     };
@@ -138,15 +156,9 @@ fn sector_detect_player(
         sector_id = 7 - sector_id;
     }
 
-    let previous_sector_id = if sector_id == 7 { 0 } else { sector_id + 1 };
-
-    for (sector, mut material_handle) in sectors.iter_mut() {
-        if sector.0 == sector_id {
-            *material_handle = sector_materials.material_with_player.clone();
-        }
-        if sector.0 == previous_sector_id {
-            *material_handle = sector_materials.material_default.clone();
-        }
+    if sector_id != *local {
+        println!("player is in the sector: {sector_id}");
+        *local = sector_id;
     }
 }
 
