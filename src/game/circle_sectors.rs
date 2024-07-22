@@ -5,7 +5,7 @@ use bevy::{
 
 use crate::GlobalState;
 
-use super::{GameRenderLayer, GameState, Player};
+use super::{enemy::EnemyResources, GameRenderLayer, GameState, Player};
 
 pub struct SectorsPlugin;
 
@@ -152,12 +152,10 @@ fn sector_detect_player(
 
 fn sector_spawn_things(
     time: Res<Time>,
-    mut sectors: Query<(&SectorId, &mut SectorTimer, &mut SectorSlots)>,
-
-    mut commands: Commands,
     game_render_layer: Res<GameRenderLayer>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    enemy_resources: Res<EnemyResources>,
+    mut commands: Commands,
+    mut sectors: Query<(&SectorId, &mut SectorTimer, &mut SectorSlots)>,
 ) {
     for (id, mut timer, mut slots) in sectors.iter_mut() {
         timer.0.tick(time.delta());
@@ -165,9 +163,6 @@ fn sector_spawn_things(
         if timer.0.finished() {
             if let Some(empty_slot_position) = slots.0.iter().position(|slot| slot.is_none()) {
                 slots.0[empty_slot_position] = Some(SlotType::Enemy);
-
-                let material = materials.add(Color::srgb(0.9, 0.2, 0.2));
-                let mesh = meshes.add(Circle { radius: 10.0 });
 
                 // Take end of the sector, subtract enought for the slot and take
                 // middle of the slot.
@@ -180,12 +175,11 @@ fn sector_spawn_things(
 
                 commands.spawn((
                     MaterialMesh2dBundle {
-                        mesh: mesh.into(),
-                        material,
+                        mesh: enemy_resources.mesh_default.clone().into(),
+                        material: enemy_resources.material_default.clone(),
                         transform: t,
                         ..default()
                     },
-                    Wireframe2d,
                     game_render_layer.layer.clone(),
                     StateScoped(GlobalState::InGame),
                 ));

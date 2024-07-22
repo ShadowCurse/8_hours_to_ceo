@@ -10,8 +10,8 @@ impl Plugin for EnemyPlugin {
 
 #[derive(Resource, Debug, Clone, PartialEq, Eq)]
 pub struct EnemyResources {
-    mesh_default: Handle<Mesh>,
-    material_default: Handle<ColorMaterial>,
+    pub material_default: Handle<ColorMaterial>,
+    pub mesh_default: Handle<Mesh>,
 }
 
 fn prepare_enemy_resources(
@@ -19,11 +19,11 @@ fn prepare_enemy_resources(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let material_default = materials.add(Color::srgb(0.1, 0.0, 0.0));
+    let material_default = materials.add(Color::srgb(1.0, 0.0, 0.0));
     let mesh_default = meshes.add(Circle { radius: 10.0 });
 
     commands.insert_resource(EnemyResources {
-        mesh_default,
         material_default,
+        mesh_default,
     });
 }
