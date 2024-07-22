@@ -8,6 +8,8 @@ use crate::GlobalState;
 
 use super::{enemy::EnemyResources, GameRenderLayer, GameState, Player};
 
+const SECTORS_NUM: u8 = 8;
+
 pub struct SectorsPlugin;
 
 impl Plugin for SectorsPlugin {
@@ -80,7 +82,10 @@ fn prepare_sector_resources(
     let material_green = materials.add(Color::srgb(0.2, 0.8, 0.2));
     let material_red = materials.add(Color::srgb(0.8, 0.2, 0.2));
     let material_orange = materials.add(Color::srgb(0.8, 0.4, 0.2));
-    let mesh_default = meshes.add(CircularSector::new(200.0, std::f32::consts::FRAC_PI_8));
+    let mesh_default = meshes.add(CircularSector::new(
+        200.0,
+        std::f32::consts::PI / SECTORS_NUM as f32,
+    ));
 
     let circle_mesh_default = meshes.add(Circle { radius: 180.0 });
 
@@ -100,11 +105,13 @@ fn spawn_sectors(
     mut commands: Commands,
 ) {
     // Sectors
-    for i in 0..8 {
+    for i in 0..SECTORS_NUM {
         let mut transform = Transform::from_xyz(0.0, 0.0, 0.0);
         // Rotate PI/8 more to start sector at 0/12
-        transform
-            .rotate_local_z(std::f32::consts::FRAC_PI_8 + std::f32::consts::FRAC_PI_4 * i as f32);
+        transform.rotate_local_z(
+            std::f32::consts::PI / SECTORS_NUM as f32
+                + std::f32::consts::PI / SECTORS_NUM as f32 * 2.0 * i as f32,
+        );
         let st = SectorType::random();
         let material = match st {
             SectorType::Default => sector_resources.material_default.clone(),
@@ -150,10 +157,10 @@ fn sector_detect_player(player: Query<&Transform, With<Player>>, mut local: Loca
     let to_center = player_transform.translation.normalize();
     let angle = to_center.angle_between(Vec3::Y);
 
-    let mut sector_id = (angle / std::f32::consts::FRAC_PI_4).floor() as u8;
+    let mut sector_id = (angle / (std::f32::consts::PI / (SECTORS_NUM / 2) as f32)).floor() as u8;
 
     if 0.0 < player_transform.translation.x {
-        sector_id = 7 - sector_id;
+        sector_id = SECTORS_NUM - 1 - sector_id;
     }
 
     if sector_id != *local {
@@ -178,9 +185,10 @@ fn sector_spawn_things(
 
                 // Take end of the sector, subtract enought for the slot and take
                 // middle of the slot.
-                let angle = (7 - id.0) as f32 * std::f32::consts::FRAC_PI_4
-                    - std::f32::consts::PI / 16.0 * empty_slot_position as f32
-                    - std::f32::consts::PI / 32.0;
+                let angle = (SECTORS_NUM - 1 - id.0) as f32 * std::f32::consts::PI
+                    / SECTORS_NUM as f32
+                    - std::f32::consts::PI / (SECTORS_NUM * 2) as f32 * empty_slot_position as f32
+                    - std::f32::consts::PI / (SECTORS_NUM * 4) as f32;
 
                 let mut t = Transform::from_xyz(0.0, 210.0, 0.0);
                 t.rotate_around(Vec3::ZERO, Quat::from_rotation_z(angle));
