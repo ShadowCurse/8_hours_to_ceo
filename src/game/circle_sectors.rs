@@ -14,7 +14,7 @@ impl Plugin for SectorsPlugin {
         app.add_systems(OnEnter(GameState::Preparing), spawn_sectors)
             .add_systems(
                 Update,
-                (sector_detect_player).run_if(in_state(GameState::Running)),
+                (sector_detect_player, sector_spawn_things).run_if(in_state(GameState::Running)),
             );
     }
 }
@@ -26,7 +26,7 @@ pub struct SectorMaterials {
 }
 
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum CircleSectorType {
+pub enum SectorType {
     #[default]
     Default,
     Green,
@@ -35,10 +35,27 @@ pub enum CircleSectorType {
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct CircleSectorId(u8);
+pub struct SectorId(u8);
+
+#[derive(Component, Debug, Clone, PartialEq, Eq)]
+pub struct SectorTimer(Timer);
+
+impl Default for SectorTimer {
+    fn default() -> Self {
+        // 5..10 seconds
+        let duration = 5.0 + rand::random::<f32>() * 5.0;
+        Self(Timer::from_seconds(duration, TimerMode::Repeating))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SlotType {
+    Enemy,
+    Item,
+}
 
 #[derive(Component, Debug, Default, Clone, PartialEq, Eq)]
-pub struct CircleSectorTimer(Timer);
+pub struct SectorSlots([Option<SlotType>; 4]);
 
 fn spawn_sectors(
     game_render_layer: Res<GameRenderLayer>,
@@ -64,9 +81,10 @@ fn spawn_sectors(
                 transform,
                 ..default()
             },
-            CircleSectorId(i),
-            CircleSectorType::default(),
-            CircleSectorTimer::default(),
+            SectorId(i),
+            SectorType::default(),
+            SectorTimer::default(),
+            SectorSlots::default(),
             game_render_layer.layer.clone(),
             StateScoped(GlobalState::InGame),
         ));
@@ -95,7 +113,7 @@ fn spawn_sectors(
 fn sector_detect_player(
     sector_materials: Res<SectorMaterials>,
     player: Query<&Transform, With<Player>>,
-    mut sectors: Query<(&CircleSectorId, &mut Handle<ColorMaterial>)>,
+    mut sectors: Query<(&SectorId, &mut Handle<ColorMaterial>)>,
 ) {
     let Ok(player_transform) = player.get_single() else {
         return;
@@ -118,6 +136,50 @@ fn sector_detect_player(
         }
         if sector.0 == previous_sector_id {
             *material_handle = sector_materials.default.clone();
+        }
+    }
+}
+
+fn sector_spawn_things(
+    time: Res<Time>,
+    mut sectors: Query<(&SectorId, &mut SectorTimer, &mut SectorSlots)>,
+
+    mut commands: Commands,
+    game_render_layer: Res<GameRenderLayer>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    for (id, mut timer, mut slots) in sectors.iter_mut() {
+        timer.0.tick(time.delta());
+
+        if timer.0.finished() {
+            if let Some(empty_slot_position) = slots.0.iter().position(|slot| slot.is_none()) {
+                slots.0[empty_slot_position] = Some(SlotType::Enemy);
+
+                let material = materials.add(Color::srgb(0.9, 0.2, 0.2));
+                let mesh = meshes.add(Circle { radius: 10.0 });
+
+                // Take end of the sector, subtract enought for the slot and take
+                // middle of the slot.
+                let angle = (7 - id.0) as f32 * std::f32::consts::FRAC_PI_4
+                    - std::f32::consts::PI / 16.0 * empty_slot_position as f32
+                    - std::f32::consts::PI / 32.0;
+
+                let mut t = Transform::from_xyz(0.0, 210.0, 0.0);
+                t.rotate_around(Vec3::ZERO, Quat::from_rotation_z(angle));
+
+                commands.spawn((
+                    MaterialMesh2dBundle {
+                        mesh: mesh.into(),
+                        material,
+                        transform: t,
+                        ..default()
+                    },
+                    Wireframe2d,
+                    game_render_layer.layer.clone(),
+                    StateScoped(GlobalState::InGame),
+                ));
+            }
         }
     }
 }
