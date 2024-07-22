@@ -11,7 +11,8 @@ pub struct SectorsPlugin;
 
 impl Plugin for SectorsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::Preparing), spawn_sectors)
+        app.add_systems(Startup, prepare_sector_resources)
+            .add_systems(OnEnter(GameState::Preparing), spawn_sectors)
             .add_systems(
                 Update,
                 (sector_detect_player, sector_spawn_things).run_if(in_state(GameState::Running)),
@@ -20,9 +21,11 @@ impl Plugin for SectorsPlugin {
 }
 
 #[derive(Resource, Debug, Clone, PartialEq, Eq)]
-pub struct SectorMaterials {
-    default: Handle<ColorMaterial>,
-    with_player: Handle<ColorMaterial>,
+pub struct SectorResources {
+    material_default: Handle<ColorMaterial>,
+    material_with_player: Handle<ColorMaterial>,
+    mesh_default: Handle<Mesh>,
+    circle_mesh_default: Handle<Mesh>,
 }
 
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
@@ -57,17 +60,30 @@ pub enum SlotType {
 #[derive(Component, Debug, Default, Clone, PartialEq, Eq)]
 pub struct SectorSlots([Option<SlotType>; 4]);
 
-fn spawn_sectors(
-    game_render_layer: Res<GameRenderLayer>,
+fn prepare_sector_resources(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let sector_default_material = materials.add(Color::srgb(0.7, 0.7, 0.7));
-    let sector_with_player_material = materials.add(Color::srgb(0.2, 0.8, 0.2));
+    let material_default = materials.add(Color::srgb(0.7, 0.7, 0.7));
+    let material_with_player = materials.add(Color::srgb(0.2, 0.8, 0.2));
+    let mesh_default = meshes.add(CircularSector::new(200.0, std::f32::consts::FRAC_PI_8));
 
-    let mesh = meshes.add(CircularSector::new(200.0, std::f32::consts::FRAC_PI_8));
+    let circle_mesh_default = meshes.add(Circle { radius: 180.0 });
 
+    commands.insert_resource(SectorResources {
+        material_default,
+        material_with_player,
+        mesh_default,
+        circle_mesh_default,
+    });
+}
+
+fn spawn_sectors(
+    game_render_layer: Res<GameRenderLayer>,
+    sector_resources: Res<SectorResources>,
+    mut commands: Commands,
+) {
     // Sectors
     for i in 0..8 {
         let mut transform = Transform::from_xyz(0.0, 0.0, 0.0);
@@ -76,8 +92,8 @@ fn spawn_sectors(
             .rotate_local_z(std::f32::consts::FRAC_PI_8 + std::f32::consts::FRAC_PI_4 * i as f32);
         commands.spawn((
             MaterialMesh2dBundle {
-                mesh: mesh.clone().into(),
-                material: sector_default_material.clone(),
+                mesh: sector_resources.mesh_default.clone().into(),
+                material: sector_resources.material_default.clone(),
                 transform,
                 ..default()
             },
@@ -91,11 +107,10 @@ fn spawn_sectors(
     }
 
     // Center
-    let mesh = meshes.add(Circle { radius: 180.0 });
     commands.spawn((
         MaterialMesh2dBundle {
-            mesh: mesh.into(),
-            material: sector_default_material.clone(),
+            mesh: sector_resources.circle_mesh_default.clone().into(),
+            material: sector_resources.material_default.clone(),
             transform: Transform::from_xyz(0.0, 0.0, 1.0),
             ..default()
         },
@@ -103,15 +118,10 @@ fn spawn_sectors(
         game_render_layer.layer.clone(),
         StateScoped(GlobalState::InGame),
     ));
-
-    commands.insert_resource(SectorMaterials {
-        default: sector_default_material,
-        with_player: sector_with_player_material,
-    });
 }
 
 fn sector_detect_player(
-    sector_materials: Res<SectorMaterials>,
+    sector_materials: Res<SectorResources>,
     player: Query<&Transform, With<Player>>,
     mut sectors: Query<(&SectorId, &mut Handle<ColorMaterial>)>,
 ) {
@@ -132,10 +142,10 @@ fn sector_detect_player(
 
     for (sector, mut material_handle) in sectors.iter_mut() {
         if sector.0 == sector_id {
-            *material_handle = sector_materials.with_player.clone();
+            *material_handle = sector_materials.material_with_player.clone();
         }
         if sector.0 == previous_sector_id {
-            *material_handle = sector_materials.default.clone();
+            *material_handle = sector_materials.material_default.clone();
         }
     }
 }
