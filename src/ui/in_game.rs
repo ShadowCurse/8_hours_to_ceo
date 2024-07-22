@@ -34,6 +34,36 @@ enum InGameButton {
 pub const UI_TOP_SIZE: f32 = 10.0;
 pub const UI_RIGHT_SIZE: f32 = 30.0;
 
+fn spawn_inventory_button(builder: &mut ChildBuilder) {
+    builder
+        .spawn(ButtonBundle {
+            style: Style {
+                width: Val::Px(80.0),
+                height: Val::Px(80.0),
+                border: UiRect::all(Val::Px(5.0)),
+                // horizontally center child text
+                justify_content: JustifyContent::Center,
+                // vertically center child text
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            border_color: BorderColor(Color::BLACK),
+            border_radius: BorderRadius::all(Val::Percent(5.0)),
+            background_color: Color::WHITE.into(),
+            ..default()
+        })
+        .with_children(|builder| {
+            builder.spawn(TextBundle::from_section(
+                "NaN",
+                TextStyle {
+                    font_size: 40.0,
+                    color: Color::srgb(0.2, 0.2, 0.2),
+                    ..Default::default()
+                },
+            ));
+        });
+}
+
 fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>, game_image: Res<GameImage>) {
     // Root node
     commands
@@ -134,21 +164,140 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>, game_image: Res
                                 width: Val::Percent(100.0 - UI_RIGHT_SIZE),
                                 ..Default::default()
                             },
-                            background_color: Color::NONE.into(),
                             ..default()
                         },
                         UiImage::new(game_image.image.clone()),
                     ));
                     // Items and spells
-                    builder.spawn(NodeBundle {
-                        style: Style {
-                            width: Val::Percent(UI_RIGHT_SIZE),
-                            flex_direction: FlexDirection::Column,
-                            ..Default::default()
-                        },
-                        background_color: Color::srgb(0.7, 0.1, 0.0).into(),
-                        ..default()
-                    });
+                    builder
+                        .spawn(NodeBundle {
+                            style: Style {
+                                width: Val::Percent(UI_RIGHT_SIZE),
+                                flex_direction: FlexDirection::Column,
+                                ..Default::default()
+                            },
+                            ..default()
+                        })
+                        .with_children(|builder| {
+                            // Items
+                            builder
+                                .spawn(NodeBundle {
+                                    style: Style {
+                                        height: Val::Percent(50.0),
+                                        flex_direction: FlexDirection::Column,
+                                        ..Default::default()
+                                    },
+                                    ..default()
+                                })
+                                .with_children(|builder| {
+                                    // Active items
+                                    builder
+                                        .spawn(NodeBundle {
+                                            style: Style {
+                                                height: Val::Percent(30.0),
+                                                flex_direction: FlexDirection::Row,
+                                                align_items: AlignItems::Center,
+                                                justify_content: JustifyContent::SpaceAround,
+                                                ..Default::default()
+                                            },
+                                            background_color: Color::srgb(0.8, 0.8, 0.0).into(),
+                                            ..default()
+                                        })
+                                        .with_children(|builder| {
+                                            spawn_inventory_button(builder);
+                                            spawn_inventory_button(builder);
+                                            spawn_inventory_button(builder);
+                                            spawn_inventory_button(builder);
+                                        });
+
+                                    // Backpack items
+                                    builder
+                                        .spawn(NodeBundle {
+                                            style: Style {
+                                                height: Val::Percent(70.0),
+                                                display: Display::Grid,
+                                                align_items: AlignItems::Center,
+                                                justify_items: JustifyItems::Center,
+                                                grid_template_columns: RepeatedGridTrack::flex(
+                                                    4, 1.0,
+                                                ),
+                                                ..Default::default()
+                                            },
+                                            background_color: Color::srgb(0.2, 0.8, 0.0).into(),
+                                            ..default()
+                                        })
+                                        .with_children(|builder| {
+                                            spawn_inventory_button(builder);
+                                            spawn_inventory_button(builder);
+                                            spawn_inventory_button(builder);
+                                            spawn_inventory_button(builder);
+                                            spawn_inventory_button(builder);
+                                            spawn_inventory_button(builder);
+                                            spawn_inventory_button(builder);
+                                            spawn_inventory_button(builder);
+                                        });
+                                });
+
+                            // Spells
+                            builder
+                                .spawn(NodeBundle {
+                                    style: Style {
+                                        height: Val::Percent(50.0),
+                                        flex_direction: FlexDirection::Column,
+                                        ..Default::default()
+                                    },
+                                    background_color: Color::srgb(0.4, 0.4, 0.8).into(),
+                                    ..default()
+                                })
+                                .with_children(|builder| {
+                                    // Active spells
+                                    builder
+                                        .spawn(NodeBundle {
+                                            style: Style {
+                                                height: Val::Percent(30.0),
+                                                flex_direction: FlexDirection::Row,
+                                                align_items: AlignItems::Center,
+                                                justify_content: JustifyContent::SpaceAround,
+                                                ..Default::default()
+                                            },
+                                            background_color: Color::srgb(0.8, 0.8, 0.0).into(),
+                                            ..default()
+                                        })
+                                        .with_children(|builder| {
+                                            spawn_inventory_button(builder);
+                                            spawn_inventory_button(builder);
+                                            spawn_inventory_button(builder);
+                                            spawn_inventory_button(builder);
+                                        });
+
+                                    // Backpack spells
+                                    builder
+                                        .spawn(NodeBundle {
+                                            style: Style {
+                                                height: Val::Percent(70.0),
+                                                display: Display::Grid,
+                                                align_items: AlignItems::Center,
+                                                justify_items: JustifyItems::Center,
+                                                grid_template_columns: RepeatedGridTrack::flex(
+                                                    4, 1.0,
+                                                ),
+                                                ..Default::default()
+                                            },
+                                            background_color: Color::srgb(0.2, 0.8, 0.0).into(),
+                                            ..default()
+                                        })
+                                        .with_children(|builder| {
+                                            spawn_inventory_button(builder);
+                                            spawn_inventory_button(builder);
+                                            spawn_inventory_button(builder);
+                                            spawn_inventory_button(builder);
+                                            spawn_inventory_button(builder);
+                                            spawn_inventory_button(builder);
+                                            spawn_inventory_button(builder);
+                                            spawn_inventory_button(builder);
+                                        });
+                                });
+                        });
                 });
         });
 }
