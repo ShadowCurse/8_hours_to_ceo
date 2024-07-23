@@ -17,7 +17,7 @@ const SECTORS_NUM: u8 = 8;
 const SECTOR_GAP: f32 = PI * 2.0 / 256.0;
 const SECTOR_ANGLE: f32 = PI * 2.0 / SECTORS_NUM as f32;
 const SECTOR_ANGLE_WITH_GAP: f32 = SECTOR_ANGLE - SECTOR_GAP * 2.0;
-const SECTOR_THINGS: usize = 4;
+pub const SECTOR_THINGS: usize = 4;
 const SECTOR_THING_GAP: f32 = SECTOR_ANGLE / 8.0;
 
 const SECTORS_SPAWN_INFO: SectorsSpawnInfo = SectorsSpawnInfo {

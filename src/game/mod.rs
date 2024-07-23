@@ -9,6 +9,7 @@ use bevy::{
     sprite::{MaterialMesh2dBundle, Wireframe2d},
     window::{PrimaryWindow, WindowResized},
 };
+use rand::Rng;
 
 use crate::{
     ui::in_game::{UI_RIGHT_SIZE, UI_TOP_SIZE},
@@ -20,9 +21,9 @@ pub mod enemy;
 pub mod inventory;
 pub mod items;
 
-use circle_sectors::{position_to_sector_id, SectorId, SectorsPlugin};
-use enemy::{BattleEnemy, Enemy, EnemyPlugin};
-use inventory::InventoryPlugin;
+use circle_sectors::{position_to_sector_id, SectorId, SectorType, SectorsPlugin};
+use enemy::{BattleEnemy, EnemiesDropInfo, Enemy, EnemyPlugin};
+use inventory::{Inventory, InventoryPlugin, ItemIdx, Items, SpellIdx, Spells};
 use items::ItemsPlugin;
 
 pub struct GamePlugin;
@@ -30,6 +31,7 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((SectorsPlugin, EnemyPlugin, InventoryPlugin, ItemsPlugin))
+            .add_event::<BattleEnd>()
             .add_sub_state::<GameState>()
             .add_systems(Startup, setup_game)
             .add_systems(OnEnter(GameState::Preparing), spawn_base_game)
@@ -67,6 +69,9 @@ pub enum GameState {
     Battle,
     Paused,
 }
+
+#[derive(Event, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct BattleEnd;
 
 #[derive(Resource, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GameImage {
@@ -324,16 +329,21 @@ fn battle_auto_attack(
 }
 
 fn battle_end_check(
-    enemy: Query<(Entity, &Health), (With<BattleEnemy>, Without<Player>)>,
-    mut player: Query<(&Health, &mut AttackSpeed), (With<Player>, Without<BattleEnemy>)>,
+    items: Res<Items>,
+    spells: Res<Spells>,
+    enemies_drop_info: Res<EnemiesDropInfo>,
+    enemy: Query<(Entity, &Health, &SectorType), (With<BattleEnemy>, Without<Player>)>,
     mut commands: Commands,
+    mut inventory: ResMut<Inventory>,
+    mut event_writer: EventWriter<BattleEnd>,
     mut game_state: ResMut<NextState<GameState>>,
+    mut player: Query<(&Health, &mut AttackSpeed), (With<Player>, Without<BattleEnemy>)>,
 ) {
     let Ok((player_health, mut player_attack_speed)) = player.get_single_mut() else {
         return;
     };
 
-    let Ok((enemy_entity, enemy_health)) = enemy.get_single() else {
+    let Ok((enemy_entity, enemy_health, enemy_sector_type)) = enemy.get_single() else {
         return;
     };
 
@@ -343,6 +353,24 @@ fn battle_end_check(
             .get_entity(enemy_entity)
             .unwrap()
             .despawn_recursive();
+
+        let drop_info = enemies_drop_info.get(*enemy_sector_type);
+
+        let mut thread_rng = rand::thread_rng();
+
+        let random_item_idx = thread_rng.gen_range(0..drop_info.items.len());
+        let item = &items.0[random_item_idx];
+        if thread_rng.gen_bool(item.drop_rate as f64) {
+            inventory.backpack_items.push(ItemIdx(random_item_idx));
+        }
+
+        let random_spell_idx = thread_rng.gen_range(0..drop_info.spells.len());
+        let spell = &spells.0[random_spell_idx];
+        if thread_rng.gen_bool(spell.drop_rate as f64) {
+            inventory.backpack_spells.push(SpellIdx(random_spell_idx));
+        }
+
+        event_writer.send(BattleEnd);
         game_state.set(GameState::Running);
     }
 

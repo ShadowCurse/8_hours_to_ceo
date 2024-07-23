@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{
     game::{
         inventory::{Inventory, Items, Spells},
-        GameImage, GameState,
+        BattleEnd, GameImage, GameState,
     },
     GlobalState,
 };
@@ -70,7 +70,7 @@ fn spawn_inventory_button<C: Component>(builder: &mut ChildBuilder, c: C) {
         .with_children(|builder| {
             builder.spawn((
                 TextBundle::from_section(
-                    "--",
+                    "NaN",
                     TextStyle {
                         font_size: 40.0,
                         color: Color::srgb(0.2, 0.2, 0.2),
@@ -409,44 +409,47 @@ fn update_inventory(
             Without<ActiveSpellId>,
         ),
     >,
+    mut event_reader: EventReader<BattleEnd>,
 ) {
-    for (i, item) in inventory.active_items.iter().enumerate() {
-        for (id, mut text) in active_items_text.iter_mut() {
-            if id.0 == i as u8 {
-                text.sections[0].value = match item {
-                    Some(idx) => items.0[idx.0].name.into(),
-                    None => "NaN".into(),
-                };
+    for _ in event_reader.read() {
+        for (i, item) in inventory.active_items.iter().enumerate() {
+            for (id, mut text) in active_items_text.iter_mut() {
+                if id.0 == i as u8 {
+                    text.sections[0].value = match item {
+                        Some(idx) => items.0[idx.0].name.into(),
+                        None => "NaN".into(),
+                    };
+                }
             }
         }
-    }
-    for (i, item) in inventory.backpack_items.iter().enumerate() {
-        for (id, mut text) in backpack_items_text.iter_mut() {
-            if id.0 == i as u8 {
-                text.sections[0].value = match item {
-                    Some(idx) => items.0[idx.0].name.into(),
-                    None => "NaN".into(),
-                };
+        for (i, item) in inventory.backpack_items.iter().enumerate() {
+            for (id, mut text) in backpack_items_text.iter_mut() {
+                if id.0 == i as u8 {
+                    text.sections[0].value = match item {
+                        Some(idx) => items.0[idx.0].name.into(),
+                        None => "NaN".into(),
+                    };
+                }
             }
         }
-    }
-    for (i, spell) in inventory.active_spells.iter().enumerate() {
-        for (id, mut text) in active_spells_text.iter_mut() {
-            if id.0 == i as u8 {
-                text.sections[0].value = match spell {
-                    Some(idx) => spells.0[idx.0].name.into(),
-                    None => "NaN".into(),
-                };
+        for (i, spell) in inventory.active_spells.iter().enumerate() {
+            for (id, mut text) in active_spells_text.iter_mut() {
+                if id.0 == i as u8 {
+                    text.sections[0].value = match spell {
+                        Some(idx) => spells.0[idx.0].name.into(),
+                        None => "NaN".into(),
+                    };
+                }
             }
         }
-    }
-    for (i, spell) in inventory.backpack_spells.iter().enumerate() {
-        for (id, mut text) in backpack_spells_text.iter_mut() {
-            if id.0 == i as u8 {
-                text.sections[0].value = match spell {
-                    Some(idx) => spells.0[idx.0].name.into(),
-                    None => "NaN".into(),
-                };
+        for (i, spell) in inventory.backpack_spells.iter().enumerate() {
+            for (id, mut text) in backpack_spells_text.iter_mut() {
+                if id.0 == i as u8 {
+                    text.sections[0].value = match spell {
+                        Some(idx) => spells.0[idx.0].name.into(),
+                        None => "NaN".into(),
+                    };
+                }
             }
         }
     }
