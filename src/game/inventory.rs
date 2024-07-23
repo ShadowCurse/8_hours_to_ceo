@@ -104,12 +104,12 @@ fn prepare_items(mut commands: Commands) {
 
     items.0.push(ItemInfo {
         name: "Scissors",
-        drop_rate: 0.1,
+        drop_rate: 0.9,
         item: Item::Scissors,
     });
     items.0.push(ItemInfo {
         name: "Bucket",
-        drop_rate: 0.1,
+        drop_rate: 0.9,
         item: Item::Bucket,
     });
 
@@ -121,12 +121,12 @@ fn prepare_spells(mut commands: Commands) {
 
     spells.0.push(SpellInfo {
         name: "Lightning",
-        drop_rate: 0.1,
+        drop_rate: 0.9,
         spell: Spell::Lightning,
     });
     spells.0.push(SpellInfo {
         name: "Heal",
-        drop_rate: 0.1,
+        drop_rate: 0.9,
         spell: Spell::Heal,
     });
 
