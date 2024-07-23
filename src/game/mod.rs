@@ -304,6 +304,8 @@ fn initiate_battle(
 
 fn battle_auto_attack(
     time: Res<Time>,
+    items: Res<Items>,
+    inventory: Res<Inventory>,
     mut player: Query<
         (&Damage, &mut Health, &mut AttackSpeed),
         (With<Player>, Without<BattleEnemy>),
@@ -327,7 +329,20 @@ fn battle_auto_attack(
     enemy_attack_speed.0.tick(time.delta());
 
     if player_attack_speed.0.finished() {
-        enemy_health.0 -= player_damage.0;
+        let damage = player_damage.0
+            + inventory
+                .active_items
+                .iter()
+                .map(|item_idx| {
+                    if let Some(i) = item_idx {
+                        items.0[i.0].item.add_damage()
+                    } else {
+                        0.0
+                    }
+                })
+                .sum::<f32>();
+        println!("dealing damage: {damage}");
+        enemy_health.0 -= damage;
     }
 
     if enemy_attack_speed.0.finished() {

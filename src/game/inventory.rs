@@ -79,6 +79,15 @@ pub enum Item {
     Bucket,
 }
 
+impl Item {
+    pub fn add_damage(&self) -> f32 {
+        match self {
+            Self::Scissors => 10.0,
+            Self::Bucket => 0.0,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Spell {
     Lightning,
