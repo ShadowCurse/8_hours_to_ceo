@@ -1,4 +1,7 @@
-use bevy::{prelude::*, render::view::RenderLayers, sprite::MaterialMesh2dBundle};
+use bevy::{
+    ecs::system::EntityCommands, prelude::*, render::view::RenderLayers,
+    sprite::MaterialMesh2dBundle,
+};
 
 use crate::GlobalState;
 
@@ -92,14 +95,14 @@ fn prepare_chest_resources(
     commands.insert_resource(chests_drop_info);
 }
 
-pub fn spawn_chest(
-    commands: &mut Commands,
+pub fn spawn_chest<'a>(
+    commands: &'a mut Commands,
     chest_resources: &ChestResources,
     sector_type: SectorType,
     sector_id: u8,
     transform: Transform,
     render_layer: RenderLayers,
-) {
+) -> EntityCommands<'a> {
     let material = match sector_type {
         SectorType::Default => chest_resources.material_default.clone(),
         SectorType::Green => chest_resources.material_green.clone(),
@@ -118,5 +121,5 @@ pub fn spawn_chest(
         sector_type,
         render_layer,
         StateScoped(GlobalState::InGame),
-    ));
+    ))
 }

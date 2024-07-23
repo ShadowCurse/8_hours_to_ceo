@@ -1,4 +1,7 @@
-use bevy::{prelude::*, render::view::RenderLayers, sprite::MaterialMesh2dBundle};
+use bevy::{
+    ecs::system::EntityCommands, prelude::*, render::view::RenderLayers,
+    sprite::MaterialMesh2dBundle,
+};
 
 use crate::GlobalState;
 
@@ -95,14 +98,14 @@ fn prepare_enemy_resources(
     commands.insert_resource(enemies_drop_info);
 }
 
-pub fn spawn_enemy(
-    commands: &mut Commands,
+pub fn spawn_enemy<'a>(
+    commands: &'a mut Commands,
     enemy_resources: &EnemyResources,
     sector_type: SectorType,
     sector_id: u8,
     transform: Transform,
     render_layer: RenderLayers,
-) {
+) -> EntityCommands<'a> {
     let material = match sector_type {
         SectorType::Default => enemy_resources.material_default.clone(),
         SectorType::Green => enemy_resources.material_green.clone(),
@@ -124,5 +127,5 @@ pub fn spawn_enemy(
         sector_type,
         render_layer,
         StateScoped(GlobalState::InGame),
-    ));
+    ))
 }

@@ -1,4 +1,5 @@
 use bevy::{
+    ecs::component::{ComponentHooks, StorageType},
     prelude::*,
     sprite::{MaterialMesh2dBundle, Wireframe2d},
 };
@@ -107,6 +108,27 @@ pub enum SlotType {
 
 #[derive(Component, Debug, Default, Clone, PartialEq, Eq)]
 pub struct SectorSlots([Option<SlotType>; SECTOR_THINGS]);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SectorSlotEntity {
+    entity: Entity,
+    slot_position: usize,
+}
+
+impl Component for SectorSlotEntity {
+    const STORAGE_TYPE: StorageType = StorageType::Table;
+
+    fn register_component_hooks(hooks: &mut ComponentHooks) {
+        hooks.on_remove(|mut world, slot_entity, _component_id| {
+            let sector_slot_entity = *world.get::<SectorSlotEntity>(slot_entity).unwrap();
+
+            let mut sector_slots = world
+                .get_mut::<SectorSlots>(sector_slot_entity.entity)
+                .unwrap();
+            sector_slots.0[sector_slot_entity.slot_position] = None;
+        });
+    }
+}
 
 pub struct SectorSpawnInfo {
     enemy_spawn_prob: f64,
@@ -237,7 +259,13 @@ fn sector_spawn_things(
     game_render_layer: Res<GameRenderLayer>,
     player: Query<&Transform, With<Player>>,
     mut commands: Commands,
-    mut sectors: Query<(&SectorId, &SectorType, &mut SectorTimer, &mut SectorSlots)>,
+    mut sectors: Query<(
+        Entity,
+        &SectorId,
+        &SectorType,
+        &mut SectorTimer,
+        &mut SectorSlots,
+    )>,
 ) {
     let Ok(player_transform) = player.get_single() else {
         return;
@@ -245,7 +273,7 @@ fn sector_spawn_things(
     let player_sector_id = position_to_sector_id(player_transform.translation);
     let player_next_sector_id = next_section_id(player_sector_id);
 
-    for (id, st, mut timer, mut slots) in sectors.iter_mut() {
+    for (entity, id, st, mut timer, mut slots) in sectors.iter_mut() {
         timer.0.tick(time.delta());
 
         // Don't spawn anything in the current and next zone
@@ -274,7 +302,11 @@ fn sector_spawn_things(
                         id.0,
                         t,
                         game_render_layer.layer.clone(),
-                    );
+                    )
+                    .insert(SectorSlotEntity {
+                        entity,
+                        slot_position: empty_slot_position,
+                    });
                 } else if thread_rng.gen_bool(spawn_info.chest_spawn_prob) {
                     slots.0[empty_slot_position] = Some(SlotType::Item);
 
@@ -288,7 +320,11 @@ fn sector_spawn_things(
                         id.0,
                         t,
                         game_render_layer.layer.clone(),
-                    );
+                    )
+                    .insert(SectorSlotEntity {
+                        entity,
+                        slot_position: empty_slot_position,
+                    });
                 }
             }
         }
