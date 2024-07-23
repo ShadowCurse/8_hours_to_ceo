@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     game::{
-        inventory::{Inventory, Items, Spells},
+        inventory::{CastSpell, Inventory, Items, Spells},
         GameImage, GameState, InventoryUpdate,
     },
     GlobalState,
@@ -20,6 +20,7 @@ impl Plugin for InGamePlugin {
                 (
                     button_system,
                     backpack_items_button_system,
+                    active_spells_button_system,
                     backpack_spells_button_system,
                     update_pause,
                     update_inventory,
@@ -376,6 +377,33 @@ fn backpack_items_button_system(
                 *color = ui_style.btn_color_pressed.into();
                 inventory.equip_item(item_id.0 as usize);
                 event_writer.send(InventoryUpdate);
+            }
+            Interaction::Hovered => {
+                *color = ui_style.btn_color_hover.into();
+            }
+            Interaction::None => {
+                *color = ui_style.btn_color_normal.into();
+            }
+        }
+    }
+}
+
+fn active_spells_button_system(
+    ui_style: Res<UiStyle>,
+    mut inventory: ResMut<Inventory>,
+    mut interaction_query: Query<
+        (&ActiveSpellId, &Interaction, &mut BackgroundColor),
+        Changed<Interaction>,
+    >,
+    mut event_writer: EventWriter<CastSpell>,
+) {
+    for (spell_id, interaction, mut color) in interaction_query.iter_mut() {
+        match *interaction {
+            Interaction::Pressed => {
+                *color = ui_style.btn_color_pressed.into();
+                if let Some(spell_idx) = inventory.get_spell_idx(spell_id.0 as usize) {
+                    event_writer.send(CastSpell(spell_idx));
+                }
             }
             Interaction::Hovered => {
                 *color = ui_style.btn_color_hover.into();
