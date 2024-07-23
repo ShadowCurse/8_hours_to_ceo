@@ -1,7 +1,10 @@
 use bevy::prelude::*;
 
 use crate::{
-    game::{inventory::Inventory, GameImage, GameState},
+    game::{
+        inventory::{Inventory, Items, Spells},
+        GameImage, GameState,
+    },
     GlobalState,
 };
 
@@ -372,6 +375,8 @@ fn update_pause(
 
 fn update_inventory(
     inventory: Res<Inventory>,
+    items: Res<Items>,
+    spells: Res<Spells>,
     mut active_items_text: Query<
         (&ActiveItemId, &mut Text),
         (
@@ -409,7 +414,7 @@ fn update_inventory(
         for (id, mut text) in active_items_text.iter_mut() {
             if id.0 == i as u8 {
                 text.sections[0].value = match item {
-                    Some(v) => format!("{v:?}"),
+                    Some(idx) => items.0[idx.0].name.into(),
                     None => "NaN".into(),
                 };
             }
@@ -419,7 +424,7 @@ fn update_inventory(
         for (id, mut text) in backpack_items_text.iter_mut() {
             if id.0 == i as u8 {
                 text.sections[0].value = match item {
-                    Some(v) => format!("{v:?}"),
+                    Some(idx) => items.0[idx.0].name.into(),
                     None => "NaN".into(),
                 };
             }
@@ -429,7 +434,7 @@ fn update_inventory(
         for (id, mut text) in active_spells_text.iter_mut() {
             if id.0 == i as u8 {
                 text.sections[0].value = match spell {
-                    Some(v) => format!("{v:?}"),
+                    Some(idx) => spells.0[idx.0].name.into(),
                     None => "NaN".into(),
                 };
             }
@@ -439,7 +444,7 @@ fn update_inventory(
         for (id, mut text) in backpack_spells_text.iter_mut() {
             if id.0 == i as u8 {
                 text.sections[0].value = match spell {
-                    Some(v) => format!("{v:?}"),
+                    Some(idx) => spells.0[idx.0].name.into(),
                     None => "NaN".into(),
                 };
             }

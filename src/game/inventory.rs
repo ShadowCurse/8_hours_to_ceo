@@ -7,16 +7,16 @@ const INVENTORY_BACKPACK_ITEMS: usize = 8;
 
 impl Plugin for InventoryPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, prepare_inventory);
+        app.add_systems(Startup, (prepare_inventory, prepare_items, prepare_spells));
     }
 }
 
 #[derive(Resource, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Inventory {
-    pub active_items: Stack<Item, INVENTORY_ITEMS>,
-    pub backpack_items: Stack<Item, INVENTORY_BACKPACK_ITEMS>,
-    pub active_spells: Stack<Spell, INVENTORY_ITEMS>,
-    pub backpack_spells: Stack<Spell, INVENTORY_BACKPACK_ITEMS>,
+    pub active_items: Stack<ItemIdx, INVENTORY_ITEMS>,
+    pub backpack_items: Stack<ItemIdx, INVENTORY_BACKPACK_ITEMS>,
+    pub active_spells: Stack<SpellIdx, INVENTORY_ITEMS>,
+    pub backpack_spells: Stack<SpellIdx, INVENTORY_BACKPACK_ITEMS>,
 }
 
 impl Inventory {
@@ -69,6 +69,66 @@ pub enum Spell {
     Heal,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct ItemIdx(pub usize);
+
+#[derive(Debug)]
+pub struct ItemInfo {
+    pub name: &'static str,
+    pub drop_rate: f32,
+    pub item: Item,
+}
+
+#[derive(Resource, Debug)]
+pub struct Items(pub Vec<ItemInfo>);
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct SpellIdx(pub usize);
+
+#[derive(Debug)]
+pub struct SpellInfo {
+    pub name: &'static str,
+    pub drop_rate: f32,
+    pub spell: Spell,
+}
+
+#[derive(Resource, Debug)]
+pub struct Spells(pub Vec<SpellInfo>);
+
 fn prepare_inventory(mut commands: Commands) {
     commands.insert_resource(Inventory::new());
+}
+
+fn prepare_items(mut commands: Commands) {
+    let mut items = Items(vec![]);
+
+    items.0.push(ItemInfo {
+        name: "Scissors",
+        drop_rate: 0.1,
+        item: Item::Scissors,
+    });
+    items.0.push(ItemInfo {
+        name: "Bucket",
+        drop_rate: 0.1,
+        item: Item::Bucket,
+    });
+
+    commands.insert_resource(items);
+}
+
+fn prepare_spells(mut commands: Commands) {
+    let mut spells = Spells(vec![]);
+
+    spells.0.push(SpellInfo {
+        name: "Lightning",
+        drop_rate: 0.1,
+        spell: Spell::Lightning,
+    });
+    spells.0.push(SpellInfo {
+        name: "Heal",
+        drop_rate: 0.1,
+        spell: Spell::Heal,
+    });
+
+    commands.insert_resource(spells);
 }
