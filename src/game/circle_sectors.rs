@@ -8,7 +8,7 @@ use std::f32::consts::*;
 use crate::GlobalState;
 
 use super::{
-    chest::{spawn_chest, Chest, ChestResources},
+    chest::{spawn_chest, ChestResources},
     enemy::{spawn_enemy, EnemyResources},
     GameRenderLayer, GameState, Player,
 };
@@ -25,22 +25,22 @@ const SECTORS_SPAWN_INFO: SectorsSpawnInfo = SectorsSpawnInfo {
         // Default
         SectorSpawnInfo {
             enemy_spawn_prob: 0.3,
-            item_spawn_prob: 0.3,
+            chest_spawn_prob: 0.3,
         },
         // Green
         SectorSpawnInfo {
             enemy_spawn_prob: 0.3,
-            item_spawn_prob: 0.3,
+            chest_spawn_prob: 0.3,
         },
         // Red
         SectorSpawnInfo {
             enemy_spawn_prob: 0.3,
-            item_spawn_prob: 0.3,
+            chest_spawn_prob: 0.3,
         },
         // Orange
         SectorSpawnInfo {
             enemy_spawn_prob: 0.3,
-            item_spawn_prob: 0.3,
+            chest_spawn_prob: 0.3,
         },
     ],
 };
@@ -110,7 +110,7 @@ pub struct SectorSlots([Option<SlotType>; SECTOR_THINGS]);
 
 pub struct SectorSpawnInfo {
     enemy_spawn_prob: f64,
-    item_spawn_prob: f64,
+    chest_spawn_prob: f64,
 }
 
 pub struct SectorsSpawnInfo {
@@ -232,9 +232,9 @@ fn sector_detect_player(player: Query<&Transform, With<Player>>, mut local: Loca
 
 fn sector_spawn_things(
     time: Res<Time>,
-    game_render_layer: Res<GameRenderLayer>,
     enemy_resources: Res<EnemyResources>,
     chest_resources: Res<ChestResources>,
+    game_render_layer: Res<GameRenderLayer>,
     player: Query<&Transform, With<Player>>,
     mut commands: Commands,
     mut sectors: Query<(&SectorId, &SectorType, &mut SectorTimer, &mut SectorSlots)>,
@@ -275,7 +275,7 @@ fn sector_spawn_things(
                         t,
                         game_render_layer.layer.clone(),
                     );
-                } else if thread_rng.gen_bool(spawn_info.item_spawn_prob) {
+                } else if thread_rng.gen_bool(spawn_info.chest_spawn_prob) {
                     slots.0[empty_slot_position] = Some(SlotType::Item);
 
                     let mut t = Transform::from_xyz(0.0, 205.0, 0.0);

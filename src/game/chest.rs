@@ -2,7 +2,7 @@ use bevy::{prelude::*, render::view::RenderLayers, sprite::MaterialMesh2dBundle}
 
 use crate::GlobalState;
 
-use super::circle_sectors::{SectorId, SectorType};
+use super::circle_sectors::{SectorId, SectorType, SECTOR_THINGS};
 
 pub struct ChestsPlugin;
 
@@ -24,6 +24,27 @@ pub struct ChestResources {
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Chest;
 
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct InteractedChest;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ChestDropInfo {
+    pub items: Vec<usize>,
+    pub spells: Vec<usize>,
+}
+
+#[derive(Resource, Debug, Clone, PartialEq, Eq)]
+pub struct ChestsDropInfo {
+    infos: [ChestDropInfo; SECTOR_THINGS],
+}
+
+impl ChestsDropInfo {
+    pub fn get(&self, sector_type: SectorType) -> &ChestDropInfo {
+        let idx = sector_type as usize;
+        &self.infos[idx]
+    }
+}
+
 fn prepare_chest_resources(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -42,6 +63,33 @@ fn prepare_chest_resources(
         material_orange,
         mesh_default,
     });
+
+    let chests_drop_info = ChestsDropInfo {
+        infos: [
+            // Default
+            ChestDropInfo {
+                items: vec![0, 1],
+                spells: vec![0, 1],
+            },
+            // Green
+            ChestDropInfo {
+                items: vec![0, 1],
+                spells: vec![0, 1],
+            },
+            // Red
+            ChestDropInfo {
+                items: vec![0, 1],
+                spells: vec![0, 1],
+            },
+            // Orange
+            ChestDropInfo {
+                items: vec![0, 1],
+                spells: vec![0, 1],
+            },
+        ],
+    };
+
+    commands.insert_resource(chests_drop_info);
 }
 
 pub fn spawn_chest(

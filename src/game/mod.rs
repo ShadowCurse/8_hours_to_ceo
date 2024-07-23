@@ -21,10 +21,12 @@ pub mod circle_sectors;
 pub mod enemy;
 pub mod inventory;
 
-use chest::ChestsPlugin;
+use chest::{Chest, ChestsDropInfo, ChestsPlugin, InteractedChest};
 use circle_sectors::{position_to_sector_id, SectorId, SectorType, SectorsPlugin};
 use enemy::{BattleEnemy, EnemiesDropInfo, Enemy, EnemyPlugin};
 use inventory::{Inventory, InventoryPlugin, ItemIdx, Items, SpellIdx, Spells};
+
+const INTERACTION_DISTANCE: f32 = 30.0;
 
 pub struct GamePlugin;
 
@@ -42,6 +44,7 @@ impl Plugin for GamePlugin {
                     player_run,
                     camera_follow_player,
                     initiate_battle,
+                    initiate_pickup,
                 )
                     .run_if(in_state(GameState::Running)),
             )
@@ -49,6 +52,7 @@ impl Plugin for GamePlugin {
                 Update,
                 (battle_auto_attack, battle_end_check).run_if(in_state(GameState::Battle)),
             )
+            .add_systems(Update, (pickup_end).run_if(in_state(GameState::Pickup)))
             .add_systems(
                 OnTransition {
                     exited: GameState::Running,
@@ -66,6 +70,7 @@ pub enum GameState {
     #[default]
     Preparing,
     Running,
+    Pickup,
     Battle,
     Paused,
 }
@@ -283,7 +288,9 @@ fn initiate_battle(
         if sector_id.0 != player_sector_id {
             continue;
         }
-        if (enemy_transform.translation - player_transform.translation).length() < 30.0 {
+        if (enemy_transform.translation - player_transform.translation).length()
+            < INTERACTION_DISTANCE
+        {
             // Marke enemy as the one we fight
             commands
                 .get_entity(enemy_entity)
@@ -377,4 +384,72 @@ fn battle_end_check(
     if player_health.0 == 0.0 {
         println!("Player died...");
     }
+}
+
+fn initiate_pickup(
+    player: Query<&Transform, (With<Player>, Without<Chest>)>,
+    chests: Query<(Entity, &Transform, &SectorId), (With<Chest>, Without<Player>)>,
+    mut commands: Commands,
+    mut game_sate: ResMut<NextState<GameState>>,
+) {
+    let Ok(player_transform) = player.get_single() else {
+        return;
+    };
+    let player_sector_id = position_to_sector_id(player_transform.translation);
+
+    for (chest_entity, chest_transform, sector_id) in chests.iter() {
+        if sector_id.0 != player_sector_id {
+            continue;
+        }
+        if (chest_transform.translation - player_transform.translation).length()
+            < INTERACTION_DISTANCE
+        {
+            // Mark chest as the one we interact with
+            commands
+                .get_entity(chest_entity)
+                .unwrap()
+                .insert(InteractedChest);
+
+            game_sate.set(GameState::Pickup);
+        }
+    }
+}
+
+fn pickup_end(
+    items: Res<Items>,
+    spells: Res<Spells>,
+    chests_drop_info: Res<ChestsDropInfo>,
+    chest: Query<(Entity, &SectorType), (With<InteractedChest>, Without<Player>)>,
+    mut commands: Commands,
+    mut inventory: ResMut<Inventory>,
+    mut event_writer: EventWriter<BattleEnd>,
+    mut game_state: ResMut<NextState<GameState>>,
+) {
+    let Ok((chest_entity, chest_sector_type)) = chest.get_single() else {
+        return;
+    };
+
+    commands
+        .get_entity(chest_entity)
+        .unwrap()
+        .despawn_recursive();
+
+    let drop_info = chests_drop_info.get(*chest_sector_type);
+
+    let mut thread_rng = rand::thread_rng();
+
+    let random_item_idx = thread_rng.gen_range(0..drop_info.items.len());
+    let item = &items.0[random_item_idx];
+    if thread_rng.gen_bool(item.drop_rate as f64) {
+        inventory.backpack_items.push(ItemIdx(random_item_idx));
+    }
+
+    let random_spell_idx = thread_rng.gen_range(0..drop_info.spells.len());
+    let spell = &spells.0[random_spell_idx];
+    if thread_rng.gen_bool(spell.drop_rate as f64) {
+        inventory.backpack_spells.push(SpellIdx(random_spell_idx));
+    }
+
+    event_writer.send(BattleEnd);
+    game_state.set(GameState::Running);
 }
