@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use super::GameState;
+use super::spells::SpellIdx;
 
 pub struct InventoryPlugin;
 
@@ -9,9 +9,7 @@ const INVENTORY_BACKPACK_ITEMS: usize = 8;
 
 impl Plugin for InventoryPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<CastSpell>()
-            .add_systems(Startup, (prepare_inventory, prepare_items, prepare_spells))
-            .add_systems(Update, cast_spell.run_if(in_state(GameState::Battle)));
+        app.add_systems(Startup, (prepare_inventory, prepare_items));
     }
 }
 
@@ -115,31 +113,6 @@ impl Item {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum Spell {
-    Lightning,
-    Heal,
-}
-
-impl Spell {
-    pub fn duration(&self) -> Option<f32> {
-        match self {
-            Self::Lightning => None,
-            Self::Heal => None,
-        }
-    }
-
-    pub fn cooldown(&self) -> f32 {
-        match self {
-            Self::Lightning => 2.0,
-            Self::Heal => 5.0,
-        }
-    }
-}
-
-#[derive(Event, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct CastSpell(pub SpellIdx);
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ItemIdx(pub usize);
 
 #[derive(Debug)]
@@ -151,19 +124,6 @@ pub struct ItemInfo {
 
 #[derive(Resource, Debug)]
 pub struct Items(pub Vec<ItemInfo>);
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct SpellIdx(pub usize);
-
-#[derive(Debug)]
-pub struct SpellInfo {
-    pub name: &'static str,
-    pub drop_rate: f32,
-    pub spell: Spell,
-}
-
-#[derive(Resource, Debug)]
-pub struct Spells(pub Vec<SpellInfo>);
 
 fn prepare_inventory(mut commands: Commands) {
     commands.insert_resource(Inventory::new());
@@ -189,35 +149,4 @@ fn prepare_items(mut commands: Commands) {
     });
 
     commands.insert_resource(items);
-}
-
-fn prepare_spells(mut commands: Commands) {
-    let mut spells = Spells(vec![]);
-
-    spells.0.push(SpellInfo {
-        name: "Lightning",
-        drop_rate: 0.9,
-        spell: Spell::Lightning,
-    });
-    spells.0.push(SpellInfo {
-        name: "Heal",
-        drop_rate: 0.9,
-        spell: Spell::Heal,
-    });
-
-    commands.insert_resource(spells);
-}
-
-fn cast_spell(spells: Res<Spells>, mut event_reader: EventReader<CastSpell>) {
-    for e in event_reader.read() {
-        let spell_info = &spells.0[e.0 .0];
-        match spell_info.spell {
-            Spell::Lightning => {
-                println!("casting Lightning");
-            }
-            Spell::Heal => {
-                println!("casting Heal");
-            }
-        }
-    }
 }

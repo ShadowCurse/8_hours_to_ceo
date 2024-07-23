@@ -2,7 +2,8 @@ use bevy::prelude::*;
 
 use crate::{
     game::{
-        inventory::{CastSpell, Inventory, Items, Spells},
+        inventory::{Inventory, Items},
+        spells::{CastSpell, Spells},
         GameImage, GameState, InventoryUpdate,
     },
     GlobalState,
@@ -390,7 +391,7 @@ fn backpack_items_button_system(
 
 fn active_spells_button_system(
     ui_style: Res<UiStyle>,
-    mut inventory: ResMut<Inventory>,
+    inventory: Res<Inventory>,
     mut interaction_query: Query<
         (&ActiveSpellId, &Interaction, &mut BackgroundColor),
         Changed<Interaction>,

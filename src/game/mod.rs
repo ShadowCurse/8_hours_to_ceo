@@ -20,11 +20,13 @@ pub mod chest;
 pub mod circle_sectors;
 pub mod enemy;
 pub mod inventory;
+pub mod spells;
 
 use chest::{Chest, ChestsDropInfo, ChestsPlugin, InteractedChest};
 use circle_sectors::{position_to_sector_id, SectorId, SectorType, SectorsPlugin};
 use enemy::{BattleEnemy, EnemiesDropInfo, Enemy, EnemyPlugin};
-use inventory::{Inventory, InventoryPlugin, ItemIdx, Items, SpellIdx, Spells};
+use inventory::{Inventory, InventoryPlugin, ItemIdx, Items};
+use spells::{SpellIdx, Spells, SpellsPlugin};
 
 const INTERACTION_DISTANCE: f32 = 30.0;
 
@@ -32,35 +34,41 @@ pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((ChestsPlugin, SectorsPlugin, EnemyPlugin, InventoryPlugin))
-            .add_event::<InventoryUpdate>()
-            .add_sub_state::<GameState>()
-            .add_systems(Startup, setup_game)
-            .add_systems(OnEnter(GameState::Preparing), spawn_base_game)
-            .add_systems(
-                Update,
-                (
-                    on_window_resize,
-                    player_run,
-                    camera_follow_player,
-                    initiate_battle,
-                    initiate_pickup,
-                )
-                    .run_if(in_state(GameState::Running)),
+        app.add_plugins((
+            ChestsPlugin,
+            SectorsPlugin,
+            EnemyPlugin,
+            InventoryPlugin,
+            SpellsPlugin,
+        ))
+        .add_event::<InventoryUpdate>()
+        .add_sub_state::<GameState>()
+        .add_systems(Startup, setup_game)
+        .add_systems(OnEnter(GameState::Preparing), spawn_base_game)
+        .add_systems(
+            Update,
+            (
+                on_window_resize,
+                player_run,
+                camera_follow_player,
+                initiate_battle,
+                initiate_pickup,
             )
-            .add_systems(
-                Update,
-                (battle_auto_attack, battle_end_check).run_if(in_state(GameState::Battle)),
-            )
-            .add_systems(Update, (pickup_end).run_if(in_state(GameState::Pickup)))
-            .add_systems(
-                OnTransition {
-                    exited: GameState::Running,
-                    entered: GameState::Paused,
-                },
-                move_camera_default,
-            )
-            .add_systems(Update, game_pause.run_if(state_exists::<GameState>));
+                .run_if(in_state(GameState::Running)),
+        )
+        .add_systems(
+            Update,
+            (battle_auto_attack, battle_end_check).run_if(in_state(GameState::Battle)),
+        )
+        .add_systems(Update, (pickup_end).run_if(in_state(GameState::Pickup)))
+        .add_systems(
+            OnTransition {
+                exited: GameState::Running,
+                entered: GameState::Paused,
+            },
+            move_camera_default,
+        )
+        .add_systems(Update, game_pause.run_if(state_exists::<GameState>));
     }
 }
 
