@@ -8,8 +8,8 @@ use std::f32::consts::*;
 use crate::GlobalState;
 
 use super::{
+    chest::{spawn_chest, Chest, ChestResources},
     enemy::{spawn_enemy, EnemyResources},
-    items::{Item, ItemsResources},
     GameRenderLayer, GameState, Player,
 };
 
@@ -234,7 +234,7 @@ fn sector_spawn_things(
     time: Res<Time>,
     game_render_layer: Res<GameRenderLayer>,
     enemy_resources: Res<EnemyResources>,
-    items_resources: Res<ItemsResources>,
+    chest_resources: Res<ChestResources>,
     player: Query<&Transform, With<Player>>,
     mut commands: Commands,
     mut sectors: Query<(&SectorId, &SectorType, &mut SectorTimer, &mut SectorSlots)>,
@@ -281,18 +281,14 @@ fn sector_spawn_things(
                     let mut t = Transform::from_xyz(0.0, 205.0, 0.0);
                     t.rotate_around(Vec3::ZERO, Quat::from_rotation_z(-angle));
 
-                    commands.spawn((
-                        MaterialMesh2dBundle {
-                            mesh: items_resources.mesh_default.clone().into(),
-                            material: items_resources.material_default.clone(),
-                            transform: t,
-                            ..default()
-                        },
-                        Item,
-                        SectorId(id.0),
+                    spawn_chest(
+                        &mut commands,
+                        chest_resources.as_ref(),
+                        *st,
+                        id.0,
+                        t,
                         game_render_layer.layer.clone(),
-                        StateScoped(GlobalState::InGame),
-                    ));
+                    );
                 }
             }
         }

@@ -16,21 +16,21 @@ use crate::{
     GlobalState,
 };
 
+pub mod chest;
 pub mod circle_sectors;
 pub mod enemy;
 pub mod inventory;
-pub mod items;
 
+use chest::ChestsPlugin;
 use circle_sectors::{position_to_sector_id, SectorId, SectorType, SectorsPlugin};
 use enemy::{BattleEnemy, EnemiesDropInfo, Enemy, EnemyPlugin};
 use inventory::{Inventory, InventoryPlugin, ItemIdx, Items, SpellIdx, Spells};
-use items::ItemsPlugin;
 
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((SectorsPlugin, EnemyPlugin, InventoryPlugin, ItemsPlugin))
+        app.add_plugins((ChestsPlugin, SectorsPlugin, EnemyPlugin, InventoryPlugin))
             .add_event::<BattleEnd>()
             .add_sub_state::<GameState>()
             .add_systems(Startup, setup_game)
