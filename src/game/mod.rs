@@ -103,6 +103,9 @@ pub struct Health(pub f32);
 #[derive(Component, Debug, Clone, Copy, PartialEq)]
 pub struct Damage(pub f32);
 
+#[derive(Component, Debug, Clone, Copy, PartialEq)]
+pub struct Defense(pub f32);
+
 #[derive(Component, Debug, Clone, PartialEq)]
 pub struct AttackSpeed(pub Timer);
 
@@ -212,6 +215,7 @@ fn spawn_base_game(
         Health(100.0),
         Damage(5.0),
         AttackSpeed::new(0.5),
+        Defense(0.0),
         Wireframe2d,
         game_render_layer.layer.clone(),
         StateScoped(GlobalState::InGame),
@@ -307,20 +311,22 @@ fn battle_auto_attack(
     items: Res<Items>,
     inventory: Res<Inventory>,
     mut player: Query<
-        (&Damage, &mut Health, &mut AttackSpeed),
+        (&Damage, &Defense, &mut Health, &mut AttackSpeed),
         (With<Player>, Without<BattleEnemy>),
     >,
     mut enemy: Query<
-        (&Damage, &mut Health, &mut AttackSpeed),
+        (&Damage, &Defense, &mut Health, &mut AttackSpeed),
         (With<BattleEnemy>, Without<Player>),
     >,
 ) {
-    let Ok((player_damage, mut player_health, mut player_attack_speed)) = player.get_single_mut()
+    let Ok((player_damage, player_defense, mut player_health, mut player_attack_speed)) =
+        player.get_single_mut()
     else {
         return;
     };
 
-    let Ok((enemy_damage, mut enemy_health, mut enemy_attack_speed)) = enemy.get_single_mut()
+    let Ok((enemy_damage, enemy_defense, mut enemy_health, mut enemy_attack_speed)) =
+        enemy.get_single_mut()
     else {
         return;
     };
@@ -341,11 +347,27 @@ fn battle_auto_attack(
                     }
                 })
                 .sum::<f32>();
+
+        let damage = damage * (1.0 - enemy_defense.0);
         enemy_health.0 -= damage;
     }
 
     if enemy_attack_speed.0.finished() {
-        player_health.0 -= enemy_damage.0;
+        let player_defense = player_defense.0
+            + inventory
+                .active_items
+                .iter()
+                .map(|item_idx| {
+                    if let Some(i) = item_idx {
+                        items.0[i.0].item.add_defense()
+                    } else {
+                        0.0
+                    }
+                })
+                .sum::<f32>();
+
+        let damage = enemy_damage.0 * (1.0 - player_defense);
+        player_health.0 -= damage;
     }
 }
 

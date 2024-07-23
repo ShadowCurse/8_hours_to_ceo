@@ -7,7 +7,7 @@ use crate::GlobalState;
 
 use super::{
     circle_sectors::{SectorId, SectorType, SECTOR_THINGS},
-    AttackSpeed, Damage, Health,
+    AttackSpeed, Damage, Defense, Health,
 };
 
 pub struct EnemyPlugin;
@@ -123,6 +123,7 @@ pub fn spawn_enemy<'a>(
         Health(10.0),
         Damage(1.0),
         AttackSpeed::new(1.0),
+        Defense(0.0),
         SectorId(sector_id),
         sector_type,
         render_layer,

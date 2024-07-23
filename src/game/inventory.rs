@@ -86,6 +86,13 @@ impl Item {
             Self::Bucket => 0.0,
         }
     }
+
+    pub fn add_defense(&self) -> f32 {
+        match self {
+            Self::Scissors => 0.0,
+            Self::Bucket => 0.1,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
