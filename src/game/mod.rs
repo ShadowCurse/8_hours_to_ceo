@@ -341,7 +341,6 @@ fn battle_auto_attack(
                     }
                 })
                 .sum::<f32>();
-        println!("dealing damage: {damage}");
         enemy_health.0 -= damage;
     }
 
