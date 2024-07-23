@@ -17,7 +17,14 @@ impl Plugin for InGamePlugin {
         app.add_systems(OnEnter(UiState::InGame), in_game_setup)
             .add_systems(
                 Update,
-                (button_system, update_pause, update_inventory).run_if(in_state(UiState::InGame)),
+                (
+                    button_system,
+                    backpack_items_button_system,
+                    backpack_spells_button_system,
+                    update_pause,
+                    update_inventory,
+                )
+                    .run_if(in_state(UiState::InGame)),
             );
     }
 }
@@ -49,24 +56,27 @@ enum InGameButton {
 pub const UI_TOP_SIZE: f32 = 10.0;
 pub const UI_RIGHT_SIZE: f32 = 30.0;
 
-fn spawn_inventory_button<C: Component>(builder: &mut ChildBuilder, c: C) {
+fn spawn_inventory_button<C: Component + Copy>(builder: &mut ChildBuilder, c: C) {
     builder
-        .spawn(ButtonBundle {
-            style: Style {
-                width: Val::Px(80.0),
-                height: Val::Px(80.0),
-                border: UiRect::all(Val::Px(5.0)),
-                // horizontally center child text
-                justify_content: JustifyContent::Center,
-                // vertically center child text
-                align_items: AlignItems::Center,
+        .spawn((
+            ButtonBundle {
+                style: Style {
+                    width: Val::Px(80.0),
+                    height: Val::Px(80.0),
+                    border: UiRect::all(Val::Px(5.0)),
+                    // horizontally center child text
+                    justify_content: JustifyContent::Center,
+                    // vertically center child text
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                border_color: BorderColor(Color::BLACK),
+                border_radius: BorderRadius::all(Val::Percent(5.0)),
+                background_color: Color::WHITE.into(),
                 ..default()
             },
-            border_color: BorderColor(Color::BLACK),
-            border_radius: BorderRadius::all(Val::Percent(5.0)),
-            background_color: Color::WHITE.into(),
-            ..default()
-        })
+            c,
+        ))
         .with_children(|builder| {
             builder.spawn((
                 TextBundle::from_section(
@@ -340,6 +350,58 @@ fn button_system(
                         global_state.set(GlobalState::MainMenu);
                     }
                 }
+            }
+            Interaction::Hovered => {
+                *color = ui_style.btn_color_hover.into();
+            }
+            Interaction::None => {
+                *color = ui_style.btn_color_normal.into();
+            }
+        }
+    }
+}
+
+fn backpack_items_button_system(
+    ui_style: Res<UiStyle>,
+    mut inventory: ResMut<Inventory>,
+    mut interaction_query: Query<
+        (&BackpackItemId, &Interaction, &mut BackgroundColor),
+        Changed<Interaction>,
+    >,
+    mut event_writer: EventWriter<InventoryUpdate>,
+) {
+    for (item_id, interaction, mut color) in interaction_query.iter_mut() {
+        match *interaction {
+            Interaction::Pressed => {
+                *color = ui_style.btn_color_pressed.into();
+                inventory.equip_item(item_id.0 as usize);
+                event_writer.send(InventoryUpdate);
+            }
+            Interaction::Hovered => {
+                *color = ui_style.btn_color_hover.into();
+            }
+            Interaction::None => {
+                *color = ui_style.btn_color_normal.into();
+            }
+        }
+    }
+}
+
+fn backpack_spells_button_system(
+    ui_style: Res<UiStyle>,
+    mut inventory: ResMut<Inventory>,
+    mut interaction_query: Query<
+        (&BackpackSpellId, &Interaction, &mut BackgroundColor),
+        Changed<Interaction>,
+    >,
+    mut event_writer: EventWriter<InventoryUpdate>,
+) {
+    for (spell_id, interaction, mut color) in interaction_query.iter_mut() {
+        match *interaction {
+            Interaction::Pressed => {
+                *color = ui_style.btn_color_pressed.into();
+                inventory.equip_spell(spell_id.0 as usize);
+                event_writer.send(InventoryUpdate);
             }
             Interaction::Hovered => {
                 *color = ui_style.btn_color_hover.into();

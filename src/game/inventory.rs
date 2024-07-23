@@ -11,7 +11,7 @@ impl Plugin for InventoryPlugin {
     }
 }
 
-#[derive(Resource, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Resource, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Inventory {
     pub active_items: Stack<ItemIdx, INVENTORY_ITEMS>,
     pub backpack_items: Stack<ItemIdx, INVENTORY_BACKPACK_ITEMS>,
@@ -28,14 +28,28 @@ impl Inventory {
             backpack_spells: Stack::new(),
         }
     }
+
+    pub fn equip_item(&mut self, id: usize) {
+        if let Some(item_idx) = self.backpack_items.inner[id] {
+            self.backpack_items.remove(id);
+            self.active_items.push(item_idx);
+        }
+    }
+
+    pub fn equip_spell(&mut self, id: usize) {
+        if let Some(spell_idx) = self.backpack_spells.inner[id] {
+            self.backpack_spells.remove(id);
+            self.active_spells.push(spell_idx);
+        }
+    }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Stack<T, const N: usize> {
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Stack<T: Copy, const N: usize> {
     inner: [Option<T>; N],
 }
 
-impl<T, const N: usize> Stack<T, N> {
+impl<T: Copy, const N: usize> Stack<T, N> {
     pub fn new() -> Self {
         let mut inner: [Option<T>; N] = unsafe { std::mem::MaybeUninit::zeroed().assume_init() };
         for i in inner.iter_mut() {
@@ -45,11 +59,13 @@ impl<T, const N: usize> Stack<T, N> {
     }
 
     pub fn push(&mut self, item: T) {
-        for i in 1..self.inner.len() {
-            self.inner.swap(i, i - 1);
-        }
+        self.inner.copy_within(0..N - 1, 1);
+        self.inner[0] = Some(item);
+    }
 
-        self.inner[self.inner.len() - 1] = Some(item);
+    pub fn remove(&mut self, position: usize) {
+        self.inner.copy_within(position + 1..N, position);
+        self.inner[self.inner.len() - 1] = None;
     }
 
     pub fn iter(&self) -> impl Iterator<Item = Option<&T>> {
@@ -57,19 +73,19 @@ impl<T, const N: usize> Stack<T, N> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Item {
     Scissors,
     Bucket,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Spell {
     Lightning,
     Heal,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ItemIdx(pub usize);
 
 #[derive(Debug)]
@@ -82,7 +98,7 @@ pub struct ItemInfo {
 #[derive(Resource, Debug)]
 pub struct Items(pub Vec<ItemInfo>);
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SpellIdx(pub usize);
 
 #[derive(Debug)]
