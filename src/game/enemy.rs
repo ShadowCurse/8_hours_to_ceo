@@ -120,7 +120,7 @@ pub fn spawn_enemy<'a>(
             ..default()
         },
         Enemy,
-        Health(10.0),
+        Health(30.0),
         Damage(1.0),
         AttackSpeed::new(1.0),
         Defense(0.0),

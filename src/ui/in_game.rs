@@ -2,7 +2,10 @@ use bevy::prelude::*;
 
 use crate::{
     game::{
-        inventory::Inventory, items::Items, spells::{CastSpell, Spells}, GameImage, GameState, InventoryUpdate
+        inventory::Inventory,
+        items::Items,
+        spells::{CastSpell, Spells},
+        GameImage, GameState, InventoryUpdate,
     },
     GlobalState,
 };
@@ -388,8 +391,10 @@ fn backpack_items_button_system(
 }
 
 fn active_spells_button_system(
+    spells: Res<Spells>,
     ui_style: Res<UiStyle>,
     inventory: Res<Inventory>,
+    game_state: Res<State<GameState>>,
     mut interaction_query: Query<
         (&ActiveSpellId, &Interaction, &mut BackgroundColor),
         Changed<Interaction>,
@@ -397,18 +402,30 @@ fn active_spells_button_system(
     mut event_writer: EventWriter<CastSpell>,
 ) {
     for (spell_id, interaction, mut color) in interaction_query.iter_mut() {
-        match *interaction {
-            Interaction::Pressed => {
-                *color = ui_style.btn_color_pressed.into();
-                if let Some(spell_idx) = inventory.get_spell_idx(spell_id.0 as usize) {
-                    event_writer.send(CastSpell(spell_idx));
+        let on_cooldown = || {
+            if let Some(spell_idx) = inventory.get_spell_idx(spell_id.0 as usize) {
+                let spell = &spells.0[spell_idx.0];
+                return !spell.cooldown.finished();
+            }
+            true
+        };
+
+        if on_cooldown() || game_state.get() != &GameState::Battle {
+            *color = ui_style.btn_color_disabled.into();
+        } else {
+            match *interaction {
+                Interaction::Pressed => {
+                    *color = ui_style.btn_color_pressed.into();
+                    if let Some(spell_idx) = inventory.get_spell_idx(spell_id.0 as usize) {
+                        event_writer.send(CastSpell(spell_idx));
+                    }
                 }
-            }
-            Interaction::Hovered => {
-                *color = ui_style.btn_color_hover.into();
-            }
-            Interaction::None => {
-                *color = ui_style.btn_color_normal.into();
+                Interaction::Hovered => {
+                    *color = ui_style.btn_color_hover.into();
+                }
+                Interaction::None => {
+                    *color = ui_style.btn_color_normal.into();
+                }
             }
         }
     }

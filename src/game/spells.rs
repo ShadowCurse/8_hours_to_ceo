@@ -8,6 +8,7 @@ impl Plugin for SpellsPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<CastSpell>()
             .add_systems(Startup, prepare_spells)
+            .add_systems(Update, cooldown_spells.run_if(state_exists::<GameState>))
             .add_systems(
                 Update,
                 (cast_spell, process_lightninig, process_heal).run_if(in_state(GameState::Battle)),
@@ -55,6 +56,7 @@ pub enum Spell {
 pub struct SpellInfo {
     pub name: &'static str,
     pub drop_rate: f32,
+    pub cooldown: Timer,
     pub spell: Spell,
 }
 
@@ -67,6 +69,7 @@ fn prepare_spells(mut commands: Commands) {
     spells.0.push(SpellInfo {
         name: "Lightning",
         drop_rate: 0.9,
+        cooldown: Timer::from_seconds(2.0, TimerMode::Once),
         spell: Spell::Lightning(Lightning {
             strikes: 2,
             delta_time: 0.1,
@@ -76,20 +79,31 @@ fn prepare_spells(mut commands: Commands) {
     spells.0.push(SpellInfo {
         name: "Heal",
         drop_rate: 0.9,
+        cooldown: Timer::from_seconds(5.0, TimerMode::Once),
         spell: Spell::Heal(Heal { heal: 20.0 }),
     });
 
     commands.insert_resource(spells);
 }
 
-fn cast_spell(
-    spells: Res<Spells>,
+fn cooldown_spells(time: Res<Time>, mut spells: ResMut<Spells>) {
+    for spell_info in spells.0.iter_mut() {
+        spell_info.cooldown.tick(time.delta());
+    }
+}
 
+fn cast_spell(
     mut commands: Commands,
+    mut spells: ResMut<Spells>,
     mut event_reader: EventReader<CastSpell>,
 ) {
     for e in event_reader.read() {
-        let spell_info = &spells.0[e.0 .0];
+        let spell_info = &mut spells.0[e.0 .0];
+        if !spell_info.cooldown.finished() {
+            continue;
+        } else {
+            spell_info.cooldown.reset();
+        }
         match spell_info.spell {
             Spell::Lightning(lightning) => {
                 commands.spawn(LightningSpell {
