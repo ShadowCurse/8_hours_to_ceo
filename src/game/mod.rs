@@ -33,7 +33,7 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((ChestsPlugin, SectorsPlugin, EnemyPlugin, InventoryPlugin))
-            .add_event::<BattleEnd>()
+            .add_event::<InventoryUpdate>()
             .add_sub_state::<GameState>()
             .add_systems(Startup, setup_game)
             .add_systems(OnEnter(GameState::Preparing), spawn_base_game)
@@ -76,7 +76,7 @@ pub enum GameState {
 }
 
 #[derive(Event, Debug, Clone, PartialEq, Eq, Hash)]
-pub struct BattleEnd;
+pub struct InventoryUpdate;
 
 #[derive(Resource, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GameImage {
@@ -342,7 +342,7 @@ fn battle_end_check(
     enemy: Query<(Entity, &Health, &SectorType), (With<BattleEnemy>, Without<Player>)>,
     mut commands: Commands,
     mut inventory: ResMut<Inventory>,
-    mut event_writer: EventWriter<BattleEnd>,
+    mut event_writer: EventWriter<InventoryUpdate>,
     mut game_state: ResMut<NextState<GameState>>,
     mut player: Query<(&Health, &mut AttackSpeed), (With<Player>, Without<BattleEnemy>)>,
 ) {
@@ -377,7 +377,7 @@ fn battle_end_check(
             inventory.backpack_spells.push(SpellIdx(random_spell_idx));
         }
 
-        event_writer.send(BattleEnd);
+        event_writer.send(InventoryUpdate);
         game_state.set(GameState::Running);
     }
 
@@ -422,7 +422,7 @@ fn pickup_end(
     chest: Query<(Entity, &SectorType), (With<InteractedChest>, Without<Player>)>,
     mut commands: Commands,
     mut inventory: ResMut<Inventory>,
-    mut event_writer: EventWriter<BattleEnd>,
+    mut event_writer: EventWriter<InventoryUpdate>,
     mut game_state: ResMut<NextState<GameState>>,
 ) {
     let Ok((chest_entity, chest_sector_type)) = chest.get_single() else {
@@ -450,6 +450,6 @@ fn pickup_end(
         inventory.backpack_spells.push(SpellIdx(random_spell_idx));
     }
 
-    event_writer.send(BattleEnd);
+    event_writer.send(InventoryUpdate);
     game_state.set(GameState::Running);
 }

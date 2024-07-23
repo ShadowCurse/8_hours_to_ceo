@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{
     game::{
         inventory::{Inventory, Items, Spells},
-        BattleEnd, GameImage, GameState,
+        GameImage, GameState, InventoryUpdate,
     },
     GlobalState,
 };
@@ -409,7 +409,7 @@ fn update_inventory(
             Without<ActiveSpellId>,
         ),
     >,
-    mut event_reader: EventReader<BattleEnd>,
+    mut event_reader: EventReader<InventoryUpdate>,
 ) {
     for _ in event_reader.read() {
         for (i, item) in inventory.active_items.iter().enumerate() {
