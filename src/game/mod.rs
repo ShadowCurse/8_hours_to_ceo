@@ -24,9 +24,9 @@ pub mod inventory;
 pub mod items;
 pub mod spells;
 
-use chest::{Chest, ChestsDropInfo, ChestsPlugin, InteractedChest};
-use circle_sectors::{position_to_sector_id, SectorId, SectorType, SectorsPlugin};
-use enemy::{BattleEnemy, EnemiesDropInfo, Enemy, EnemyPlugin};
+use chest::{Chest, ChestIdx, Chests, ChestsPlugin, InteractedChest};
+use circle_sectors::{position_to_sector_id, SectorId, SectorIdx, SectorsPlugin};
+use enemy::{BattleEnemy, Enemies, Enemy, EnemyIdx, EnemyPlugin};
 use inventory::{Inventory, InventoryPlugin};
 use spells::{SpellIdx, Spells, SpellsPlugin};
 
@@ -385,8 +385,8 @@ fn battle_auto_attack(
 fn battle_end_check(
     items: Res<Items>,
     spells: Res<Spells>,
-    enemies_drop_info: Res<EnemiesDropInfo>,
-    enemy: Query<(Entity, &Health, &SectorType), (With<BattleEnemy>, Without<Player>)>,
+    enemies: Res<Enemies>,
+    enemy: Query<(Entity, &Health, &EnemyIdx), (With<BattleEnemy>, Without<Player>)>,
     mut commands: Commands,
     mut inventory: ResMut<Inventory>,
     mut event_writer: EventWriter<InventoryUpdate>,
@@ -397,7 +397,7 @@ fn battle_end_check(
         return;
     };
 
-    let Ok((enemy_entity, enemy_health, enemy_sector_type)) = enemy.get_single() else {
+    let Ok((enemy_entity, enemy_health, enemy_idx)) = enemy.get_single() else {
         return;
     };
 
@@ -408,17 +408,17 @@ fn battle_end_check(
             .unwrap()
             .despawn_recursive();
 
-        let drop_info = enemies_drop_info.get(*enemy_sector_type);
+        let enemy_info = &enemies.0[enemy_idx.0];
 
         let mut thread_rng = rand::thread_rng();
 
-        let random_item_idx = thread_rng.gen_range(0..drop_info.items.len());
+        let random_item_idx = thread_rng.gen_range(0..enemy_info.items.len());
         let item = &items.0[random_item_idx];
         if thread_rng.gen_bool(item.drop_rate as f64) {
             inventory.backpack_items.push(ItemIdx(random_item_idx));
         }
 
-        let random_spell_idx = thread_rng.gen_range(0..drop_info.spells.len());
+        let random_spell_idx = thread_rng.gen_range(0..enemy_info.spells.len());
         let spell = &spells.0[random_spell_idx];
         if thread_rng.gen_bool(spell.drop_rate as f64) {
             inventory.backpack_spells.push(SpellIdx(random_spell_idx));
@@ -477,15 +477,15 @@ fn initiate_pickup(
 
 fn pickup_end(
     items: Res<Items>,
+    chests: Res<Chests>,
     spells: Res<Spells>,
-    chests_drop_info: Res<ChestsDropInfo>,
-    chest: Query<(Entity, &SectorType), (With<InteractedChest>, Without<Player>)>,
+    chest: Query<(Entity, &ChestIdx), (With<InteractedChest>, Without<Player>)>,
     mut commands: Commands,
     mut inventory: ResMut<Inventory>,
     mut event_writer: EventWriter<InventoryUpdate>,
     mut game_state: ResMut<NextState<GameState>>,
 ) {
-    let Ok((chest_entity, chest_sector_type)) = chest.get_single() else {
+    let Ok((chest_entity, chest_idx)) = chest.get_single() else {
         return;
     };
 
@@ -494,17 +494,17 @@ fn pickup_end(
         .unwrap()
         .despawn_recursive();
 
-    let drop_info = chests_drop_info.get(*chest_sector_type);
+    let chest_info = &chests.0[chest_idx.0];
 
     let mut thread_rng = rand::thread_rng();
 
-    let random_item_idx = thread_rng.gen_range(0..drop_info.items.len());
+    let random_item_idx = thread_rng.gen_range(0..chest_info.items.len());
     let item = &items.0[random_item_idx];
     if thread_rng.gen_bool(item.drop_rate as f64) {
         inventory.backpack_items.push(ItemIdx(random_item_idx));
     }
 
-    let random_spell_idx = thread_rng.gen_range(0..drop_info.spells.len());
+    let random_spell_idx = thread_rng.gen_range(0..chest_info.spells.len());
     let spell = &spells.0[random_spell_idx];
     if thread_rng.gen_bool(spell.drop_rate as f64) {
         inventory.backpack_spells.push(SpellIdx(random_spell_idx));

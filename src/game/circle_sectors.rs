@@ -9,8 +9,8 @@ use std::f32::consts::*;
 use crate::GlobalState;
 
 use super::{
-    chest::{spawn_chest, ChestResources},
-    enemy::{spawn_enemy, EnemyResources},
+    chest::{spawn_chest, ChestIdx, ChestResources, Chests},
+    enemy::{spawn_enemy, Enemies, EnemyIdx, EnemyResources},
     GameRenderLayer, GameState, Player,
 };
 
@@ -20,31 +20,6 @@ const SECTOR_ANGLE: f32 = PI * 2.0 / SECTORS_NUM as f32;
 const SECTOR_ANGLE_WITH_GAP: f32 = SECTOR_ANGLE - SECTOR_GAP * 2.0;
 pub const SECTOR_THINGS: usize = 4;
 const SECTOR_THING_GAP: f32 = SECTOR_ANGLE / 8.0;
-
-const SECTORS_SPAWN_INFO: SectorsSpawnInfo = SectorsSpawnInfo {
-    infos: [
-        // Default
-        SectorSpawnInfo {
-            enemy_spawn_prob: 0.3,
-            chest_spawn_prob: 0.3,
-        },
-        // Green
-        SectorSpawnInfo {
-            enemy_spawn_prob: 0.3,
-            chest_spawn_prob: 0.3,
-        },
-        // Red
-        SectorSpawnInfo {
-            enemy_spawn_prob: 0.3,
-            chest_spawn_prob: 0.3,
-        },
-        // Orange
-        SectorSpawnInfo {
-            enemy_spawn_prob: 0.3,
-            chest_spawn_prob: 0.3,
-        },
-    ],
-};
 
 pub struct SectorsPlugin;
 
@@ -62,29 +37,24 @@ impl Plugin for SectorsPlugin {
 #[derive(Resource, Debug, Clone, PartialEq, Eq)]
 pub struct SectorResources {
     material_default: Handle<ColorMaterial>,
-    material_green: Handle<ColorMaterial>,
-    material_red: Handle<ColorMaterial>,
-    material_orange: Handle<ColorMaterial>,
     mesh_default: Handle<Mesh>,
     circle_mesh_default: Handle<Mesh>,
 }
 
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-#[repr(u8)]
-pub enum SectorType {
-    #[default]
-    Default,
-    Green,
-    Red,
-    Orange,
+pub struct SectorIdx(pub usize);
+
+#[derive(Debug)]
+pub struct SectorInfo {
+    pub name: &'static str,
+    pub material: Handle<ColorMaterial>,
+    pub drop_rate: f32,
+    pub enemies: Vec<usize>,
+    pub chests: Vec<usize>,
 }
 
-impl SectorType {
-    fn random() -> Self {
-        let idx: u8 = rand::thread_rng().gen_range(0..4);
-        unsafe { std::mem::transmute(idx) }
-    }
-}
+#[derive(Resource, Debug)]
+pub struct Sectors(pub Vec<SectorInfo>);
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SectorId(pub u8);
@@ -130,22 +100,6 @@ impl Component for SectorSlotEntity {
     }
 }
 
-pub struct SectorSpawnInfo {
-    enemy_spawn_prob: f64,
-    chest_spawn_prob: f64,
-}
-
-pub struct SectorsSpawnInfo {
-    infos: [SectorSpawnInfo; SECTOR_THINGS],
-}
-
-impl SectorsSpawnInfo {
-    pub fn get(&self, sector_type: SectorType) -> &SectorSpawnInfo {
-        let idx = sector_type as usize;
-        &self.infos[idx]
-    }
-}
-
 pub fn sector_id_to_start_angle(id: u8) -> f32 {
     id as f32 * SECTOR_ANGLE - SECTOR_ANGLE / 2.0
 }
@@ -182,18 +136,47 @@ fn prepare_sector_resources(
     let circle_mesh_default = meshes.add(Circle { radius: 180.0 });
 
     commands.insert_resource(SectorResources {
-        material_default,
-        material_green,
-        material_red,
-        material_orange,
+        material_default: material_default.clone(),
         mesh_default,
         circle_mesh_default,
     });
+
+    let mut sectors = Sectors(vec![]);
+    sectors.0.push(SectorInfo {
+        name: "Default",
+        material: material_default,
+        drop_rate: 0.9,
+        enemies: vec![0],
+        chests: vec![0],
+    });
+    sectors.0.push(SectorInfo {
+        name: "Green",
+        material: material_green,
+        drop_rate: 0.9,
+        enemies: vec![1],
+        chests: vec![1],
+    });
+    sectors.0.push(SectorInfo {
+        name: "Red",
+        material: material_red,
+        drop_rate: 0.9,
+        enemies: vec![2],
+        chests: vec![2],
+    });
+    sectors.0.push(SectorInfo {
+        name: "Orange",
+        material: material_orange,
+        drop_rate: 0.9,
+        enemies: vec![3],
+        chests: vec![3],
+    });
+    commands.insert_resource(sectors);
 }
 
 fn spawn_sectors(
-    game_render_layer: Res<GameRenderLayer>,
+    sectors: Res<Sectors>,
     sector_resources: Res<SectorResources>,
+    game_render_layer: Res<GameRenderLayer>,
     mut commands: Commands,
 ) {
     // Sectors
@@ -202,13 +185,9 @@ fn spawn_sectors(
         let rotation = PI / (SECTORS_NUM / 2) as f32 * i as f32;
         // Rotation happens ccw, so make it cw.
         transform.rotate_local_z(-rotation);
-        let st = SectorType::random();
-        let material = match st {
-            SectorType::Default => sector_resources.material_default.clone(),
-            SectorType::Green => sector_resources.material_green.clone(),
-            SectorType::Red => sector_resources.material_red.clone(),
-            SectorType::Orange => sector_resources.material_orange.clone(),
-        };
+
+        let sector_idx = SectorIdx(rand::thread_rng().gen_range(0..4));
+        let material = sectors.0[sector_idx.0].material.clone();
         commands.spawn((
             MaterialMesh2dBundle {
                 mesh: sector_resources.mesh_default.clone().into(),
@@ -217,7 +196,7 @@ fn spawn_sectors(
                 ..default()
             },
             SectorId(i),
-            st,
+            sector_idx,
             SectorTimer::default(),
             SectorSlots::default(),
             game_render_layer.layer.clone(),
@@ -254,15 +233,18 @@ fn sector_detect_player(player: Query<&Transform, With<Player>>, mut local: Loca
 
 fn sector_spawn_things(
     time: Res<Time>,
+    chests: Res<Chests>,
+    enemies: Res<Enemies>,
+    sectors: Res<Sectors>,
     enemy_resources: Res<EnemyResources>,
     chest_resources: Res<ChestResources>,
     game_render_layer: Res<GameRenderLayer>,
     player: Query<&Transform, With<Player>>,
     mut commands: Commands,
-    mut sectors: Query<(
+    mut s: Query<(
         Entity,
         &SectorId,
-        &SectorType,
+        &SectorIdx,
         &mut SectorTimer,
         &mut SectorSlots,
     )>,
@@ -273,7 +255,7 @@ fn sector_spawn_things(
     let player_sector_id = position_to_sector_id(player_transform.translation);
     let player_next_sector_id = next_section_id(player_sector_id);
 
-    for (entity, id, st, mut timer, mut slots) in sectors.iter_mut() {
+    for (entity, id, sector_idx, mut timer, mut slots) in s.iter_mut() {
         timer.0.tick(time.delta());
 
         // Don't spawn anything in the current and next zone
@@ -287,9 +269,14 @@ fn sector_spawn_things(
                     - SECTOR_THING_GAP / 2.0 * (SECTOR_THINGS - 1) as f32
                     + SECTOR_THING_GAP * empty_slot_position as f32;
 
-                let spawn_info = SECTORS_SPAWN_INFO.get(*st);
+                let sector_info = &sectors.0[sector_idx.0];
                 let mut thread_rng = rand::thread_rng();
-                if thread_rng.gen_bool(spawn_info.enemy_spawn_prob) {
+
+                let random_enemy = thread_rng.gen_range(0..sector_info.enemies.len());
+                let random_enemy_idx = sector_info.enemies[random_enemy];
+
+                let enemy_info = &enemies.0[random_enemy_idx];
+                if thread_rng.gen_bool(enemy_info.spawn_rate as f64) {
                     slots.0[empty_slot_position] = Some(SlotType::Enemy);
 
                     let mut t = Transform::from_xyz(0.0, 210.0, 0.0);
@@ -297,9 +284,10 @@ fn sector_spawn_things(
 
                     spawn_enemy(
                         &mut commands,
+                        enemies.as_ref(),
                         enemy_resources.as_ref(),
-                        *st,
-                        id.0,
+                        EnemyIdx(random_enemy_idx),
+                        *id,
                         t,
                         game_render_layer.layer.clone(),
                     )
@@ -307,24 +295,32 @@ fn sector_spawn_things(
                         entity,
                         slot_position: empty_slot_position,
                     });
-                } else if thread_rng.gen_bool(spawn_info.chest_spawn_prob) {
-                    slots.0[empty_slot_position] = Some(SlotType::Item);
+                } else {
+                    let random_chest = thread_rng.gen_range(0..sector_info.chests.len());
+                    let random_chest_idx = sector_info.chests[random_chest];
 
-                    let mut t = Transform::from_xyz(0.0, 205.0, 0.0);
-                    t.rotate_around(Vec3::ZERO, Quat::from_rotation_z(-angle));
+                    let chest_info = &chests.0[random_chest_idx];
 
-                    spawn_chest(
-                        &mut commands,
-                        chest_resources.as_ref(),
-                        *st,
-                        id.0,
-                        t,
-                        game_render_layer.layer.clone(),
-                    )
-                    .insert(SectorSlotEntity {
-                        entity,
-                        slot_position: empty_slot_position,
-                    });
+                    if thread_rng.gen_bool(chest_info.spawn_rate as f64) {
+                        slots.0[empty_slot_position] = Some(SlotType::Item);
+
+                        let mut t = Transform::from_xyz(0.0, 205.0, 0.0);
+                        t.rotate_around(Vec3::ZERO, Quat::from_rotation_z(-angle));
+
+                        spawn_chest(
+                            &mut commands,
+                            chests.as_ref(),
+                            chest_resources.as_ref(),
+                            ChestIdx(random_chest_idx),
+                            *id,
+                            t,
+                            game_render_layer.layer.clone(),
+                        )
+                        .insert(SectorSlotEntity {
+                            entity,
+                            slot_position: empty_slot_position,
+                        });
+                    }
                 }
             }
         }

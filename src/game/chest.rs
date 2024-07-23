@@ -5,7 +5,7 @@ use bevy::{
 
 use crate::GlobalState;
 
-use super::circle_sectors::{SectorId, SectorType, SECTOR_THINGS};
+use super::circle_sectors::SectorId;
 
 pub struct ChestsPlugin;
 
@@ -17,12 +17,11 @@ impl Plugin for ChestsPlugin {
 
 #[derive(Resource, Debug, Clone, PartialEq, Eq)]
 pub struct ChestResources {
-    pub material_default: Handle<ColorMaterial>,
-    pub material_green: Handle<ColorMaterial>,
-    pub material_red: Handle<ColorMaterial>,
-    pub material_orange: Handle<ColorMaterial>,
     pub mesh_default: Handle<Mesh>,
 }
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ChestIdx(pub usize);
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Chest;
@@ -30,23 +29,17 @@ pub struct Chest;
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct InteractedChest;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ChestDropInfo {
+#[derive(Debug, Clone, PartialEq)]
+pub struct ChestInfo {
+    pub material: Handle<ColorMaterial>,
+    pub spawn_rate: f32,
     pub items: Vec<usize>,
     pub spells: Vec<usize>,
+    pub sectors: Vec<usize>,
 }
 
-#[derive(Resource, Debug, Clone, PartialEq, Eq)]
-pub struct ChestsDropInfo {
-    infos: [ChestDropInfo; SECTOR_THINGS],
-}
-
-impl ChestsDropInfo {
-    pub fn get(&self, sector_type: SectorType) -> &ChestDropInfo {
-        let idx = sector_type as usize;
-        &self.infos[idx]
-    }
-}
+#[derive(Resource, Debug, Clone, PartialEq)]
+pub struct Chests(pub Vec<ChestInfo>);
 
 fn prepare_chest_resources(
     mut commands: Commands,
@@ -59,56 +52,54 @@ fn prepare_chest_resources(
     let material_orange = materials.add(Color::srgb(0.8, 0.4, 0.2));
     let mesh_default = meshes.add(Rectangle::new(20.0, 10.0));
 
-    commands.insert_resource(ChestResources {
-        material_default,
-        material_green,
-        material_red,
-        material_orange,
-        mesh_default,
+    commands.insert_resource(ChestResources { mesh_default });
+
+    let mut chests = Chests(vec![]);
+    // Default
+    chests.0.push(ChestInfo {
+        material: material_default,
+        spawn_rate: 0.3,
+        items: vec![0, 1, 2],
+        spells: vec![0, 1],
+        sectors: vec![],
     });
-
-    let chests_drop_info = ChestsDropInfo {
-        infos: [
-            // Default
-            ChestDropInfo {
-                items: vec![0, 1, 2],
-                spells: vec![0, 1],
-            },
-            // Green
-            ChestDropInfo {
-                items: vec![0, 1, 2],
-                spells: vec![0, 1],
-            },
-            // Red
-            ChestDropInfo {
-                items: vec![0, 1, 2],
-                spells: vec![0, 1],
-            },
-            // Orange
-            ChestDropInfo {
-                items: vec![0, 1, 2],
-                spells: vec![0, 1],
-            },
-        ],
-    };
-
-    commands.insert_resource(chests_drop_info);
+    // Green
+    chests.0.push(ChestInfo {
+        material: material_green,
+        spawn_rate: 0.3,
+        items: vec![0, 1, 2],
+        spells: vec![0, 1],
+        sectors: vec![],
+    });
+    // Red
+    chests.0.push(ChestInfo {
+        material: material_red,
+        spawn_rate: 0.3,
+        items: vec![0, 1, 2],
+        spells: vec![0, 1],
+        sectors: vec![],
+    });
+    // Orange
+    chests.0.push(ChestInfo {
+        material: material_orange,
+        spawn_rate: 0.3,
+        items: vec![0, 1, 2],
+        spells: vec![0, 1],
+        sectors: vec![],
+    });
+    commands.insert_resource(chests);
 }
 
 pub fn spawn_chest<'a>(
     commands: &'a mut Commands,
+    chests: &Chests,
     chest_resources: &ChestResources,
-    sector_type: SectorType,
-    sector_id: u8,
+    chest_idx: ChestIdx,
+    sector_id: SectorId,
     transform: Transform,
     render_layer: RenderLayers,
 ) -> EntityCommands<'a> {
-    let material = match sector_type {
-        SectorType::Default => chest_resources.material_default.clone(),
-        SectorType::Green => chest_resources.material_green.clone(),
-        SectorType::Red => chest_resources.material_red.clone(),
-        SectorType::Orange => chest_resources.material_orange.clone(),
-    };
+    let material = chests.0[chest_idx.0].material.clone();
     commands.spawn((
         MaterialMesh2dBundle {
             mesh: chest_resources.mesh_default.clone().into(),
@@ -117,8 +108,8 @@ pub fn spawn_chest<'a>(
             ..default()
         },
         Chest,
-        SectorId(sector_id),
-        sector_type,
+        sector_id,
+        chest_idx,
         render_layer,
         StateScoped(GlobalState::InGame),
     ))
