@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use super::spells::SpellIdx;
+use super::{items::ItemIdx, spells::SpellIdx};
 
 pub struct InventoryPlugin;
 
@@ -9,7 +9,7 @@ const INVENTORY_BACKPACK_ITEMS: usize = 8;
 
 impl Plugin for InventoryPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, (prepare_inventory, prepare_items));
+        app.add_systems(Startup, prepare_inventory);
     }
 }
 
@@ -79,74 +79,6 @@ impl<T: Copy, const N: usize> Stack<T, N> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum Item {
-    Scissors,
-    Bucket,
-    Plant,
-}
-
-impl Item {
-    pub fn add_damage(&self) -> f32 {
-        match self {
-            Self::Scissors => 10.0,
-            Self::Bucket => 0.0,
-            Self::Plant => 0.0,
-        }
-    }
-
-    pub fn add_defense(&self) -> f32 {
-        match self {
-            Self::Scissors => 0.0,
-            Self::Bucket => 0.1,
-            Self::Plant => 0.0,
-        }
-    }
-
-    pub fn heal(&self) -> f32 {
-        match self {
-            Self::Scissors => 0.0,
-            Self::Bucket => 0.0,
-            Self::Plant => 5.0,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ItemIdx(pub usize);
-
-#[derive(Debug)]
-pub struct ItemInfo {
-    pub name: &'static str,
-    pub drop_rate: f32,
-    pub item: Item,
-}
-
-#[derive(Resource, Debug)]
-pub struct Items(pub Vec<ItemInfo>);
-
 fn prepare_inventory(mut commands: Commands) {
     commands.insert_resource(Inventory::new());
-}
-
-fn prepare_items(mut commands: Commands) {
-    let mut items = Items(vec![]);
-
-    items.0.push(ItemInfo {
-        name: "Scissors",
-        drop_rate: 0.9,
-        item: Item::Scissors,
-    });
-    items.0.push(ItemInfo {
-        name: "Bucket",
-        drop_rate: 0.9,
-        item: Item::Bucket,
-    });
-    items.0.push(ItemInfo {
-        name: "Plant",
-        drop_rate: 0.9,
-        item: Item::Plant,
-    });
-
-    commands.insert_resource(items);
 }

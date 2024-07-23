@@ -2,9 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     game::{
-        inventory::{Inventory, Items},
-        spells::{CastSpell, Spells},
-        GameImage, GameState, InventoryUpdate,
+        inventory::Inventory, items::Items, spells::{CastSpell, Spells}, GameImage, GameState, InventoryUpdate
     },
     GlobalState,
 };

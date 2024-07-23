@@ -9,6 +9,7 @@ use bevy::{
     sprite::{MaterialMesh2dBundle, Wireframe2d},
     window::{PrimaryWindow, WindowResized},
 };
+use items::{ItemIdx, Items, ItemsPlugin};
 use rand::Rng;
 
 use crate::{
@@ -20,12 +21,13 @@ pub mod chest;
 pub mod circle_sectors;
 pub mod enemy;
 pub mod inventory;
+pub mod items;
 pub mod spells;
 
 use chest::{Chest, ChestsDropInfo, ChestsPlugin, InteractedChest};
 use circle_sectors::{position_to_sector_id, SectorId, SectorType, SectorsPlugin};
 use enemy::{BattleEnemy, EnemiesDropInfo, Enemy, EnemyPlugin};
-use inventory::{Inventory, InventoryPlugin, ItemIdx, Items};
+use inventory::{Inventory, InventoryPlugin};
 use spells::{SpellIdx, Spells, SpellsPlugin};
 
 const INTERACTION_DISTANCE: f32 = 30.0;
@@ -39,6 +41,7 @@ impl Plugin for GamePlugin {
             SectorsPlugin,
             EnemyPlugin,
             InventoryPlugin,
+            ItemsPlugin,
             SpellsPlugin,
         ))
         .add_event::<InventoryUpdate>()
