@@ -74,22 +74,22 @@ fn prepare_enemy_resources(
         infos: [
             // Default
             EnemyDropInfo {
-                items: vec![0, 1],
+                items: vec![0, 1, 2],
                 spells: vec![0, 1],
             },
             // Green
             EnemyDropInfo {
-                items: vec![0, 1],
+                items: vec![0, 1, 2],
                 spells: vec![0, 1],
             },
             // Red
             EnemyDropInfo {
-                items: vec![0, 1],
+                items: vec![0, 1, 2],
                 spells: vec![0, 1],
             },
             // Orange
             EnemyDropInfo {
-                items: vec![0, 1],
+                items: vec![0, 1, 2],
                 spells: vec![0, 1],
             },
         ],

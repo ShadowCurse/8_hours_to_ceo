@@ -77,6 +77,7 @@ impl<T: Copy, const N: usize> Stack<T, N> {
 pub enum Item {
     Scissors,
     Bucket,
+    Plant,
 }
 
 impl Item {
@@ -84,6 +85,7 @@ impl Item {
         match self {
             Self::Scissors => 10.0,
             Self::Bucket => 0.0,
+            Self::Plant => 0.0,
         }
     }
 
@@ -91,6 +93,15 @@ impl Item {
         match self {
             Self::Scissors => 0.0,
             Self::Bucket => 0.1,
+            Self::Plant => 0.0,
+        }
+    }
+
+    pub fn heal(&self) -> f32 {
+        match self {
+            Self::Scissors => 0.0,
+            Self::Bucket => 0.0,
+            Self::Plant => 5.0,
         }
     }
 }
@@ -143,6 +154,11 @@ fn prepare_items(mut commands: Commands) {
         name: "Bucket",
         drop_rate: 0.9,
         item: Item::Bucket,
+    });
+    items.0.push(ItemInfo {
+        name: "Plant",
+        drop_rate: 0.9,
+        item: Item::Plant,
     });
 
     commands.insert_resource(items);

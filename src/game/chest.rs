@@ -71,22 +71,22 @@ fn prepare_chest_resources(
         infos: [
             // Default
             ChestDropInfo {
-                items: vec![0, 1],
+                items: vec![0, 1, 2],
                 spells: vec![0, 1],
             },
             // Green
             ChestDropInfo {
-                items: vec![0, 1],
+                items: vec![0, 1, 2],
                 spells: vec![0, 1],
             },
             // Red
             ChestDropInfo {
-                items: vec![0, 1],
+                items: vec![0, 1, 2],
                 spells: vec![0, 1],
             },
             // Orange
             ChestDropInfo {
-                items: vec![0, 1],
+                items: vec![0, 1, 2],
                 spells: vec![0, 1],
             },
         ],

@@ -380,9 +380,9 @@ fn battle_end_check(
     mut inventory: ResMut<Inventory>,
     mut event_writer: EventWriter<InventoryUpdate>,
     mut game_state: ResMut<NextState<GameState>>,
-    mut player: Query<(&Health, &mut AttackSpeed), (With<Player>, Without<BattleEnemy>)>,
+    mut player: Query<(&mut Health, &mut AttackSpeed), (With<Player>, Without<BattleEnemy>)>,
 ) {
-    let Ok((player_health, mut player_attack_speed)) = player.get_single_mut() else {
+    let Ok((mut player_health, mut player_attack_speed)) = player.get_single_mut() else {
         return;
     };
 
@@ -412,6 +412,19 @@ fn battle_end_check(
         if thread_rng.gen_bool(spell.drop_rate as f64) {
             inventory.backpack_spells.push(SpellIdx(random_spell_idx));
         }
+
+        let heal = inventory
+            .active_items
+            .iter()
+            .map(|item_idx| {
+                if let Some(i) = item_idx {
+                    items.0[i.0].item.heal()
+                } else {
+                    0.0
+                }
+            })
+            .sum::<f32>();
+        player_health.0 += heal;
 
         event_writer.send(InventoryUpdate);
         game_state.set(GameState::Running);
