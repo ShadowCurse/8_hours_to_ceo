@@ -8,9 +8,9 @@ use std::f32::consts::*;
 use crate::GlobalState;
 
 use super::{
-    enemy::{Enemy, EnemyResources},
+    enemy::{spawn_enemy, EnemyResources},
     items::{Item, ItemsResources},
-    AttackSpeed, Damage, GameRenderLayer, GameState, Health, Player,
+    GameRenderLayer, GameState, Player,
 };
 
 const SECTORS_NUM: u8 = 8;
@@ -260,36 +260,22 @@ fn sector_spawn_things(
                     + SECTOR_THING_GAP * empty_slot_position as f32;
 
                 let spawn_info = SECTORS_SPAWN_INFO.get(*st);
-                let spawn_enemy = rand::thread_rng().gen_bool(spawn_info.enemy_spawn_prob);
-                let spawn_item = rand::thread_rng().gen_bool(spawn_info.item_spawn_prob);
-                if spawn_enemy {
+                let mut thread_rng = rand::thread_rng();
+                if thread_rng.gen_bool(spawn_info.enemy_spawn_prob) {
                     slots.0[empty_slot_position] = Some(SlotType::Enemy);
 
                     let mut t = Transform::from_xyz(0.0, 210.0, 0.0);
                     t.rotate_around(Vec3::ZERO, Quat::from_rotation_z(-angle));
 
-                    let material = match st {
-                        SectorType::Default => enemy_resources.material_default.clone(),
-                        SectorType::Green => enemy_resources.material_green.clone(),
-                        SectorType::Red => enemy_resources.material_red.clone(),
-                        SectorType::Orange => enemy_resources.material_orange.clone(),
-                    };
-                    commands.spawn((
-                        MaterialMesh2dBundle {
-                            mesh: enemy_resources.mesh_default.clone().into(),
-                            material,
-                            transform: t,
-                            ..default()
-                        },
-                        Enemy,
-                        Health(10.0),
-                        Damage(1.0),
-                        AttackSpeed::new(1.0),
-                        SectorId(id.0),
+                    spawn_enemy(
+                        &mut commands,
+                        enemy_resources.as_ref(),
+                        *st,
+                        id.0,
+                        t,
                         game_render_layer.layer.clone(),
-                        StateScoped(GlobalState::InGame),
-                    ));
-                } else if spawn_item {
+                    );
+                } else if thread_rng.gen_bool(spawn_info.item_spawn_prob) {
                     slots.0[empty_slot_position] = Some(SlotType::Item);
 
                     let mut t = Transform::from_xyz(0.0, 205.0, 0.0);

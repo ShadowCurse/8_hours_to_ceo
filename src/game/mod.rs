@@ -337,7 +337,7 @@ fn battle_end_check(
         return;
     };
 
-    if enemy_health.0 == 0.0 {
+    if enemy_health.0 <= 0.0 {
         player_attack_speed.0.reset();
         commands
             .get_entity(enemy_entity)

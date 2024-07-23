@@ -1,4 +1,11 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, render::view::RenderLayers, sprite::MaterialMesh2dBundle};
+
+use crate::GlobalState;
+
+use super::{
+    circle_sectors::{SectorId, SectorType},
+    AttackSpeed, Damage, Health,
+};
 
 pub struct EnemyPlugin;
 
@@ -41,4 +48,35 @@ fn prepare_enemy_resources(
         material_orange,
         mesh_default,
     });
+}
+
+pub fn spawn_enemy(
+    commands: &mut Commands,
+    enemy_resources: &EnemyResources,
+    sector_type: SectorType,
+    sector_id: u8,
+    transform: Transform,
+    render_layer: RenderLayers,
+) {
+    let material = match sector_type {
+        SectorType::Default => enemy_resources.material_default.clone(),
+        SectorType::Green => enemy_resources.material_green.clone(),
+        SectorType::Red => enemy_resources.material_red.clone(),
+        SectorType::Orange => enemy_resources.material_orange.clone(),
+    };
+    commands.spawn((
+        MaterialMesh2dBundle {
+            mesh: enemy_resources.mesh_default.clone().into(),
+            material,
+            transform,
+            ..default()
+        },
+        Enemy,
+        Health(10.0),
+        Damage(1.0),
+        AttackSpeed::new(1.0),
+        SectorId(sector_id),
+        render_layer,
+        StateScoped(GlobalState::InGame),
+    ));
 }
