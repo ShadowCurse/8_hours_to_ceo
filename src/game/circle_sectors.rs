@@ -73,7 +73,7 @@ impl IndexMut<SectorIdx> for Sectors {
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct SectorId(pub u8);
+pub struct SectorPosition(pub u8);
 
 #[derive(Component, Debug, Clone, PartialEq, Eq)]
 pub struct SectorTimer(Timer);
@@ -120,7 +120,7 @@ pub fn sector_id_to_start_angle(id: u8) -> f32 {
     id as f32 * SECTOR_ANGLE - SECTOR_ANGLE / 2.0
 }
 
-pub fn position_to_sector_id(position: Vec3) -> u8 {
+pub fn position_to_sector_position(position: Vec3) -> u8 {
     let angle = position.angle_between(Vec3::Y);
     let mut sector_id = ((angle / (SECTOR_ANGLE / 2.0)).floor() as u8).div_ceil(2);
     if position.x < 0.0 && sector_id != 0 {
@@ -129,7 +129,7 @@ pub fn position_to_sector_id(position: Vec3) -> u8 {
     sector_id
 }
 
-pub fn next_section_id(section_id: u8) -> u8 {
+pub fn next_section_position(section_id: u8) -> u8 {
     if section_id == SECTORS_NUM - 1 {
         0
     } else {
@@ -211,7 +211,7 @@ fn spawn_sectors(
                 transform,
                 ..default()
             },
-            SectorId(i),
+            SectorPosition(i),
             sector_idx,
             SectorTimer::default(),
             SectorSlots::default(),
@@ -239,7 +239,7 @@ fn sector_detect_player(player: Query<&Transform, With<Player>>, mut local: Loca
         return;
     };
 
-    let sector_id = position_to_sector_id(player_transform.translation);
+    let sector_id = position_to_sector_position(player_transform.translation);
 
     if sector_id != *local {
         println!("player is in the sector: {sector_id}");
@@ -259,7 +259,7 @@ fn sector_spawn_things(
     mut commands: Commands,
     mut s: Query<(
         Entity,
-        &SectorId,
+        &SectorPosition,
         &SectorIdx,
         &mut SectorTimer,
         &mut SectorSlots,
@@ -268,8 +268,8 @@ fn sector_spawn_things(
     let Ok(player_transform) = player.get_single() else {
         return;
     };
-    let player_sector_id = position_to_sector_id(player_transform.translation);
-    let player_next_sector_id = next_section_id(player_sector_id);
+    let player_sector_id = position_to_sector_position(player_transform.translation);
+    let player_next_sector_id = next_section_position(player_sector_id);
 
     for (entity, id, sector_idx, mut timer, mut slots) in s.iter_mut() {
         timer.0.tick(time.delta());

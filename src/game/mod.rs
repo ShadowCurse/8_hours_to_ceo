@@ -25,7 +25,7 @@ pub mod items;
 pub mod spells;
 
 use chest::{Chest, ChestIdx, Chests, ChestsPlugin, InteractedChest};
-use circle_sectors::{position_to_sector_id, SectorId, SectorsPlugin};
+use circle_sectors::{position_to_sector_position, SectorPosition, SectorsPlugin};
 use enemy::{BattleEnemy, Enemies, Enemy, EnemyIdx, EnemyPlugin};
 use inventory::{Inventory, InventoryPlugin};
 use spells::{SpellIdx, Spells, SpellsPlugin};
@@ -290,14 +290,14 @@ fn move_camera_default(mut camera: Query<&mut Transform, With<GameCamera>>) {
 
 fn initiate_battle(
     player: Query<&Transform, (With<Player>, Without<Enemy>)>,
-    enemies: Query<(Entity, &Transform, &SectorId), (With<Enemy>, Without<Player>)>,
+    enemies: Query<(Entity, &Transform, &SectorPosition), (With<Enemy>, Without<Player>)>,
     mut commands: Commands,
     mut game_sate: ResMut<NextState<GameState>>,
 ) {
     let Ok(player_transform) = player.get_single() else {
         return;
     };
-    let player_sector_id = position_to_sector_id(player_transform.translation);
+    let player_sector_id = position_to_sector_position(player_transform.translation);
 
     for (enemy_entity, enemy_transform, sector_id) in enemies.iter() {
         if sector_id.0 != player_sector_id {
@@ -448,14 +448,14 @@ fn battle_end_check(
 
 fn initiate_pickup(
     player: Query<&Transform, (With<Player>, Without<Chest>)>,
-    chests: Query<(Entity, &Transform, &SectorId), (With<Chest>, Without<Player>)>,
+    chests: Query<(Entity, &Transform, &SectorPosition), (With<Chest>, Without<Player>)>,
     mut commands: Commands,
     mut game_sate: ResMut<NextState<GameState>>,
 ) {
     let Ok(player_transform) = player.get_single() else {
         return;
     };
-    let player_sector_id = position_to_sector_id(player_transform.translation);
+    let player_sector_id = position_to_sector_position(player_transform.translation);
 
     for (chest_entity, chest_transform, sector_id) in chests.iter() {
         if sector_id.0 != player_sector_id {

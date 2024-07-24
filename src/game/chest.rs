@@ -7,7 +7,7 @@ use bevy::{
 
 use crate::GlobalState;
 
-use super::circle_sectors::SectorId;
+use super::circle_sectors::SectorPosition;
 
 pub struct ChestsPlugin;
 
@@ -110,7 +110,7 @@ pub fn spawn_chest<'a>(
     chests: &Chests,
     chest_resources: &ChestResources,
     chest_idx: ChestIdx,
-    sector_id: SectorId,
+    sector_id: SectorPosition,
     transform: Transform,
     render_layer: RenderLayers,
 ) -> EntityCommands<'a> {

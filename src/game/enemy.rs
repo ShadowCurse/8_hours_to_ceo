@@ -7,7 +7,7 @@ use bevy::{
 
 use crate::GlobalState;
 
-use super::{circle_sectors::SectorId, AttackSpeed, Damage, Defense, Health};
+use super::{circle_sectors::SectorPosition, AttackSpeed, Damage, Defense, Health};
 
 pub struct EnemyPlugin;
 
@@ -107,7 +107,7 @@ pub fn spawn_enemy<'a>(
     enemies: &Enemies,
     enemy_resources: &EnemyResources,
     enemy_idx: EnemyIdx,
-    sector_id: SectorId,
+    sector_id: SectorPosition,
     transform: Transform,
     render_layer: RenderLayers,
 ) -> EntityCommands<'a> {
