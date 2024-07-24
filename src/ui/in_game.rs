@@ -648,6 +648,7 @@ fn backpack_sectors_button_system(
             Interaction::Pressed => {
                 *color = ui_style.btn_color_pressed.into();
                 selected_section_button.0 = Some(entity);
+                println!("aa");
             }
             Interaction::Hovered => {
                 *color = ui_style.btn_color_hover.into();
@@ -782,14 +783,14 @@ fn update_sectors(
                 continue;
             };
 
-            let Some(sector_idx) = inventory.backpack_sectors[button_sector_id.0 as usize] else {
-                continue;
-            };
+            if let Some(sector_idx) = inventory.backpack_sectors[button_sector_id.0 as usize] {
+                let sector_info = &sectors[sector_idx];
 
-            let sector_info = &sectors[sector_idx];
-
-            *button_visibility = Visibility::Visible;
-            text.sections[0].value = sector_info.name.into();
+                *button_visibility = Visibility::Visible;
+                text.sections[0].value = sector_info.name.into();
+            } else {
+                *button_visibility = Visibility::Hidden;
+            }
         }
     }
 }

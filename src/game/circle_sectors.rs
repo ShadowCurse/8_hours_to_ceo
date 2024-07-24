@@ -22,6 +22,9 @@ use super::{
     GameRenderLayer, GameState, Player,
 };
 
+pub const CIRCLE_RADIUS: f32 = 200.0;
+pub const CIRCLE_INNER_RADIUS: f32 = 180.0;
+
 const SECTORS_NUM: u8 = 8;
 const SECTOR_GAP: f32 = PI * 2.0 / 256.0;
 const SECTOR_ANGLE: f32 = PI * 2.0 / SECTORS_NUM as f32;
@@ -33,7 +36,8 @@ pub struct SectorsPlugin;
 
 impl Plugin for SectorsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, prepare_sector_resources)
+        app.add_event::<SectorPlaced>()
+            .add_systems(Startup, prepare_sector_resources)
             .add_systems(OnEnter(GameState::Preparing), spawn_sectors)
             .add_systems(
                 Update,
@@ -53,6 +57,9 @@ pub struct SectorResources {
     mesh_default: Handle<Mesh>,
     circle_mesh_default: Handle<Mesh>,
 }
+
+#[derive(Event, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct SectorPlaced;
 
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SectorIdx(pub usize);
@@ -157,9 +164,14 @@ fn prepare_sector_resources(
     let material_red = materials.add(Color::srgb(0.8, 0.2, 0.2));
     let material_orange = materials.add(Color::srgb(0.8, 0.4, 0.2));
     // CircularSector uses half_angle underneath
-    let mesh_default = meshes.add(CircularSector::new(200.0, SECTOR_ANGLE_WITH_GAP / 2.0));
+    let mesh_default = meshes.add(CircularSector::new(
+        CIRCLE_RADIUS,
+        SECTOR_ANGLE_WITH_GAP / 2.0,
+    ));
 
-    let circle_mesh_default = meshes.add(Circle { radius: 180.0 });
+    let circle_mesh_default = meshes.add(Circle {
+        radius: CIRCLE_INNER_RADIUS,
+    });
 
     commands.insert_resource(SectorResources {
         material_default: material_default.clone(),
@@ -263,7 +275,9 @@ fn sector_update_selected(
     cursor_sector: Res<CursorSector>,
     selected_section_button: Res<SelectedSectionButton>,
     buttons: Query<&BackpackSectorId>,
-    mut s: Query<(&SectorPosition, &mut Handle<ColorMaterial>)>,
+    mouse_input: Res<ButtonInput<MouseButton>>,
+    mut s: Query<(&SectorPosition, &mut SectorIdx, &mut Handle<ColorMaterial>)>,
+    mut event_writer: EventWriter<SectorPlaced>,
 ) {
     let Some(cursor_sector_position) = cursor_sector.0 else {
         return;
@@ -283,9 +297,13 @@ fn sector_update_selected(
 
     let to_be_placed_sector_info = &sectors[sector_idx];
 
-    for (sector_position, mut material) in s.iter_mut() {
+    for (sector_position, mut current_sector_idx, mut material) in s.iter_mut() {
         if *sector_position == cursor_sector_position {
             *material = to_be_placed_sector_info.material.clone();
+            if mouse_input.just_pressed(MouseButton::Left) {
+                *current_sector_idx = sector_idx;
+                event_writer.send(SectorPlaced);
+            }
             break;
         }
     }
@@ -295,16 +313,21 @@ fn sector_update_not_selected(
     sectors: Res<Sectors>,
     cursor_sector: Res<CursorSector>,
     mut s: Query<(&SectorPosition, &SectorIdx, &mut Handle<ColorMaterial>)>,
+    mut local: Local<Option<SectorPosition>>,
 ) {
-    let Some(cursor_sector_position) = cursor_sector.0 else {
+    if *local == cursor_sector.0 {
         return;
-    };
+    }
+    *local = cursor_sector.0;
 
     for (sector_position, sector_idx, mut material) in s.iter_mut() {
         let sector_info = &sectors[*sector_idx];
-        if *sector_position != cursor_sector_position {
-            *material = sector_info.material.clone();
+        if let Some(cs) = cursor_sector.0 {
+            if *sector_position == cs {
+                continue;
+            }
         }
+        *material = sector_info.material.clone();
     }
 }
 
@@ -336,9 +359,9 @@ fn sector_spawn_things(
         timer.0.tick(time.delta());
 
         // Don't spawn anything in the current and next zone
-        // if id.0 == player_sector_id || id.0 == player_next_sector_id {
-        //     continue;
-        // }
+        if id.0 == player_sector_id || id.0 == player_next_sector_id {
+            continue;
+        }
 
         if timer.0.finished() {
             if let Some(empty_slot_position) = slots.0.iter().position(|slot| slot.is_none()) {
@@ -356,7 +379,7 @@ fn sector_spawn_things(
                     if thread_rng.gen_bool(enemy_info.spawn_rate as f64) {
                         slots.0[empty_slot_position] = Some(SlotType::Enemy);
 
-                        let mut t = Transform::from_xyz(0.0, 210.0, 0.0);
+                        let mut t = Transform::from_xyz(0.0, CIRCLE_RADIUS + 10.0, 0.0);
                         t.rotate_around(Vec3::ZERO, Quat::from_rotation_z(-angle));
 
                         spawn_enemy(
@@ -381,7 +404,7 @@ fn sector_spawn_things(
                     if thread_rng.gen_bool(chest_info.spawn_rate as f64) {
                         slots.0[empty_slot_position] = Some(SlotType::Item);
 
-                        let mut t = Transform::from_xyz(0.0, 205.0, 0.0);
+                        let mut t = Transform::from_xyz(0.0, CIRCLE_RADIUS + 5.0, 0.0);
                         t.rotate_around(Vec3::ZERO, Quat::from_rotation_z(-angle));
 
                         spawn_chest(

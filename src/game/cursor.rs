@@ -3,7 +3,9 @@ use bevy::{prelude::*, window::PrimaryWindow};
 use crate::ui::in_game::{SelectedSectionButton, UI_RIGHT_SIZE, UI_TOP_SIZE};
 
 use super::{
-    circle_sectors::{position_to_sector_position, SectorPosition},
+    circle_sectors::{
+        position_to_sector_position, SectorPosition, CIRCLE_INNER_RADIUS, CIRCLE_RADIUS,
+    },
     GameCamera, GameState,
 };
 
@@ -50,6 +52,11 @@ fn update_cursor(
     // adjust to account for texture is moved to the side
     world_pos.x += window.width() * (UI_RIGHT_SIZE / 100.0) / 2.0;
     world_pos.y += window.height() * (UI_TOP_SIZE / 100.0) / 2.0;
+
+    if world_pos.length() < CIRCLE_INNER_RADIUS || CIRCLE_RADIUS < world_pos.length() {
+        cursor_sector.0 = None;
+        return;
+    }
 
     let sector_position = position_to_sector_position(world_pos.extend(0.0));
     cursor_sector.0 = Some(SectorPosition(sector_position));

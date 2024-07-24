@@ -2,7 +2,14 @@ use std::ops::Index;
 
 use bevy::prelude::*;
 
-use super::{circle_sectors::SectorIdx, items::ItemIdx, spells::SpellIdx};
+use crate::ui::in_game::{BackpackSectorId, SelectedSectionButton};
+
+use super::{
+    circle_sectors::{SectorIdx, SectorPlaced, SectorPosition},
+    items::ItemIdx,
+    spells::SpellIdx,
+    GameState,
+};
 
 pub struct InventoryPlugin;
 
@@ -13,7 +20,8 @@ const INVENTORY_BACKPACK_SECTORS: usize = 8;
 impl Plugin for InventoryPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<InventoryUpdate>()
-            .add_systems(Startup, prepare_inventory);
+            .add_systems(Startup, prepare_inventory)
+            .add_systems(Update, on_sector_placed.run_if(state_exists::<GameState>));
     }
 }
 
@@ -97,4 +105,27 @@ impl<T: Copy, const N: usize> Index<usize> for Stack<T, N> {
 
 fn prepare_inventory(mut commands: Commands) {
     commands.insert_resource(Inventory::new());
+}
+
+fn on_sector_placed(
+    section_buttons: Query<&BackpackSectorId, With<Button>>,
+    mut inventory: ResMut<Inventory>,
+    mut event_reader: EventReader<SectorPlaced>,
+    mut event_writer: EventWriter<InventoryUpdate>,
+    mut selected_section_button: ResMut<SelectedSectionButton>,
+) {
+    for _ in event_reader.read() {
+        let Some(button_entity) = selected_section_button.0 else {
+            return;
+        };
+
+        let Ok(sector_id) = section_buttons.get(button_entity) else {
+            return;
+        };
+
+        inventory.backpack_sectors.remove(sector_id.0 as usize);
+        *selected_section_button = SelectedSectionButton(None);
+
+        event_writer.send(InventoryUpdate);
+    }
 }
