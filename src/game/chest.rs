@@ -76,7 +76,7 @@ fn prepare_chest_resources(
         spawn_rate: 0.3,
         items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
         spells: vec![SpellIdx(0), SpellIdx(1)],
-        sectors: vec![],
+        sectors: vec![SectorIdx(0)],
     });
     // Green
     chests.0.push(ChestInfo {
@@ -84,7 +84,7 @@ fn prepare_chest_resources(
         spawn_rate: 0.3,
         items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
         spells: vec![SpellIdx(0), SpellIdx(1)],
-        sectors: vec![],
+        sectors: vec![SectorIdx(1)],
     });
     // Red
     chests.0.push(ChestInfo {
@@ -92,7 +92,7 @@ fn prepare_chest_resources(
         spawn_rate: 0.3,
         items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
         spells: vec![SpellIdx(0), SpellIdx(1)],
-        sectors: vec![],
+        sectors: vec![SectorIdx(2)],
     });
     // Orange
     chests.0.push(ChestInfo {
@@ -100,7 +100,7 @@ fn prepare_chest_resources(
         spawn_rate: 0.3,
         items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
         spells: vec![SpellIdx(0), SpellIdx(1)],
-        sectors: vec![],
+        sectors: vec![SectorIdx(3)],
     });
     commands.insert_resource(chests);
 }

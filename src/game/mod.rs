@@ -24,7 +24,7 @@ pub mod items;
 pub mod spells;
 
 use chest::{Chest, ChestIdx, Chests, ChestsPlugin, InteractedChest};
-use circle_sectors::{position_to_sector_position, SectorPosition, SectorsPlugin};
+use circle_sectors::{position_to_sector_position, SectorPosition, Sectors, SectorsPlugin};
 use enemy::{BattleEnemy, Enemies, Enemy, EnemyIdx, EnemyPlugin};
 use inventory::{Inventory, InventoryPlugin};
 use items::{Items, ItemsPlugin};
@@ -386,6 +386,7 @@ fn battle_end_check(
     items: Res<Items>,
     spells: Res<Spells>,
     enemies: Res<Enemies>,
+    sectors: Res<Sectors>,
     enemy: Query<(Entity, &Health, &EnemyIdx), (With<BattleEnemy>, Without<Player>)>,
     mut commands: Commands,
     mut inventory: ResMut<Inventory>,
@@ -412,16 +413,30 @@ fn battle_end_check(
 
         let mut thread_rng = rand::thread_rng();
 
-        let random_item_idx = enemy_info.items[thread_rng.gen_range(0..enemy_info.items.len())];
-        let item = &items[random_item_idx];
-        if thread_rng.gen_bool(item.drop_rate as f64) {
-            inventory.backpack_items.push(random_item_idx);
+        if !enemy_info.items.is_empty() {
+            let random_item_idx = enemy_info.items[thread_rng.gen_range(0..enemy_info.items.len())];
+            let item = &items[random_item_idx];
+            if thread_rng.gen_bool(item.drop_rate as f64) {
+                inventory.backpack_items.push(random_item_idx);
+            }
         }
 
-        let random_spell_idx = enemy_info.spells[thread_rng.gen_range(0..enemy_info.spells.len())];
-        let spell = &spells[random_spell_idx];
-        if thread_rng.gen_bool(spell.drop_rate as f64) {
-            inventory.backpack_spells.push(random_spell_idx);
+        if !enemy_info.spells.is_empty() {
+            let random_spell_idx =
+                enemy_info.spells[thread_rng.gen_range(0..enemy_info.spells.len())];
+            let spell = &spells[random_spell_idx];
+            if thread_rng.gen_bool(spell.drop_rate as f64) {
+                inventory.backpack_spells.push(random_spell_idx);
+            }
+        }
+
+        if !enemy_info.sectors.is_empty() {
+            let random_sector_idx =
+                enemy_info.sectors[thread_rng.gen_range(0..enemy_info.sectors.len())];
+            let sector = &sectors[random_sector_idx];
+            if thread_rng.gen_bool(sector.drop_rate as f64) {
+                println!("Sector {sector:?} dropped");
+            }
         }
 
         let heal = inventory
@@ -479,6 +494,7 @@ fn pickup_end(
     items: Res<Items>,
     chests: Res<Chests>,
     spells: Res<Spells>,
+    sectors: Res<Sectors>,
     chest: Query<(Entity, &ChestIdx), (With<InteractedChest>, Without<Player>)>,
     mut commands: Commands,
     mut inventory: ResMut<Inventory>,
@@ -498,16 +514,29 @@ fn pickup_end(
 
     let mut thread_rng = rand::thread_rng();
 
-    let random_item_idx = chest_info.items[thread_rng.gen_range(0..chest_info.items.len())];
-    let item = &items[random_item_idx];
-    if thread_rng.gen_bool(item.drop_rate as f64) {
-        inventory.backpack_items.push(random_item_idx);
+    if !chest_info.items.is_empty() {
+        let random_item_idx = chest_info.items[thread_rng.gen_range(0..chest_info.items.len())];
+        let item = &items[random_item_idx];
+        if thread_rng.gen_bool(item.drop_rate as f64) {
+            inventory.backpack_items.push(random_item_idx);
+        }
     }
 
-    let random_spell_idx = chest_info.spells[thread_rng.gen_range(0..chest_info.spells.len())];
-    let spell = &spells[random_spell_idx];
-    if thread_rng.gen_bool(spell.drop_rate as f64) {
-        inventory.backpack_spells.push(random_spell_idx);
+    if !chest_info.spells.is_empty() {
+        let random_spell_idx = chest_info.spells[thread_rng.gen_range(0..chest_info.spells.len())];
+        let spell = &spells[random_spell_idx];
+        if thread_rng.gen_bool(spell.drop_rate as f64) {
+            inventory.backpack_spells.push(random_spell_idx);
+        }
+    }
+
+    if !chest_info.sectors.is_empty() {
+        let random_sector_idx =
+            chest_info.sectors[thread_rng.gen_range(0..chest_info.sectors.len())];
+        let sector = &sectors[random_sector_idx];
+        if thread_rng.gen_bool(sector.drop_rate as f64) {
+            println!("Sector {sector:?} dropped");
+        }
     }
 
     event_writer.send(InventoryUpdate);
