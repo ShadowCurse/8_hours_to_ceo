@@ -9,11 +9,16 @@ use std::{
     ops::{Index, IndexMut},
 };
 
-use crate::GlobalState;
+use crate::{
+    ui::in_game::{BackpackSectorId, SelectedSectionButton},
+    GlobalState,
+};
 
 use super::{
     chest::{spawn_chest, ChestIdx, ChestResources, Chests},
+    cursor::CursorSector,
     enemy::{spawn_enemy, Enemies, EnemyIdx, EnemyResources},
+    inventory::Inventory,
     GameRenderLayer, GameState, Player,
 };
 
@@ -33,6 +38,11 @@ impl Plugin for SectorsPlugin {
             .add_systems(
                 Update,
                 (sector_detect_player, sector_spawn_things).run_if(in_state(GameState::Running)),
+            )
+            .add_systems(
+                Update,
+                (sector_update_selected, sector_update_not_selected)
+                    .run_if(state_exists::<GameState>),
             );
     }
 }
@@ -81,7 +91,7 @@ pub struct SectorTimer(Timer);
 impl Default for SectorTimer {
     fn default() -> Self {
         // 5..10 seconds
-        let duration = 1.0 + rand::random::<f32>() * 1.0;
+        let duration = 1.0; //1.0 + rand::random::<f32>() * 1.0;
         Self(Timer::from_seconds(duration, TimerMode::Repeating))
     }
 }
@@ -247,6 +257,57 @@ fn sector_detect_player(player: Query<&Transform, With<Player>>, mut local: Loca
     }
 }
 
+fn sector_update_selected(
+    sectors: Res<Sectors>,
+    inventory: Res<Inventory>,
+    cursor_sector: Res<CursorSector>,
+    selected_section_button: Res<SelectedSectionButton>,
+    buttons: Query<&BackpackSectorId>,
+    mut s: Query<(&SectorPosition, &mut Handle<ColorMaterial>)>,
+) {
+    let Some(cursor_sector_position) = cursor_sector.0 else {
+        return;
+    };
+
+    let Some(selected_button_entity) = selected_section_button.0 else {
+        return;
+    };
+
+    let Ok(sector_id) = buttons.get(selected_button_entity) else {
+        return;
+    };
+
+    let Some(sector_idx) = inventory.backpack_sectors[sector_id.0 as usize] else {
+        return;
+    };
+
+    let to_be_placed_sector_info = &sectors[sector_idx];
+
+    for (sector_position, mut material) in s.iter_mut() {
+        if *sector_position == cursor_sector_position {
+            *material = to_be_placed_sector_info.material.clone();
+            break;
+        }
+    }
+}
+
+fn sector_update_not_selected(
+    sectors: Res<Sectors>,
+    cursor_sector: Res<CursorSector>,
+    mut s: Query<(&SectorPosition, &SectorIdx, &mut Handle<ColorMaterial>)>,
+) {
+    let Some(cursor_sector_position) = cursor_sector.0 else {
+        return;
+    };
+
+    for (sector_position, sector_idx, mut material) in s.iter_mut() {
+        let sector_info = &sectors[*sector_idx];
+        if *sector_position != cursor_sector_position {
+            *material = sector_info.material.clone();
+        }
+    }
+}
+
 fn sector_spawn_things(
     time: Res<Time>,
     chests: Res<Chests>,
@@ -275,9 +336,9 @@ fn sector_spawn_things(
         timer.0.tick(time.delta());
 
         // Don't spawn anything in the current and next zone
-        if id.0 == player_sector_id || id.0 == player_next_sector_id {
-            continue;
-        }
+        // if id.0 == player_sector_id || id.0 == player_next_sector_id {
+        //     continue;
+        // }
 
         if timer.0.finished() {
             if let Some(empty_slot_position) = slots.0.iter().position(|slot| slot.is_none()) {

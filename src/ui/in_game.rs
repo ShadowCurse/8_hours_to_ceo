@@ -57,7 +57,7 @@ struct ActiveSpellId(u8);
 struct BackpackSpellId(u8);
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-struct BackpackSectorId(u8);
+pub struct BackpackSectorId(pub u8);
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum InGameButton {
