@@ -25,6 +25,7 @@ impl Plugin for InGamePlugin {
                     backpack_items_button_system,
                     active_spells_button_system,
                     backpack_spells_button_system,
+                    backpack_sectors_button_system,
                     update_pause,
                     update_inventory,
                     update_sectors,
@@ -33,6 +34,9 @@ impl Plugin for InGamePlugin {
             );
     }
 }
+
+#[derive(Resource, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+struct SelectedSectionButton(pub Option<Entity>);
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct CyclesText;
@@ -106,6 +110,8 @@ fn spawn_inventory_button<C: Component + Copy>(
 }
 
 fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>, game_image: Res<GameImage>) {
+    commands.insert_resource(SelectedSectionButton(None));
+
     // Root node
     commands
         .spawn(NodeBundle {
@@ -619,6 +625,40 @@ fn backpack_spells_button_system(
                 *color = ui_style.btn_color_normal.into();
             }
         }
+    }
+}
+
+fn backpack_sectors_button_system(
+    ui_style: Res<UiStyle>,
+    mouse_input: Res<ButtonInput<MouseButton>>,
+    mut selected_section_button: ResMut<SelectedSectionButton>,
+    mut interaction_query: Query<
+        (Entity, &Interaction, &mut BackgroundColor),
+        With<BackpackSectorId>,
+    >,
+) {
+    for (entity, interaction, mut color) in interaction_query.iter_mut() {
+        if let Some(e) = selected_section_button.0 {
+            if e == entity {
+                *color = ui_style.btn_color_disabled.into();
+                continue;
+            }
+        }
+        match *interaction {
+            Interaction::Pressed => {
+                *color = ui_style.btn_color_pressed.into();
+                selected_section_button.0 = Some(entity);
+            }
+            Interaction::Hovered => {
+                *color = ui_style.btn_color_hover.into();
+            }
+            Interaction::None => {
+                *color = ui_style.btn_color_normal.into();
+            }
+        }
+    }
+    if mouse_input.just_pressed(MouseButton::Right) {
+        selected_section_button.0 = None;
     }
 }
 
