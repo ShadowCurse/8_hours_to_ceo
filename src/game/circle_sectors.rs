@@ -312,8 +312,7 @@ fn sector_spawn_things(
                             slot_position: empty_slot_position,
                         });
                     }
-                }
-                if !sector_info.chests.is_empty() {
+                } else if !sector_info.chests.is_empty() {
                     let random_chest_idx =
                         sector_info.chests[thread_rng.gen_range(0..sector_info.chests.len())];
                     let chest_info = &chests[random_chest_idx];
