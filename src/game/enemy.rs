@@ -7,7 +7,10 @@ use bevy::{
 
 use crate::GlobalState;
 
-use super::{circle_sectors::SectorPosition, AttackSpeed, Damage, Defense, Health};
+use super::{
+    circle_sectors::SectorPosition, items::ItemIdx, spells::SpellIdx, AttackSpeed, Damage, Defense,
+    Health,
+};
 
 pub struct EnemyPlugin;
 
@@ -35,8 +38,8 @@ pub struct BattleEnemy;
 pub struct EnemyInfo {
     pub material: Handle<ColorMaterial>,
     pub spawn_rate: f32,
-    pub items: Vec<usize>,
-    pub spells: Vec<usize>,
+    pub items: Vec<ItemIdx>,
+    pub spells: Vec<SpellIdx>,
 }
 
 #[derive(Resource, Debug, Clone, PartialEq)]
@@ -74,29 +77,29 @@ fn prepare_enemy_resources(
     enemies.0.push(EnemyInfo {
         material: material_default,
         spawn_rate: 0.3,
-        items: vec![0, 1, 2],
-        spells: vec![0, 1],
+        items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
+        spells: vec![SpellIdx(0), SpellIdx(1)],
     });
     // Green
     enemies.0.push(EnemyInfo {
         material: material_green,
         spawn_rate: 0.3,
-        items: vec![0, 1, 2],
-        spells: vec![0, 1],
+        items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
+        spells: vec![SpellIdx(0), SpellIdx(1)],
     });
     // Red
     enemies.0.push(EnemyInfo {
         material: material_red,
         spawn_rate: 0.3,
-        items: vec![0, 1, 2],
-        spells: vec![0, 1],
+        items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
+        spells: vec![SpellIdx(0), SpellIdx(1)],
     });
     // Orange
     enemies.0.push(EnemyInfo {
         material: material_orange,
         spawn_rate: 0.3,
-        items: vec![0, 1, 2],
-        spells: vec![0, 1],
+        items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
+        spells: vec![SpellIdx(0), SpellIdx(1)],
     });
 
     commands.insert_resource(enemies);

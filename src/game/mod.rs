@@ -9,7 +9,6 @@ use bevy::{
     sprite::{MaterialMesh2dBundle, Wireframe2d},
     window::{PrimaryWindow, WindowResized},
 };
-use items::{ItemIdx, Items, ItemsPlugin};
 use rand::Rng;
 
 use crate::{
@@ -28,7 +27,8 @@ use chest::{Chest, ChestIdx, Chests, ChestsPlugin, InteractedChest};
 use circle_sectors::{position_to_sector_position, SectorPosition, SectorsPlugin};
 use enemy::{BattleEnemy, Enemies, Enemy, EnemyIdx, EnemyPlugin};
 use inventory::{Inventory, InventoryPlugin};
-use spells::{SpellIdx, Spells, SpellsPlugin};
+use items::{Items, ItemsPlugin};
+use spells::{Spells, SpellsPlugin};
 
 const INTERACTION_DISTANCE: f32 = 30.0;
 
@@ -412,13 +412,13 @@ fn battle_end_check(
 
         let mut thread_rng = rand::thread_rng();
 
-        let random_item_idx = ItemIdx(thread_rng.gen_range(0..enemy_info.items.len()));
+        let random_item_idx = enemy_info.items[thread_rng.gen_range(0..enemy_info.items.len())];
         let item = &items[random_item_idx];
         if thread_rng.gen_bool(item.drop_rate as f64) {
             inventory.backpack_items.push(random_item_idx);
         }
 
-        let random_spell_idx = SpellIdx(thread_rng.gen_range(0..enemy_info.spells.len()));
+        let random_spell_idx = enemy_info.spells[thread_rng.gen_range(0..enemy_info.spells.len())];
         let spell = &spells[random_spell_idx];
         if thread_rng.gen_bool(spell.drop_rate as f64) {
             inventory.backpack_spells.push(random_spell_idx);
@@ -498,13 +498,13 @@ fn pickup_end(
 
     let mut thread_rng = rand::thread_rng();
 
-    let random_item_idx = ItemIdx(thread_rng.gen_range(0..chest_info.items.len()));
+    let random_item_idx = chest_info.items[thread_rng.gen_range(0..chest_info.items.len())];
     let item = &items[random_item_idx];
     if thread_rng.gen_bool(item.drop_rate as f64) {
         inventory.backpack_items.push(random_item_idx);
     }
 
-    let random_spell_idx = SpellIdx(thread_rng.gen_range(0..chest_info.spells.len()));
+    let random_spell_idx = chest_info.spells[thread_rng.gen_range(0..chest_info.spells.len())];
     let spell = &spells[random_spell_idx];
     if thread_rng.gen_bool(spell.drop_rate as f64) {
         inventory.backpack_spells.push(random_spell_idx);

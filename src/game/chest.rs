@@ -7,7 +7,7 @@ use bevy::{
 
 use crate::GlobalState;
 
-use super::circle_sectors::SectorPosition;
+use super::{circle_sectors::{SectorIdx, SectorPosition}, items::ItemIdx, spells::SpellIdx};
 
 pub struct ChestsPlugin;
 
@@ -35,9 +35,9 @@ pub struct InteractedChest;
 pub struct ChestInfo {
     pub material: Handle<ColorMaterial>,
     pub spawn_rate: f32,
-    pub items: Vec<usize>,
-    pub spells: Vec<usize>,
-    pub sectors: Vec<usize>,
+    pub items: Vec<ItemIdx>,
+    pub spells: Vec<SpellIdx>,
+    pub sectors: Vec<SectorIdx>,
 }
 
 #[derive(Resource, Debug, Clone, PartialEq)]
@@ -74,32 +74,32 @@ fn prepare_chest_resources(
     chests.0.push(ChestInfo {
         material: material_default,
         spawn_rate: 0.3,
-        items: vec![0, 1, 2],
-        spells: vec![0, 1],
+        items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
+        spells: vec![SpellIdx(0), SpellIdx(1)],
         sectors: vec![],
     });
     // Green
     chests.0.push(ChestInfo {
         material: material_green,
         spawn_rate: 0.3,
-        items: vec![0, 1, 2],
-        spells: vec![0, 1],
+        items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
+        spells: vec![SpellIdx(0), SpellIdx(1)],
         sectors: vec![],
     });
     // Red
     chests.0.push(ChestInfo {
         material: material_red,
         spawn_rate: 0.3,
-        items: vec![0, 1, 2],
-        spells: vec![0, 1],
+        items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
+        spells: vec![SpellIdx(0), SpellIdx(1)],
         sectors: vec![],
     });
     // Orange
     chests.0.push(ChestInfo {
         material: material_orange,
         spawn_rate: 0.3,
-        items: vec![0, 1, 2],
-        spells: vec![0, 1],
+        items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
+        spells: vec![SpellIdx(0), SpellIdx(1)],
         sectors: vec![],
     });
     commands.insert_resource(chests);
