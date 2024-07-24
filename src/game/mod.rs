@@ -26,7 +26,7 @@ pub mod spells;
 use chest::{Chest, ChestIdx, Chests, ChestsPlugin, InteractedChest};
 use circle_sectors::{position_to_sector_position, SectorPosition, Sectors, SectorsPlugin};
 use enemy::{BattleEnemy, Enemies, Enemy, EnemyIdx, EnemyPlugin};
-use inventory::{Inventory, InventoryPlugin};
+use inventory::{Inventory, InventoryPlugin, InventoryUpdate};
 use items::{Items, ItemsPlugin};
 use spells::{Spells, SpellsPlugin};
 
@@ -44,7 +44,6 @@ impl Plugin for GamePlugin {
             ItemsPlugin,
             SpellsPlugin,
         ))
-        .add_event::<InventoryUpdate>()
         .add_sub_state::<GameState>()
         .add_systems(Startup, setup_game)
         .add_systems(OnEnter(GameState::Preparing), spawn_base_game)
@@ -85,9 +84,6 @@ pub enum GameState {
     Battle,
     Paused,
 }
-
-#[derive(Event, Debug, Clone, PartialEq, Eq, Hash)]
-pub struct InventoryUpdate;
 
 #[derive(Resource, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GameImage {
@@ -435,7 +431,7 @@ fn battle_end_check(
                 enemy_info.sectors[thread_rng.gen_range(0..enemy_info.sectors.len())];
             let sector = &sectors[random_sector_idx];
             if thread_rng.gen_bool(sector.drop_rate as f64) {
-                println!("Sector {sector:?} dropped");
+                inventory.backpack_sectors.push(random_sector_idx);
             }
         }
 
@@ -535,7 +531,7 @@ fn pickup_end(
             chest_info.sectors[thread_rng.gen_range(0..chest_info.sectors.len())];
         let sector = &sectors[random_sector_idx];
         if thread_rng.gen_bool(sector.drop_rate as f64) {
-            println!("Sector {sector:?} dropped");
+            inventory.backpack_sectors.push(random_sector_idx);
         }
     }
 

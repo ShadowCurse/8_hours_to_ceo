@@ -2,10 +2,11 @@ use bevy::prelude::*;
 
 use crate::{
     game::{
-        inventory::Inventory,
+        circle_sectors::Sectors,
+        inventory::{Inventory, InventoryUpdate},
         items::Items,
         spells::{CastSpell, Spells},
-        GameImage, GameState, InventoryUpdate,
+        GameImage, GameState,
     },
     GlobalState,
 };
@@ -26,6 +27,7 @@ impl Plugin for InGamePlugin {
                     backpack_spells_button_system,
                     update_pause,
                     update_inventory,
+                    update_sectors,
                 )
                     .run_if(in_state(UiState::InGame)),
             );
@@ -51,6 +53,9 @@ struct ActiveSpellId(u8);
 struct BackpackSpellId(u8);
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+struct BackpackSectorId(u8);
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum InGameButton {
     Settings,
     MainMenu,
@@ -59,7 +64,11 @@ enum InGameButton {
 pub const UI_TOP_SIZE: f32 = 10.0;
 pub const UI_RIGHT_SIZE: f32 = 30.0;
 
-fn spawn_inventory_button<C: Component + Copy>(builder: &mut ChildBuilder, c: C) {
+fn spawn_inventory_button<C: Component + Copy>(
+    builder: &mut ChildBuilder,
+    visibility: Visibility,
+    c: C,
+) {
     builder
         .spawn((
             ButtonBundle {
@@ -73,6 +82,7 @@ fn spawn_inventory_button<C: Component + Copy>(builder: &mut ChildBuilder, c: C)
                     align_items: AlignItems::Center,
                     ..default()
                 },
+                visibility,
                 border_color: BorderColor(Color::BLACK),
                 border_radius: BorderRadius::all(Val::Percent(5.0)),
                 background_color: Color::WHITE.into(),
@@ -189,16 +199,75 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>, game_image: Res
                 })
                 .with_children(|builder| {
                     // Game window + dynamic ui
-                    builder.spawn((
-                        NodeBundle {
-                            style: Style {
-                                width: Val::Percent(100.0 - UI_RIGHT_SIZE),
-                                ..Default::default()
+                    builder
+                        .spawn((
+                            NodeBundle {
+                                style: Style {
+                                    width: Val::Percent(100.0 - UI_RIGHT_SIZE),
+                                    flex_direction: FlexDirection::Column,
+                                    justify_content: JustifyContent::End,
+                                    ..Default::default()
+                                },
+                                ..default()
                             },
-                            ..default()
-                        },
-                        UiImage::new(game_image.image.clone()),
-                    ));
+                            UiImage::new(game_image.image.clone()),
+                        ))
+                        .with_children(|builder| {
+                            // Sectors UI
+                            builder
+                                .spawn(NodeBundle {
+                                    style: Style {
+                                        width: Val::Percent(100.0),
+                                        height: Val::Percent(15.0),
+                                        align_items: AlignItems::Center,
+                                        justify_content: JustifyContent::Center,
+                                        ..Default::default()
+                                    },
+                                    ..default()
+                                })
+                                .with_children(|builder| {
+                                    spawn_inventory_button(
+                                        builder,
+                                        Visibility::Hidden,
+                                        BackpackSectorId(0),
+                                    );
+                                    spawn_inventory_button(
+                                        builder,
+                                        Visibility::Hidden,
+                                        BackpackSectorId(1),
+                                    );
+                                    spawn_inventory_button(
+                                        builder,
+                                        Visibility::Hidden,
+                                        BackpackSectorId(2),
+                                    );
+                                    spawn_inventory_button(
+                                        builder,
+                                        Visibility::Hidden,
+                                        BackpackSectorId(3),
+                                    );
+                                    spawn_inventory_button(
+                                        builder,
+                                        Visibility::Hidden,
+                                        BackpackSectorId(4),
+                                    );
+                                    spawn_inventory_button(
+                                        builder,
+                                        Visibility::Hidden,
+                                        BackpackSectorId(5),
+                                    );
+                                    spawn_inventory_button(
+                                        builder,
+                                        Visibility::Hidden,
+                                        BackpackSectorId(6),
+                                    );
+                                    spawn_inventory_button(
+                                        builder,
+                                        Visibility::Hidden,
+                                        BackpackSectorId(7),
+                                    );
+                                });
+                        });
                     // Items and spells
                     builder
                         .spawn(NodeBundle {
@@ -235,10 +304,26 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>, game_image: Res
                                             ..default()
                                         })
                                         .with_children(|builder| {
-                                            spawn_inventory_button(builder, ActiveItemId(0));
-                                            spawn_inventory_button(builder, ActiveItemId(1));
-                                            spawn_inventory_button(builder, ActiveItemId(2));
-                                            spawn_inventory_button(builder, ActiveItemId(3));
+                                            spawn_inventory_button(
+                                                builder,
+                                                Visibility::default(),
+                                                ActiveItemId(0),
+                                            );
+                                            spawn_inventory_button(
+                                                builder,
+                                                Visibility::default(),
+                                                ActiveItemId(1),
+                                            );
+                                            spawn_inventory_button(
+                                                builder,
+                                                Visibility::default(),
+                                                ActiveItemId(2),
+                                            );
+                                            spawn_inventory_button(
+                                                builder,
+                                                Visibility::default(),
+                                                ActiveItemId(3),
+                                            );
                                         });
 
                                     // Backpack items
@@ -258,14 +343,46 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>, game_image: Res
                                             ..default()
                                         })
                                         .with_children(|builder| {
-                                            spawn_inventory_button(builder, BackpackItemId(0));
-                                            spawn_inventory_button(builder, BackpackItemId(1));
-                                            spawn_inventory_button(builder, BackpackItemId(2));
-                                            spawn_inventory_button(builder, BackpackItemId(3));
-                                            spawn_inventory_button(builder, BackpackItemId(4));
-                                            spawn_inventory_button(builder, BackpackItemId(5));
-                                            spawn_inventory_button(builder, BackpackItemId(6));
-                                            spawn_inventory_button(builder, BackpackItemId(7));
+                                            spawn_inventory_button(
+                                                builder,
+                                                Visibility::default(),
+                                                BackpackItemId(0),
+                                            );
+                                            spawn_inventory_button(
+                                                builder,
+                                                Visibility::default(),
+                                                BackpackItemId(1),
+                                            );
+                                            spawn_inventory_button(
+                                                builder,
+                                                Visibility::default(),
+                                                BackpackItemId(2),
+                                            );
+                                            spawn_inventory_button(
+                                                builder,
+                                                Visibility::default(),
+                                                BackpackItemId(3),
+                                            );
+                                            spawn_inventory_button(
+                                                builder,
+                                                Visibility::default(),
+                                                BackpackItemId(4),
+                                            );
+                                            spawn_inventory_button(
+                                                builder,
+                                                Visibility::default(),
+                                                BackpackItemId(5),
+                                            );
+                                            spawn_inventory_button(
+                                                builder,
+                                                Visibility::default(),
+                                                BackpackItemId(6),
+                                            );
+                                            spawn_inventory_button(
+                                                builder,
+                                                Visibility::default(),
+                                                BackpackItemId(7),
+                                            );
                                         });
                                 });
 
@@ -295,10 +412,26 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>, game_image: Res
                                             ..default()
                                         })
                                         .with_children(|builder| {
-                                            spawn_inventory_button(builder, ActiveSpellId(0));
-                                            spawn_inventory_button(builder, ActiveSpellId(1));
-                                            spawn_inventory_button(builder, ActiveSpellId(2));
-                                            spawn_inventory_button(builder, ActiveSpellId(3));
+                                            spawn_inventory_button(
+                                                builder,
+                                                Visibility::default(),
+                                                ActiveSpellId(0),
+                                            );
+                                            spawn_inventory_button(
+                                                builder,
+                                                Visibility::default(),
+                                                ActiveSpellId(1),
+                                            );
+                                            spawn_inventory_button(
+                                                builder,
+                                                Visibility::default(),
+                                                ActiveSpellId(2),
+                                            );
+                                            spawn_inventory_button(
+                                                builder,
+                                                Visibility::default(),
+                                                ActiveSpellId(3),
+                                            );
                                         });
 
                                     // Backpack spells
@@ -318,14 +451,46 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>, game_image: Res
                                             ..default()
                                         })
                                         .with_children(|builder| {
-                                            spawn_inventory_button(builder, BackpackSpellId(0));
-                                            spawn_inventory_button(builder, BackpackSpellId(1));
-                                            spawn_inventory_button(builder, BackpackSpellId(2));
-                                            spawn_inventory_button(builder, BackpackSpellId(3));
-                                            spawn_inventory_button(builder, BackpackSpellId(4));
-                                            spawn_inventory_button(builder, BackpackSpellId(5));
-                                            spawn_inventory_button(builder, BackpackSpellId(6));
-                                            spawn_inventory_button(builder, BackpackSpellId(7));
+                                            spawn_inventory_button(
+                                                builder,
+                                                Visibility::default(),
+                                                BackpackSpellId(0),
+                                            );
+                                            spawn_inventory_button(
+                                                builder,
+                                                Visibility::default(),
+                                                BackpackSpellId(1),
+                                            );
+                                            spawn_inventory_button(
+                                                builder,
+                                                Visibility::default(),
+                                                BackpackSpellId(2),
+                                            );
+                                            spawn_inventory_button(
+                                                builder,
+                                                Visibility::default(),
+                                                BackpackSpellId(3),
+                                            );
+                                            spawn_inventory_button(
+                                                builder,
+                                                Visibility::default(),
+                                                BackpackSpellId(4),
+                                            );
+                                            spawn_inventory_button(
+                                                builder,
+                                                Visibility::default(),
+                                                BackpackSpellId(5),
+                                            );
+                                            spawn_inventory_button(
+                                                builder,
+                                                Visibility::default(),
+                                                BackpackSpellId(6),
+                                            );
+                                            spawn_inventory_button(
+                                                builder,
+                                                Visibility::default(),
+                                                BackpackSpellId(7),
+                                            );
                                         });
                                 });
                         });
@@ -557,6 +722,34 @@ fn update_inventory(
                     };
                 }
             }
+        }
+    }
+}
+
+fn update_sectors(
+    sectors: Res<Sectors>,
+    inventory: Res<Inventory>,
+    mut sectors_buttons: Query<(&BackpackSectorId, &mut Visibility), With<Button>>,
+    mut sectors_texts: Query<(&BackpackSectorId, &mut Text)>,
+    mut event_reader: EventReader<InventoryUpdate>,
+) {
+    for _ in event_reader.read() {
+        for (button_sector_id, mut button_visibility) in sectors_buttons.iter_mut() {
+            let Some((_, mut text)) = sectors_texts
+                .iter_mut()
+                .find(|(text_sector_id, _)| **text_sector_id == *button_sector_id)
+            else {
+                continue;
+            };
+
+            let Some(sector_idx) = inventory.backpack_sectors[button_sector_id.0 as usize] else {
+                continue;
+            };
+
+            let sector_info = &sectors[sector_idx];
+
+            *button_visibility = Visibility::Visible;
+            text.sections[0].value = sector_info.name.into();
         }
     }
 }

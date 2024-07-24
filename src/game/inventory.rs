@@ -1,17 +1,24 @@
+use std::ops::Index;
+
 use bevy::prelude::*;
 
-use super::{items::ItemIdx, spells::SpellIdx};
+use super::{circle_sectors::SectorIdx, items::ItemIdx, spells::SpellIdx};
 
 pub struct InventoryPlugin;
 
 const INVENTORY_ITEMS: usize = 4;
 const INVENTORY_BACKPACK_ITEMS: usize = 8;
+const INVENTORY_BACKPACK_SECTORS: usize = 8;
 
 impl Plugin for InventoryPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, prepare_inventory);
+        app.add_event::<InventoryUpdate>()
+            .add_systems(Startup, prepare_inventory);
     }
 }
+
+#[derive(Event, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct InventoryUpdate;
 
 #[derive(Resource, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Inventory {
@@ -19,6 +26,7 @@ pub struct Inventory {
     pub backpack_items: Stack<ItemIdx, INVENTORY_BACKPACK_ITEMS>,
     pub active_spells: Stack<SpellIdx, INVENTORY_ITEMS>,
     pub backpack_spells: Stack<SpellIdx, INVENTORY_BACKPACK_ITEMS>,
+    pub backpack_sectors: Stack<SectorIdx, INVENTORY_BACKPACK_SECTORS>,
 }
 
 impl Inventory {
@@ -28,6 +36,7 @@ impl Inventory {
             backpack_items: Stack::new(),
             active_spells: Stack::new(),
             backpack_spells: Stack::new(),
+            backpack_sectors: Stack::new(),
         }
     }
 
@@ -76,6 +85,13 @@ impl<T: Copy, const N: usize> Stack<T, N> {
 
     pub fn iter(&self) -> impl Iterator<Item = Option<&T>> {
         self.inner.iter().map(|a| a.as_ref())
+    }
+}
+
+impl<T: Copy, const N: usize> Index<usize> for Stack<T, N> {
+    type Output = Option<T>;
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.inner[index]
     }
 }
 
