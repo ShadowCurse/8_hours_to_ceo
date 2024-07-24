@@ -4,7 +4,10 @@ use bevy::{
     sprite::{MaterialMesh2dBundle, Wireframe2d},
 };
 use rand::Rng;
-use std::f32::consts::*;
+use std::{
+    f32::consts::*,
+    ops::{Index, IndexMut},
+};
 
 use crate::GlobalState;
 
@@ -54,7 +57,20 @@ pub struct SectorInfo {
 }
 
 #[derive(Resource, Debug)]
-pub struct Sectors(pub Vec<SectorInfo>);
+pub struct Sectors(Vec<SectorInfo>);
+
+impl Index<SectorIdx> for Sectors {
+    type Output = SectorInfo;
+    fn index(&self, index: SectorIdx) -> &Self::Output {
+        &self.0[index.0]
+    }
+}
+
+impl IndexMut<SectorIdx> for Sectors {
+    fn index_mut(&mut self, index: SectorIdx) -> &mut Self::Output {
+        &mut self.0[index.0]
+    }
+}
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SectorId(pub u8);
