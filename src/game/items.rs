@@ -1,3 +1,5 @@
+use std::ops::{Index, IndexMut};
+
 use bevy::prelude::*;
 
 pub struct ItemsPlugin;
@@ -52,7 +54,20 @@ pub struct ItemInfo {
 }
 
 #[derive(Resource, Debug)]
-pub struct Items(pub Vec<ItemInfo>);
+pub struct Items(Vec<ItemInfo>);
+
+impl Index<ItemIdx> for Items {
+    type Output = ItemInfo;
+    fn index(&self, index: ItemIdx) -> &Self::Output {
+        &self.0[index.0]
+    }
+}
+
+impl IndexMut<ItemIdx> for Items {
+    fn index_mut(&mut self, index: ItemIdx) -> &mut Self::Output {
+        &mut self.0[index.0]
+    }
+}
 
 fn prepare_items(mut commands: Commands) {
     let mut items = Items(vec![]);

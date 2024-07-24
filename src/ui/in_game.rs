@@ -522,7 +522,7 @@ fn update_inventory(
             for (id, mut text) in active_items_text.iter_mut() {
                 if id.0 == i as u8 {
                     text.sections[0].value = match item {
-                        Some(idx) => items.0[idx.0].name.into(),
+                        Some(idx) => items[*idx].name.into(),
                         None => "NaN".into(),
                     };
                 }
@@ -532,7 +532,7 @@ fn update_inventory(
             for (id, mut text) in backpack_items_text.iter_mut() {
                 if id.0 == i as u8 {
                     text.sections[0].value = match item {
-                        Some(idx) => items.0[idx.0].name.into(),
+                        Some(idx) => items[*idx].name.into(),
                         None => "NaN".into(),
                     };
                 }

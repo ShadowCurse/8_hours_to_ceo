@@ -352,7 +352,7 @@ fn battle_auto_attack(
                 .iter()
                 .map(|item_idx| {
                     if let Some(i) = item_idx {
-                        items.0[i.0].item.add_damage()
+                        items[*i].item.add_damage()
                     } else {
                         0.0
                     }
@@ -370,7 +370,7 @@ fn battle_auto_attack(
                 .iter()
                 .map(|item_idx| {
                     if let Some(i) = item_idx {
-                        items.0[i.0].item.add_defense()
+                        items[*i].item.add_defense()
                     } else {
                         0.0
                     }
@@ -412,10 +412,10 @@ fn battle_end_check(
 
         let mut thread_rng = rand::thread_rng();
 
-        let random_item_idx = thread_rng.gen_range(0..enemy_info.items.len());
-        let item = &items.0[random_item_idx];
+        let random_item_idx = ItemIdx(thread_rng.gen_range(0..enemy_info.items.len()));
+        let item = &items[random_item_idx];
         if thread_rng.gen_bool(item.drop_rate as f64) {
-            inventory.backpack_items.push(ItemIdx(random_item_idx));
+            inventory.backpack_items.push(random_item_idx);
         }
 
         let random_spell_idx = thread_rng.gen_range(0..enemy_info.spells.len());
@@ -429,7 +429,7 @@ fn battle_end_check(
             .iter()
             .map(|item_idx| {
                 if let Some(i) = item_idx {
-                    items.0[i.0].item.heal()
+                    items[*i].item.heal()
                 } else {
                     0.0
                 }
@@ -498,10 +498,10 @@ fn pickup_end(
 
     let mut thread_rng = rand::thread_rng();
 
-    let random_item_idx = thread_rng.gen_range(0..chest_info.items.len());
-    let item = &items.0[random_item_idx];
+    let random_item_idx = ItemIdx(thread_rng.gen_range(0..chest_info.items.len()));
+    let item = &items[random_item_idx];
     if thread_rng.gen_bool(item.drop_rate as f64) {
-        inventory.backpack_items.push(ItemIdx(random_item_idx));
+        inventory.backpack_items.push(random_item_idx);
     }
 
     let random_spell_idx = thread_rng.gen_range(0..chest_info.spells.len());
