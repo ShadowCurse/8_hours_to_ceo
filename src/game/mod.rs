@@ -18,6 +18,7 @@ use crate::{
 
 pub mod chest;
 pub mod circle_sectors;
+pub mod cursor;
 pub mod enemy;
 pub mod inventory;
 pub mod items;
@@ -25,6 +26,7 @@ pub mod spells;
 
 use chest::{Chest, ChestIdx, Chests, ChestsPlugin, InteractedChest};
 use circle_sectors::{position_to_sector_position, SectorPosition, Sectors, SectorsPlugin};
+use cursor::CursorPlugin;
 use enemy::{BattleEnemy, Enemies, Enemy, EnemyIdx, EnemyPlugin};
 use inventory::{Inventory, InventoryPlugin, InventoryUpdate};
 use items::{Items, ItemsPlugin};
@@ -39,6 +41,7 @@ impl Plugin for GamePlugin {
         app.add_plugins((
             ChestsPlugin,
             SectorsPlugin,
+            CursorPlugin,
             EnemyPlugin,
             InventoryPlugin,
             ItemsPlugin,
