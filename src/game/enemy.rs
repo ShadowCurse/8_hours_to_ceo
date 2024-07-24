@@ -40,6 +40,7 @@ pub struct EnemyInfo {
     pub spawn_rate: f32,
     pub items: Vec<ItemIdx>,
     pub spells: Vec<SpellIdx>,
+    pub sectors: Vec<SectorIdx>,
 }
 
 #[derive(Resource, Debug, Clone, PartialEq)]
@@ -79,6 +80,7 @@ fn prepare_enemy_resources(
         spawn_rate: 0.3,
         items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
         spells: vec![SpellIdx(0), SpellIdx(1)],
+        sectors: vec![],
     });
     // Green
     enemies.0.push(EnemyInfo {
@@ -86,6 +88,7 @@ fn prepare_enemy_resources(
         spawn_rate: 0.3,
         items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
         spells: vec![SpellIdx(0), SpellIdx(1)],
+        sectors: vec![],
     });
     // Red
     enemies.0.push(EnemyInfo {
@@ -93,6 +96,7 @@ fn prepare_enemy_resources(
         spawn_rate: 0.3,
         items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
         spells: vec![SpellIdx(0), SpellIdx(1)],
+        sectors: vec![],
     });
     // Orange
     enemies.0.push(EnemyInfo {
@@ -100,6 +104,7 @@ fn prepare_enemy_resources(
         spawn_rate: 0.3,
         items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
         spells: vec![SpellIdx(0), SpellIdx(1)],
+        sectors: vec![],
     });
 
     commands.insert_resource(enemies);
