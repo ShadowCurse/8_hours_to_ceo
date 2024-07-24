@@ -494,7 +494,7 @@ fn pickup_end(
         .unwrap()
         .despawn_recursive();
 
-    let chest_info = &chests.0[chest_idx.0];
+    let chest_info = &chests[*chest_idx];
 
     let mut thread_rng = rand::thread_rng();
 

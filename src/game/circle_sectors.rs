@@ -297,9 +297,9 @@ fn sector_spawn_things(
                     });
                 } else {
                     let random_chest = thread_rng.gen_range(0..sector_info.chests.len());
-                    let random_chest_idx = sector_info.chests[random_chest];
+                    let random_chest_idx = ChestIdx(sector_info.chests[random_chest]);
 
-                    let chest_info = &chests.0[random_chest_idx];
+                    let chest_info = &chests[random_chest_idx];
 
                     if thread_rng.gen_bool(chest_info.spawn_rate as f64) {
                         slots.0[empty_slot_position] = Some(SlotType::Item);
@@ -311,7 +311,7 @@ fn sector_spawn_things(
                             &mut commands,
                             chests.as_ref(),
                             chest_resources.as_ref(),
-                            ChestIdx(random_chest_idx),
+                            random_chest_idx,
                             *id,
                             t,
                             game_render_layer.layer.clone(),

@@ -1,3 +1,5 @@
+use std::ops::{Index, IndexMut};
+
 use bevy::{
     ecs::system::EntityCommands, prelude::*, render::view::RenderLayers,
     sprite::MaterialMesh2dBundle,
@@ -39,7 +41,20 @@ pub struct ChestInfo {
 }
 
 #[derive(Resource, Debug, Clone, PartialEq)]
-pub struct Chests(pub Vec<ChestInfo>);
+pub struct Chests(Vec<ChestInfo>);
+
+impl Index<ChestIdx> for Chests {
+    type Output = ChestInfo;
+    fn index(&self, index: ChestIdx) -> &Self::Output {
+        &self.0[index.0]
+    }
+}
+
+impl IndexMut<ChestIdx> for Chests {
+    fn index_mut(&mut self, index: ChestIdx) -> &mut Self::Output {
+        &mut self.0[index.0]
+    }
+}
 
 fn prepare_chest_resources(
     mut commands: Commands,
