@@ -404,7 +404,7 @@ fn active_spells_button_system(
     for (spell_id, interaction, mut color) in interaction_query.iter_mut() {
         let on_cooldown = || {
             if let Some(spell_idx) = inventory.get_spell_idx(spell_id.0 as usize) {
-                let spell = &spells.0[spell_idx.0];
+                let spell = &spells[spell_idx];
                 return !spell.cooldown.finished();
             }
             true
@@ -542,7 +542,7 @@ fn update_inventory(
             for (id, mut text) in active_spells_text.iter_mut() {
                 if id.0 == i as u8 {
                     text.sections[0].value = match spell {
-                        Some(idx) => spells.0[idx.0].name.into(),
+                        Some(idx) => spells[*idx].name.into(),
                         None => "NaN".into(),
                     };
                 }
@@ -552,7 +552,7 @@ fn update_inventory(
             for (id, mut text) in backpack_spells_text.iter_mut() {
                 if id.0 == i as u8 {
                     text.sections[0].value = match spell {
-                        Some(idx) => spells.0[idx.0].name.into(),
+                        Some(idx) => spells[*idx].name.into(),
                         None => "NaN".into(),
                     };
                 }

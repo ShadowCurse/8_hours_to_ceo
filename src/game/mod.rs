@@ -25,7 +25,7 @@ pub mod items;
 pub mod spells;
 
 use chest::{Chest, ChestIdx, Chests, ChestsPlugin, InteractedChest};
-use circle_sectors::{position_to_sector_id, SectorId, SectorIdx, SectorsPlugin};
+use circle_sectors::{position_to_sector_id, SectorId, SectorsPlugin};
 use enemy::{BattleEnemy, Enemies, Enemy, EnemyIdx, EnemyPlugin};
 use inventory::{Inventory, InventoryPlugin};
 use spells::{SpellIdx, Spells, SpellsPlugin};
@@ -418,10 +418,10 @@ fn battle_end_check(
             inventory.backpack_items.push(random_item_idx);
         }
 
-        let random_spell_idx = thread_rng.gen_range(0..enemy_info.spells.len());
-        let spell = &spells.0[random_spell_idx];
+        let random_spell_idx = SpellIdx(thread_rng.gen_range(0..enemy_info.spells.len()));
+        let spell = &spells[random_spell_idx];
         if thread_rng.gen_bool(spell.drop_rate as f64) {
-            inventory.backpack_spells.push(SpellIdx(random_spell_idx));
+            inventory.backpack_spells.push(random_spell_idx);
         }
 
         let heal = inventory
@@ -504,10 +504,10 @@ fn pickup_end(
         inventory.backpack_items.push(random_item_idx);
     }
 
-    let random_spell_idx = thread_rng.gen_range(0..chest_info.spells.len());
-    let spell = &spells.0[random_spell_idx];
+    let random_spell_idx = SpellIdx(thread_rng.gen_range(0..chest_info.spells.len()));
+    let spell = &spells[random_spell_idx];
     if thread_rng.gen_bool(spell.drop_rate as f64) {
-        inventory.backpack_spells.push(SpellIdx(random_spell_idx));
+        inventory.backpack_spells.push(random_spell_idx);
     }
 
     event_writer.send(InventoryUpdate);

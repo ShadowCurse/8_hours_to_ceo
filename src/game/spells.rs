@@ -1,3 +1,5 @@
+use std::ops::{Index, IndexMut};
+
 use bevy::prelude::*;
 
 use super::{enemy::BattleEnemy, Defense, GameState, Health, Player};
@@ -61,7 +63,20 @@ pub struct SpellInfo {
 }
 
 #[derive(Resource, Debug)]
-pub struct Spells(pub Vec<SpellInfo>);
+pub struct Spells(Vec<SpellInfo>);
+
+impl Index<SpellIdx> for Spells {
+    type Output = SpellInfo;
+    fn index(&self, index: SpellIdx) -> &Self::Output {
+        &self.0[index.0]
+    }
+}
+
+impl IndexMut<SpellIdx> for Spells {
+    fn index_mut(&mut self, index: SpellIdx) -> &mut Self::Output {
+        &mut self.0[index.0]
+    }
+}
 
 fn prepare_spells(mut commands: Commands) {
     let mut spells = Spells(vec![]);
