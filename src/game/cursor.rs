@@ -72,8 +72,8 @@ fn update_cursor(
     };
 
     // adjust to account for texture is moved to the side
-    world_pos.x += window.width() * UI_RIGHT_SIZE / 2.0;
-    world_pos.y += window.height() * UI_TOP_SIZE / 2.0;
+    world_pos.x += window.width() * (UI_RIGHT_SIZE / 100.0) / 2.0;
+    world_pos.y += window.height() * (UI_TOP_SIZE / 100.0) / 2.0;
 
     ct.translation.x = world_pos.x;
     ct.translation.y = world_pos.y;
