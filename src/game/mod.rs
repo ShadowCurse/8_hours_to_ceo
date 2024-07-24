@@ -408,7 +408,7 @@ fn battle_end_check(
             .unwrap()
             .despawn_recursive();
 
-        let enemy_info = &enemies.0[enemy_idx.0];
+        let enemy_info = &enemies[*enemy_idx];
 
         let mut thread_rng = rand::thread_rng();
 

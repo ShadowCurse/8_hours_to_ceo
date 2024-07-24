@@ -273,9 +273,9 @@ fn sector_spawn_things(
                 let mut thread_rng = rand::thread_rng();
 
                 let random_enemy = thread_rng.gen_range(0..sector_info.enemies.len());
-                let random_enemy_idx = sector_info.enemies[random_enemy];
+                let random_enemy_idx = EnemyIdx(sector_info.enemies[random_enemy]);
 
-                let enemy_info = &enemies.0[random_enemy_idx];
+                let enemy_info = &enemies[random_enemy_idx];
                 if thread_rng.gen_bool(enemy_info.spawn_rate as f64) {
                     slots.0[empty_slot_position] = Some(SlotType::Enemy);
 
@@ -286,7 +286,7 @@ fn sector_spawn_things(
                         &mut commands,
                         enemies.as_ref(),
                         enemy_resources.as_ref(),
-                        EnemyIdx(random_enemy_idx),
+                        random_enemy_idx,
                         *id,
                         t,
                         game_render_layer.layer.clone(),

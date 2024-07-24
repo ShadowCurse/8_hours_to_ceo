@@ -1,3 +1,5 @@
+use std::ops::{Index, IndexMut};
+
 use bevy::{
     ecs::system::EntityCommands, prelude::*, render::view::RenderLayers,
     sprite::MaterialMesh2dBundle,
@@ -38,7 +40,20 @@ pub struct EnemyInfo {
 }
 
 #[derive(Resource, Debug, Clone, PartialEq)]
-pub struct Enemies(pub Vec<EnemyInfo>);
+pub struct Enemies(Vec<EnemyInfo>);
+
+impl Index<EnemyIdx> for Enemies {
+    type Output = EnemyInfo;
+    fn index(&self, index: EnemyIdx) -> &Self::Output {
+        &self.0[index.0]
+    }
+}
+
+impl IndexMut<EnemyIdx> for Enemies {
+    fn index_mut(&mut self, index: EnemyIdx) -> &mut Self::Output {
+        &mut self.0[index.0]
+    }
+}
 
 fn prepare_enemy_resources(
     mut commands: Commands,
