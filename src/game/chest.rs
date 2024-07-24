@@ -7,7 +7,11 @@ use bevy::{
 
 use crate::GlobalState;
 
-use super::{circle_sectors::{SectorIdx, SectorPosition}, items::ItemIdx, spells::SpellIdx};
+use super::{
+    circle_sectors::{SectorIdx, SectorPosition},
+    items::ItemIdx,
+    spells::SpellIdx,
+};
 
 pub struct ChestsPlugin;
 

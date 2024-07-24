@@ -52,8 +52,8 @@ pub struct SectorInfo {
     pub name: &'static str,
     pub material: Handle<ColorMaterial>,
     pub drop_rate: f32,
-    pub enemies: Vec<usize>,
-    pub chests: Vec<usize>,
+    pub enemies: Vec<EnemyIdx>,
+    pub chests: Vec<ChestIdx>,
 }
 
 #[derive(Resource, Debug)]
@@ -162,29 +162,29 @@ fn prepare_sector_resources(
         name: "Default",
         material: material_default,
         drop_rate: 0.9,
-        enemies: vec![0],
-        chests: vec![0],
+        enemies: vec![EnemyIdx(0)],
+        chests: vec![ChestIdx(0)],
     });
     sectors.0.push(SectorInfo {
         name: "Green",
         material: material_green,
         drop_rate: 0.9,
-        enemies: vec![1],
-        chests: vec![1],
+        enemies: vec![EnemyIdx(1)],
+        chests: vec![ChestIdx(1)],
     });
     sectors.0.push(SectorInfo {
         name: "Red",
         material: material_red,
         drop_rate: 0.9,
-        enemies: vec![2],
-        chests: vec![2],
+        enemies: vec![EnemyIdx(2)],
+        chests: vec![ChestIdx(2)],
     });
     sectors.0.push(SectorInfo {
         name: "Orange",
         material: material_orange,
         drop_rate: 0.9,
-        enemies: vec![3],
-        chests: vec![3],
+        enemies: vec![EnemyIdx(3)],
+        chests: vec![ChestIdx(3)],
     });
     commands.insert_resource(sectors);
 }
@@ -288,33 +288,34 @@ fn sector_spawn_things(
                 let sector_info = &sectors.0[sector_idx.0];
                 let mut thread_rng = rand::thread_rng();
 
-                let random_enemy = thread_rng.gen_range(0..sector_info.enemies.len());
-                let random_enemy_idx = EnemyIdx(sector_info.enemies[random_enemy]);
+                if !sector_info.enemies.is_empty() {
+                    let random_enemy_idx =
+                        sector_info.enemies[thread_rng.gen_range(0..sector_info.enemies.len())];
+                    let enemy_info = &enemies[random_enemy_idx];
+                    if thread_rng.gen_bool(enemy_info.spawn_rate as f64) {
+                        slots.0[empty_slot_position] = Some(SlotType::Enemy);
 
-                let enemy_info = &enemies[random_enemy_idx];
-                if thread_rng.gen_bool(enemy_info.spawn_rate as f64) {
-                    slots.0[empty_slot_position] = Some(SlotType::Enemy);
+                        let mut t = Transform::from_xyz(0.0, 210.0, 0.0);
+                        t.rotate_around(Vec3::ZERO, Quat::from_rotation_z(-angle));
 
-                    let mut t = Transform::from_xyz(0.0, 210.0, 0.0);
-                    t.rotate_around(Vec3::ZERO, Quat::from_rotation_z(-angle));
-
-                    spawn_enemy(
-                        &mut commands,
-                        enemies.as_ref(),
-                        enemy_resources.as_ref(),
-                        random_enemy_idx,
-                        *id,
-                        t,
-                        game_render_layer.layer.clone(),
-                    )
-                    .insert(SectorSlotEntity {
-                        entity,
-                        slot_position: empty_slot_position,
-                    });
-                } else {
-                    let random_chest = thread_rng.gen_range(0..sector_info.chests.len());
-                    let random_chest_idx = ChestIdx(sector_info.chests[random_chest]);
-
+                        spawn_enemy(
+                            &mut commands,
+                            enemies.as_ref(),
+                            enemy_resources.as_ref(),
+                            random_enemy_idx,
+                            *id,
+                            t,
+                            game_render_layer.layer.clone(),
+                        )
+                        .insert(SectorSlotEntity {
+                            entity,
+                            slot_position: empty_slot_position,
+                        });
+                    }
+                }
+                if !sector_info.chests.is_empty() {
+                    let random_chest_idx =
+                        sector_info.chests[thread_rng.gen_range(0..sector_info.chests.len())];
                     let chest_info = &chests[random_chest_idx];
 
                     if thread_rng.gen_bool(chest_info.spawn_rate as f64) {
