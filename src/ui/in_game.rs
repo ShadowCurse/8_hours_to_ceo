@@ -36,7 +36,7 @@ impl Plugin for InGamePlugin {
 }
 
 #[derive(Resource, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-struct SelectedSectionButton(pub Option<Entity>);
+pub struct SelectedSectionButton(pub Option<Entity>);
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct CyclesText;

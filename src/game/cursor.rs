@@ -1,6 +1,6 @@
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle, window::PrimaryWindow};
 
-use crate::ui::in_game::{UI_RIGHT_SIZE, UI_TOP_SIZE};
+use crate::ui::in_game::{SelectedSectionButton, UI_RIGHT_SIZE, UI_TOP_SIZE};
 
 use super::{
     circle_sectors::{position_to_sector_position, SectorPosition},
@@ -46,11 +46,17 @@ fn prepare_cursor_resources(
 }
 
 fn update_cursor(
-    camera: Query<(&Camera, &GlobalTransform), Without<GameCamera>>,
+    selected_section_button: Res<SelectedSectionButton>,
     window: Query<&Window, With<PrimaryWindow>>,
+    camera: Query<(&Camera, &GlobalTransform), Without<GameCamera>>,
     mut cursor: Query<&mut Transform, With<Cursor>>,
     mut cursor_sector: ResMut<CursorSector>,
 ) {
+    if selected_section_button.0.is_none() {
+        cursor_sector.0 = None;
+        return;
+    }
+
     let Ok((camera, camera_transform)) = camera.get_single() else {
         return;
     };
