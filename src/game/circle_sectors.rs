@@ -125,9 +125,10 @@ impl Component for SectorSlotEntity {
         hooks.on_remove(|mut world, slot_entity, _component_id| {
             let sector_slot_entity = *world.get::<SectorSlotEntity>(slot_entity).unwrap();
 
-            let mut sector_slots = world
-                .get_mut::<SectorSlots>(sector_slot_entity.entity)
-                .unwrap();
+            let Some(mut sector_slots) = world.get_mut::<SectorSlots>(sector_slot_entity.entity)
+            else {
+                return;
+            };
             sector_slots.0[sector_slot_entity.slot_position] = None;
         });
     }
