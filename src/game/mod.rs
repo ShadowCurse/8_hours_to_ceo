@@ -28,7 +28,7 @@ use animation::AnimationPlugin;
 use chest::{Chest, ChestOppenedEvent, ChestsPlugin, InteractedChest};
 use circle_sectors::{position_to_sector_position, SectorPosition, SectorsPlugin};
 use cursor::CursorPlugin;
-use enemy::{BattleEnemy, EnemyDeadEvent, Enemy, EnemyPlugin};
+use enemy::{BattleEnemy, Enemy, EnemyDeadEvent, EnemyPlugin};
 use inventory::InventoryPlugin;
 use items::ItemsPlugin;
 use player::{spawn_player, Player, PlayerPlugin, PlayerResources, PlayerState};
@@ -61,13 +61,7 @@ impl Plugin for GamePlugin {
         )
         .add_systems(Update, battle_end_check.run_if(in_state(GameState::Battle)))
         .add_systems(Update, pickup_end_check.run_if(in_state(GameState::Pickup)))
-        .add_systems(
-            OnTransition {
-                exited: GameState::Running,
-                entered: GameState::Paused,
-            },
-            move_camera_default,
-        )
+        .add_systems(OnEnter(GameState::Paused), move_camera_default)
         .add_systems(Update, game_pause.run_if(state_exists::<GameState>));
     }
 }

@@ -22,9 +22,13 @@ impl Plugin for PlayerPlugin {
             .add_systems(OnEnter(PlayerState::Run), player_start_run)
             .add_systems(OnEnter(PlayerState::Attack), player_start_attack)
             .add_systems(OnEnter(PlayerState::Dead), player_start_dead)
+            .add_systems(Update, player_run.run_if(in_state(GameState::Running)))
             .add_systems(
                 Update,
-                (player_run, camera_follow_player).run_if(in_state(GameState::Running)),
+                camera_follow_player.run_if(
+                    in_state(GameState::Running)
+                        .or_else(in_state(GameState::Battle).or_else(in_state(GameState::Pickup))),
+                ),
             )
             .add_systems(
                 Update,
