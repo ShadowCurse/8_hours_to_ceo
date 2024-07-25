@@ -19,8 +19,12 @@ impl Plugin for PlayerPlugin {
 #[derive(Resource, Debug)]
 pub struct PlayerResources {
     idle_texture: Handle<Image>,
-    idle_atlas: TextureAtlas,
-    idle_animation_config: AnimationConfig,
+    run_texture: Handle<Image>,
+    attack_texture: Handle<Image>,
+    dead_texture: Handle<Image>,
+
+    texture_atlas: TextureAtlas,
+    animation_config: AnimationConfig,
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -35,19 +39,25 @@ fn prepare_player_resources(
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     let idle_texture = asset_server.load("player/alex_idle_sheet.png");
-    let idle_texture_layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 6, 1, None, None);
-    let idle_atlas_handle = texture_atlas_layouts.add(idle_texture_layout);
-    let idle_animation_config = AnimationConfig::new(1, 5, 10);
+    let run_texture = asset_server.load("player/alex_run_sheet.png");
+    let attack_texture = asset_server.load("player/alex_attack_sheet.png");
+    let dead_texture = asset_server.load("player/alex_dead_sheet.png");
 
-    let idle_atlas = TextureAtlas {
-        layout: idle_atlas_handle,
-        index: idle_animation_config.first_sprite_index,
+    let texture_layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 6, 1, None, None);
+    let atlas_handle = texture_atlas_layouts.add(texture_layout);
+    let animation_config = AnimationConfig::new(1, 5, 10);
+    let texture_atlas = TextureAtlas {
+        layout: atlas_handle,
+        index: animation_config.first_sprite_index,
     };
 
     commands.insert_resource(PlayerResources {
         idle_texture,
-        idle_atlas,
-        idle_animation_config,
+        run_texture,
+        attack_texture,
+        dead_texture,
+        texture_atlas,
+        animation_config,
     });
 }
 
@@ -60,11 +70,11 @@ pub fn spawn_player<'a>(
     commands.spawn((
         SpriteBundle {
             transform,
-            texture: player_resources.idle_texture.clone(),
+            texture: player_resources.run_texture.clone(),
             ..default()
         },
-        player_resources.idle_atlas.clone(),
-        player_resources.idle_animation_config.clone(),
+        player_resources.texture_atlas.clone(),
+        player_resources.animation_config.clone(),
         Player,
         PlayerSpeed(0.1),
         Health(100.0),
