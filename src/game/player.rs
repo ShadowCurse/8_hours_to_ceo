@@ -143,12 +143,13 @@ pub fn spawn_player<'a>(
         AttackSpeed::new(0.5),
         Defense(0.0),
         render_layer,
+        StateScoped(GlobalState::InGame),
     ))
 }
 
 fn player_start_idle(
     player_resources: Res<PlayerResources>,
-    mut player: Query<(&mut AnimationConfig, &mut Handle<Image>, &mut TextureAtlas)>,
+    mut player: Query<(&mut AnimationConfig, &mut Handle<Image>, &mut TextureAtlas), With<Player>>,
 ) {
     let Ok((mut config, mut texture, mut atlas)) = player.get_single_mut() else {
         return;
@@ -161,7 +162,7 @@ fn player_start_idle(
 
 fn player_start_run(
     player_resources: Res<PlayerResources>,
-    mut player: Query<(&mut AnimationConfig, &mut Handle<Image>, &mut TextureAtlas)>,
+    mut player: Query<(&mut AnimationConfig, &mut Handle<Image>, &mut TextureAtlas), With<Player>>,
 ) {
     let Ok((mut config, mut texture, mut atlas)) = player.get_single_mut() else {
         return;
@@ -175,7 +176,7 @@ fn player_start_run(
 
 fn player_start_attack(
     player_resources: Res<PlayerResources>,
-    mut player: Query<(&mut AnimationConfig, &mut Handle<Image>, &mut TextureAtlas)>,
+    mut player: Query<(&mut AnimationConfig, &mut Handle<Image>, &mut TextureAtlas), With<Player>>,
 ) {
     let Ok((mut config, mut texture, mut atlas)) = player.get_single_mut() else {
         return;
@@ -188,7 +189,7 @@ fn player_start_attack(
 
 fn player_start_dead(
     player_resources: Res<PlayerResources>,
-    mut player: Query<(&mut AnimationConfig, &mut Handle<Image>, &mut TextureAtlas)>,
+    mut player: Query<(&mut AnimationConfig, &mut Handle<Image>, &mut TextureAtlas), With<Player>>,
 ) {
     let Ok((mut config, mut texture, mut atlas)) = player.get_single_mut() else {
         return;
