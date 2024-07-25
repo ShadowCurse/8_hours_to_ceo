@@ -3,9 +3,9 @@ use bevy::prelude::*;
 use crate::{
     game::{
         circle_sectors::Sectors,
-        inventory::{Inventory, InventoryUpdate},
+        inventory::{Inventory, InventoryUpdateEvent},
         items::Items,
-        spells::{CastSpell, Spells},
+        spells::{CastSpellEvent, Spells},
         GameImage, GameState,
     },
     GlobalState,
@@ -542,14 +542,14 @@ fn backpack_items_button_system(
         (&BackpackItemId, &Interaction, &mut BackgroundColor),
         Changed<Interaction>,
     >,
-    mut event_writer: EventWriter<InventoryUpdate>,
+    mut event_writer: EventWriter<InventoryUpdateEvent>,
 ) {
     for (item_id, interaction, mut color) in interaction_query.iter_mut() {
         match *interaction {
             Interaction::Pressed => {
                 *color = ui_style.btn_color_pressed.into();
                 inventory.equip_item(item_id.0 as usize);
-                event_writer.send(InventoryUpdate);
+                event_writer.send(InventoryUpdateEvent);
             }
             Interaction::Hovered => {
                 *color = ui_style.btn_color_hover.into();
@@ -570,7 +570,7 @@ fn active_spells_button_system(
         (&ActiveSpellId, &Interaction, &mut BackgroundColor),
         Changed<Interaction>,
     >,
-    mut event_writer: EventWriter<CastSpell>,
+    mut event_writer: EventWriter<CastSpellEvent>,
 ) {
     for (spell_id, interaction, mut color) in interaction_query.iter_mut() {
         let on_cooldown = || {
@@ -588,7 +588,7 @@ fn active_spells_button_system(
                 Interaction::Pressed => {
                     *color = ui_style.btn_color_pressed.into();
                     if let Some(spell_idx) = inventory.get_spell_idx(spell_id.0 as usize) {
-                        event_writer.send(CastSpell(spell_idx));
+                        event_writer.send(CastSpellEvent(spell_idx));
                     }
                 }
                 Interaction::Hovered => {
@@ -609,14 +609,14 @@ fn backpack_spells_button_system(
         (&BackpackSpellId, &Interaction, &mut BackgroundColor),
         Changed<Interaction>,
     >,
-    mut event_writer: EventWriter<InventoryUpdate>,
+    mut event_writer: EventWriter<InventoryUpdateEvent>,
 ) {
     for (spell_id, interaction, mut color) in interaction_query.iter_mut() {
         match *interaction {
             Interaction::Pressed => {
                 *color = ui_style.btn_color_pressed.into();
                 inventory.equip_spell(spell_id.0 as usize);
-                event_writer.send(InventoryUpdate);
+                event_writer.send(InventoryUpdateEvent);
             }
             Interaction::Hovered => {
                 *color = ui_style.btn_color_hover.into();
@@ -720,7 +720,7 @@ fn update_inventory(
             Without<ActiveSpellId>,
         ),
     >,
-    mut event_reader: EventReader<InventoryUpdate>,
+    mut event_reader: EventReader<InventoryUpdateEvent>,
 ) {
     for _ in event_reader.read() {
         for (i, item) in inventory.active_items.iter().enumerate() {
@@ -771,7 +771,7 @@ fn update_sectors(
     inventory: Res<Inventory>,
     mut sectors_buttons: Query<(&BackpackSectorId, &mut Visibility), With<Button>>,
     mut sectors_texts: Query<(&BackpackSectorId, &mut Text)>,
-    mut event_reader: EventReader<InventoryUpdate>,
+    mut event_reader: EventReader<InventoryUpdateEvent>,
 ) {
     for _ in event_reader.read() {
         for (button_sector_id, mut button_visibility) in sectors_buttons.iter_mut() {

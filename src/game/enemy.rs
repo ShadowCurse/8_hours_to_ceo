@@ -6,11 +6,11 @@ use rand::Rng;
 use crate::GlobalState;
 
 use super::{
-    animation::{AllAnimations, AnimationConfig, AnimationFinished},
+    animation::{AllAnimations, AnimationConfig, AnimationFinishedEvent},
     circle_sectors::{SectorIdx, SectorPosition, Sectors},
-    inventory::{Inventory, InventoryUpdate},
+    inventory::{Inventory, InventoryUpdateEvent},
     items::{ItemIdx, Items},
-    player::DamagePlayer,
+    player::DamagePlayerEvent,
     spells::{SpellIdx, Spells},
     AttackSpeed, Damage, Defense, GameState, Health,
 };
@@ -19,7 +19,7 @@ pub struct EnemyPlugin;
 
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<DamageEnemy>()
+        app.add_event::<DamageEnemyEvent>()
             .add_event::<EnemyDeadEvent>()
             .add_systems(Startup, prepare_enemy_resources)
             .add_systems(
@@ -37,7 +37,7 @@ impl Plugin for EnemyPlugin {
 }
 
 #[derive(Event, Debug, Clone, PartialEq)]
-pub struct DamageEnemy(pub f32);
+pub struct DamageEnemyEvent(pub f32);
 
 #[derive(Event, Debug, Clone, PartialEq)]
 pub struct EnemyDeadEvent;
@@ -330,8 +330,8 @@ fn enemy_attack(
 
 fn on_attack_finish(
     enemy: Query<&Damage, With<BattleEnemy>>,
-    mut event_reader: EventReader<AnimationFinished>,
-    mut event_writer: EventWriter<DamagePlayer>,
+    mut event_reader: EventReader<AnimationFinishedEvent>,
+    mut event_writer: EventWriter<DamagePlayerEvent>,
 ) {
     let Ok(damage) = enemy.get_single() else {
         return;
@@ -339,14 +339,14 @@ fn on_attack_finish(
 
     for e in event_reader.read() {
         if e.0 == AllAnimations::BossAttack {
-            event_writer.send(DamagePlayer(damage.0));
+            event_writer.send(DamagePlayerEvent(damage.0));
         }
     }
 }
 
 fn enemy_take_damage(
     mut enemy: Query<(&Defense, &mut Health), With<BattleEnemy>>,
-    mut event_reader: EventReader<DamageEnemy>,
+    mut event_reader: EventReader<DamageEnemyEvent>,
 ) {
     let Ok((enemy_defense, mut enemy_health)) = enemy.get_single_mut() else {
         return;
@@ -377,7 +377,7 @@ fn enemy_check_dead(
         With<BattleEnemy>,
     >,
     mut inventory: ResMut<Inventory>,
-    mut event_writer: EventWriter<InventoryUpdate>,
+    mut event_writer: EventWriter<InventoryUpdateEvent>,
 ) {
     let Ok((enemy_entity, enemy_health, enemy_idx, mut config, mut texture, mut atlas)) =
         enemy.get_single_mut()
@@ -426,14 +426,14 @@ fn enemy_check_dead(
             }
         }
 
-        event_writer.send(InventoryUpdate);
+        event_writer.send(InventoryUpdateEvent);
     }
 }
 
 fn on_dead_finish(
     enemy: Query<Entity, With<BattleEnemyDead>>,
     mut commands: Commands,
-    mut event_reader: EventReader<AnimationFinished>,
+    mut event_reader: EventReader<AnimationFinishedEvent>,
     mut event_writer: EventWriter<EnemyDeadEvent>,
 ) {
     let Ok(entity) = enemy.get_single() else {

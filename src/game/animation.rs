@@ -8,7 +8,7 @@ pub struct AnimationPlugin;
 
 impl Plugin for AnimationPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<AnimationFinished>().add_systems(
+        app.add_event::<AnimationFinishedEvent>().add_systems(
             Update,
             execute_animations
                 .run_if(in_state(GameState::Running).or_else(in_state(GameState::Battle))),
@@ -17,7 +17,7 @@ impl Plugin for AnimationPlugin {
 }
 
 #[derive(Event, Debug, Clone)]
-pub struct AnimationFinished(pub AllAnimations);
+pub struct AnimationFinishedEvent(pub AllAnimations);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AllAnimations {
@@ -67,7 +67,7 @@ impl AnimationConfig {
 fn execute_animations(
     time: Res<Time>,
     mut query: Query<(&mut AnimationConfig, &mut TextureAtlas)>,
-    mut event_writer: EventWriter<AnimationFinished>,
+    mut event_writer: EventWriter<AnimationFinishedEvent>,
 ) {
     for (mut config, mut atlas) in &mut query {
         config.frame_timer.tick(time.delta());
@@ -76,7 +76,7 @@ fn execute_animations(
             if atlas.index == config.last_sprite_index {
                 atlas.index = config.first_sprite_index;
                 if config.send_finish_event {
-                    event_writer.send(AnimationFinished(config.animation));
+                    event_writer.send(AnimationFinishedEvent(config.animation));
                 }
             } else {
                 atlas.index += 1;

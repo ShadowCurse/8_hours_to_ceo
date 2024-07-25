@@ -10,7 +10,7 @@ use crate::GlobalState;
 
 use super::{
     circle_sectors::{SectorIdx, SectorPosition, Sectors},
-    inventory::{Inventory, InventoryUpdate},
+    inventory::{Inventory, InventoryUpdateEvent},
     items::{ItemIdx, Items},
     spells::{SpellIdx, Spells},
     GameState,
@@ -20,14 +20,14 @@ pub struct ChestsPlugin;
 
 impl Plugin for ChestsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<ChestOppened>()
+        app.add_event::<ChestOppenedEvent>()
             .add_systems(Startup, prepare_chest_resources)
             .add_systems(Update, chest_open_check.run_if(in_state(GameState::Pickup)));
     }
 }
 
 #[derive(Event, Debug, Clone, PartialEq)]
-pub struct ChestOppened;
+pub struct ChestOppenedEvent;
 
 #[derive(Resource, Debug, Clone, PartialEq, Eq)]
 pub struct ChestResources {
@@ -150,8 +150,8 @@ fn chest_open_check(
     chest: Query<(Entity, &ChestIdx), With<InteractedChest>>,
     mut commands: Commands,
     mut inventory: ResMut<Inventory>,
-    mut inventory_update_event: EventWriter<InventoryUpdate>,
-    mut chest_openned_event: EventWriter<ChestOppened>,
+    mut inventory_update_event: EventWriter<InventoryUpdateEvent>,
+    mut chest_openned_event: EventWriter<ChestOppenedEvent>,
 ) {
     let Ok((chest_entity, chest_idx)) = chest.get_single() else {
         return;
@@ -191,6 +191,6 @@ fn chest_open_check(
         }
     }
 
-    inventory_update_event.send(InventoryUpdate);
-    chest_openned_event.send(ChestOppened);
+    inventory_update_event.send(InventoryUpdateEvent);
+    chest_openned_event.send(ChestOppenedEvent);
 }

@@ -3,9 +3,9 @@ use bevy::{ecs::system::EntityCommands, prelude::*, render::view::RenderLayers};
 use crate::GlobalState;
 
 use super::{
-    animation::{AllAnimations, AnimationConfig, AnimationFinished},
-    chest::ChestOppened,
-    enemy::{EnemyDeadEvent, DamageEnemy},
+    animation::{AllAnimations, AnimationConfig, AnimationFinishedEvent},
+    chest::ChestOppenedEvent,
+    enemy::{DamageEnemyEvent, EnemyDeadEvent},
     inventory::Inventory,
     items::Items,
     AttackSpeed, Damage, Defense, GameCamera, GameState, Health,
@@ -16,7 +16,7 @@ pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_sub_state::<PlayerState>()
-            .add_event::<DamagePlayer>()
+            .add_event::<DamagePlayerEvent>()
             .add_systems(Startup, prepare_player_resources)
             .add_systems(OnEnter(PlayerState::Idle), player_start_idle)
             .add_systems(OnEnter(PlayerState::Run), player_start_run)
@@ -41,7 +41,7 @@ impl Plugin for PlayerPlugin {
 }
 
 #[derive(Event, Debug, Clone, PartialEq)]
-pub struct DamagePlayer(pub f32);
+pub struct DamagePlayerEvent(pub f32);
 
 #[derive(Resource, Debug)]
 pub struct PlayerResources {
@@ -232,8 +232,8 @@ fn on_attack_finish(
     items: Res<Items>,
     inventory: Res<Inventory>,
     player: Query<&Damage, With<Player>>,
-    mut event_reader: EventReader<AnimationFinished>,
-    mut event_writer: EventWriter<DamageEnemy>,
+    mut event_reader: EventReader<AnimationFinishedEvent>,
+    mut event_writer: EventWriter<DamageEnemyEvent>,
     mut player_state: ResMut<NextState<PlayerState>>,
 ) {
     let Ok(player_damage) = player.get_single() else {
@@ -255,7 +255,7 @@ fn on_attack_finish(
                     })
                     .sum::<f32>();
 
-            event_writer.send(DamageEnemy(damage));
+            event_writer.send(DamageEnemyEvent(damage));
             player_state.set(PlayerState::Idle);
         }
     }
@@ -265,7 +265,7 @@ fn player_take_damage(
     items: Res<Items>,
     inventory: Res<Inventory>,
     mut player: Query<(&Defense, &mut Health), With<Player>>,
-    mut event_read: EventReader<DamagePlayer>,
+    mut event_read: EventReader<DamagePlayerEvent>,
 ) {
     let Ok((player_defense, mut player_health)) = player.get_single_mut() else {
         return;
@@ -320,7 +320,7 @@ fn battle_end_check(
 }
 
 fn pickup_end_check(
-    mut event_reader: EventReader<ChestOppened>,
+    mut event_reader: EventReader<ChestOppenedEvent>,
     mut player_state: ResMut<NextState<PlayerState>>,
 ) {
     for _ in event_reader.read() {

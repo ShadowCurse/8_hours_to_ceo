@@ -25,7 +25,7 @@ pub mod player;
 pub mod spells;
 
 use animation::AnimationPlugin;
-use chest::{Chest, ChestOppened, ChestsPlugin, InteractedChest};
+use chest::{Chest, ChestOppenedEvent, ChestsPlugin, InteractedChest};
 use circle_sectors::{position_to_sector_position, SectorPosition, SectorsPlugin};
 use cursor::CursorPlugin;
 use enemy::{BattleEnemy, EnemyDeadEvent, Enemy, EnemyPlugin};
@@ -304,7 +304,7 @@ fn initiate_pickup(
 }
 
 fn pickup_end_check(
-    mut event_reader: EventReader<ChestOppened>,
+    mut event_reader: EventReader<ChestOppenedEvent>,
     mut game_state: ResMut<NextState<GameState>>,
 ) {
     for _ in event_reader.read() {

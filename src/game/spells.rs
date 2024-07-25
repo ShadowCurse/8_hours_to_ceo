@@ -8,7 +8,7 @@ pub struct SpellsPlugin;
 
 impl Plugin for SpellsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<CastSpell>()
+        app.add_event::<CastSpellEvent>()
             .add_systems(Startup, prepare_spells)
             .add_systems(Update, cooldown_spells.run_if(state_exists::<GameState>))
             .add_systems(
@@ -22,7 +22,7 @@ impl Plugin for SpellsPlugin {
 pub struct SpellIdx(pub usize);
 
 #[derive(Event, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct CastSpell(pub SpellIdx);
+pub struct CastSpellEvent(pub SpellIdx);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Lightning {
@@ -110,7 +110,7 @@ fn cooldown_spells(time: Res<Time>, mut spells: ResMut<Spells>) {
 fn cast_spell(
     mut commands: Commands,
     mut spells: ResMut<Spells>,
-    mut event_reader: EventReader<CastSpell>,
+    mut event_reader: EventReader<CastSpellEvent>,
 ) {
     for e in event_reader.read() {
         let spell_info = &mut spells.0[e.0 .0];

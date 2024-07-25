@@ -36,7 +36,7 @@ pub struct SectorsPlugin;
 
 impl Plugin for SectorsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<SectorPlaced>()
+        app.add_event::<SectorPlacedEvent>()
             .add_systems(Startup, prepare_sector_resources)
             .add_systems(OnEnter(GameState::Preparing), spawn_sectors)
             .add_systems(
@@ -59,7 +59,7 @@ pub struct SectorResources {
 }
 
 #[derive(Event, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct SectorPlaced;
+pub struct SectorPlacedEvent;
 
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SectorIdx(pub usize);
@@ -278,7 +278,7 @@ fn sector_update_selected(
     buttons: Query<&BackpackSectorId>,
     mouse_input: Res<ButtonInput<MouseButton>>,
     mut s: Query<(&SectorPosition, &mut SectorIdx, &mut Handle<ColorMaterial>)>,
-    mut event_writer: EventWriter<SectorPlaced>,
+    mut event_writer: EventWriter<SectorPlacedEvent>,
 ) {
     let Some(cursor_sector_position) = cursor_sector.0 else {
         return;
@@ -303,7 +303,7 @@ fn sector_update_selected(
             *material = to_be_placed_sector_info.material.clone();
             if mouse_input.just_pressed(MouseButton::Left) {
                 *current_sector_idx = sector_idx;
-                event_writer.send(SectorPlaced);
+                event_writer.send(SectorPlacedEvent);
             }
             break;
         }
