@@ -29,7 +29,7 @@ use animation::AnimationPlugin;
 use chest::{Chest, ChestIdx, Chests, ChestsPlugin, InteractedChest};
 use circle_sectors::{position_to_sector_position, SectorPosition, Sectors, SectorsPlugin};
 use cursor::CursorPlugin;
-use enemy::{BattleEnemy, Enemies, Enemy, EnemyIdx, EnemyPlugin};
+use enemy::{BattleEnemy, BattleEnemyDead, Enemies, Enemy, EnemyIdx, EnemyPlugin};
 use inventory::{Inventory, InventoryPlugin, InventoryUpdate};
 use items::{Items, ItemsPlugin};
 use player::{spawn_player, Player, PlayerPlugin, PlayerResources, PlayerState};
@@ -265,83 +265,11 @@ fn initiate_battle(
 }
 
 fn battle_end_check(
-    items: Res<Items>,
-    spells: Res<Spells>,
-    enemies: Res<Enemies>,
-    sectors: Res<Sectors>,
-    enemy: Query<(Entity, &Health, &EnemyIdx), (With<BattleEnemy>, Without<Player>)>,
-    mut commands: Commands,
-    mut inventory: ResMut<Inventory>,
-    mut event_writer: EventWriter<InventoryUpdate>,
     mut game_state: ResMut<NextState<GameState>>,
-    mut player_state: ResMut<NextState<PlayerState>>,
-    mut player: Query<(&mut Health, &mut AttackSpeed), (With<Player>, Without<BattleEnemy>)>,
+    mut event_reader: EventReader<BattleEnemyDead>,
 ) {
-    let Ok((mut player_health, mut player_attack_speed)) = player.get_single_mut() else {
-        return;
-    };
-
-    let Ok((enemy_entity, enemy_health, enemy_idx)) = enemy.get_single() else {
-        return;
-    };
-
-    if enemy_health.0 <= 0.0 {
-        player_attack_speed.0.reset();
-        commands
-            .get_entity(enemy_entity)
-            .unwrap()
-            .despawn_recursive();
-
-        let enemy_info = &enemies[*enemy_idx];
-
-        let mut thread_rng = rand::thread_rng();
-
-        if !enemy_info.items.is_empty() {
-            let random_item_idx = enemy_info.items[thread_rng.gen_range(0..enemy_info.items.len())];
-            let item = &items[random_item_idx];
-            if thread_rng.gen_bool(item.drop_rate as f64) {
-                inventory.backpack_items.push(random_item_idx);
-            }
-        }
-
-        if !enemy_info.spells.is_empty() {
-            let random_spell_idx =
-                enemy_info.spells[thread_rng.gen_range(0..enemy_info.spells.len())];
-            let spell = &spells[random_spell_idx];
-            if thread_rng.gen_bool(spell.drop_rate as f64) {
-                inventory.backpack_spells.push(random_spell_idx);
-            }
-        }
-
-        if !enemy_info.sectors.is_empty() {
-            let random_sector_idx =
-                enemy_info.sectors[thread_rng.gen_range(0..enemy_info.sectors.len())];
-            let sector = &sectors[random_sector_idx];
-            if thread_rng.gen_bool(sector.drop_rate as f64) {
-                inventory.backpack_sectors.push(random_sector_idx);
-            }
-        }
-
-        let heal = inventory
-            .active_items
-            .iter()
-            .map(|item_idx| {
-                if let Some(i) = item_idx {
-                    items[*i].item.heal()
-                } else {
-                    0.0
-                }
-            })
-            .sum::<f32>();
-        player_health.0 += heal;
-
-        event_writer.send(InventoryUpdate);
+    for _ in event_reader.read() {
         game_state.set(GameState::Running);
-        player_state.set(PlayerState::Run);
-    }
-
-    if player_health.0 == 0.0 {
-        println!("Player died...");
     }
 }
 

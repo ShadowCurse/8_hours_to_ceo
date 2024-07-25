@@ -4,14 +4,16 @@ use bevy::{
     ecs::system::EntityCommands, prelude::*, render::view::RenderLayers,
     sprite::MaterialMesh2dBundle,
 };
+use rand::Rng;
 
 use crate::GlobalState;
 
 use super::{
-    circle_sectors::{SectorIdx, SectorPosition},
-    items::ItemIdx,
+    circle_sectors::{SectorIdx, SectorPosition, Sectors},
+    inventory::{Inventory, InventoryUpdate},
+    items::{ItemIdx, Items},
     player::DamagePlayer,
-    spells::SpellIdx,
+    spells::{SpellIdx, Spells},
     AttackSpeed, Damage, Defense, GameState, Health,
 };
 
@@ -20,16 +22,21 @@ pub struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<DamageEnemy>()
+            .add_event::<BattleEnemyDead>()
             .add_systems(Startup, prepare_enemy_resources)
             .add_systems(
                 Update,
-                (enemy_attack, enemy_take_damage).run_if(in_state(GameState::Battle)),
+                (enemy_attack, enemy_take_damage, enemy_check_dead)
+                    .run_if(in_state(GameState::Battle)),
             );
     }
 }
 
 #[derive(Event, Debug, Clone, PartialEq)]
 pub struct DamageEnemy(pub f32);
+
+#[derive(Event, Debug, Clone, PartialEq)]
+pub struct BattleEnemyDead;
 
 #[derive(Resource, Debug, Clone, PartialEq, Eq)]
 pub struct EnemyResources {
@@ -178,5 +185,61 @@ fn enemy_take_damage(
         let damage = e.0 * (1.0 - enemy_defense.0);
         println!("enemy takes: {damage} damage");
         enemy_health.0 -= damage;
+    }
+}
+
+fn enemy_check_dead(
+    items: Res<Items>,
+    spells: Res<Spells>,
+    enemies: Res<Enemies>,
+    sectors: Res<Sectors>,
+    enemy: Query<(Entity, &Health, &EnemyIdx), With<BattleEnemy>>,
+    mut commands: Commands,
+    mut inventory: ResMut<Inventory>,
+    mut inventory_update_event: EventWriter<InventoryUpdate>,
+    mut battle_enemy_dead_event: EventWriter<BattleEnemyDead>,
+) {
+    let Ok((enemy_entity, enemy_health, enemy_idx)) = enemy.get_single() else {
+        return;
+    };
+
+    if enemy_health.0 <= 0.0 {
+        commands
+            .get_entity(enemy_entity)
+            .unwrap()
+            .despawn_recursive();
+
+        let enemy_info = &enemies[*enemy_idx];
+
+        let mut thread_rng = rand::thread_rng();
+
+        if !enemy_info.items.is_empty() {
+            let random_item_idx = enemy_info.items[thread_rng.gen_range(0..enemy_info.items.len())];
+            let item = &items[random_item_idx];
+            if thread_rng.gen_bool(item.drop_rate as f64) {
+                inventory.backpack_items.push(random_item_idx);
+            }
+        }
+
+        if !enemy_info.spells.is_empty() {
+            let random_spell_idx =
+                enemy_info.spells[thread_rng.gen_range(0..enemy_info.spells.len())];
+            let spell = &spells[random_spell_idx];
+            if thread_rng.gen_bool(spell.drop_rate as f64) {
+                inventory.backpack_spells.push(random_spell_idx);
+            }
+        }
+
+        if !enemy_info.sectors.is_empty() {
+            let random_sector_idx =
+                enemy_info.sectors[thread_rng.gen_range(0..enemy_info.sectors.len())];
+            let sector = &sectors[random_sector_idx];
+            if thread_rng.gen_bool(sector.drop_rate as f64) {
+                inventory.backpack_sectors.push(random_sector_idx);
+            }
+        }
+
+        inventory_update_event.send(InventoryUpdate);
+        battle_enemy_dead_event.send(BattleEnemyDead);
     }
 }

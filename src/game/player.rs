@@ -4,7 +4,7 @@ use crate::GlobalState;
 
 use super::{
     animation::{AllAnimations, AnimationConfig, AnimationFinished},
-    enemy::DamageEnemy,
+    enemy::{BattleEnemyDead, DamageEnemy},
     inventory::Inventory,
     items::Items,
     AttackSpeed, Damage, Defense, GameCamera, GameState, Health,
@@ -27,7 +27,12 @@ impl Plugin for PlayerPlugin {
             )
             .add_systems(
                 Update,
-                (player_attack, on_attack_finish, player_take_damage)
+                (
+                    player_attack,
+                    on_attack_finish,
+                    player_take_damage,
+                    battle_end_check,
+                )
                     .run_if(in_state(GameState::Battle)),
             );
     }
@@ -281,6 +286,34 @@ fn player_take_damage(
         let damage = e.0 * (1.0 - player_defense);
         println!("player takes: {damage} damage");
         player_health.0 -= damage;
+    }
+}
+
+fn battle_end_check(
+    items: Res<Items>,
+    inventory: Res<Inventory>,
+    mut player: Query<(&mut Health, &mut AttackSpeed), With<Player>>,
+    mut player_state: ResMut<NextState<PlayerState>>,
+    mut event_reader: EventReader<BattleEnemyDead>,
+) {
+    let Ok((mut player_health, mut player_attack_speed)) = player.get_single_mut() else {
+        return;
+    };
+    for _ in event_reader.read() {
+        player_attack_speed.0.reset();
+        let heal = inventory
+            .active_items
+            .iter()
+            .map(|item_idx| {
+                if let Some(i) = item_idx {
+                    items[*i].item.heal()
+                } else {
+                    0.0
+                }
+            })
+            .sum::<f32>();
+        player_health.0 += heal;
+        player_state.set(PlayerState::Run);
     }
 }
 
