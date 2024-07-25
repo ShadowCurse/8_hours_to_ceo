@@ -10,7 +10,8 @@ impl Plugin for AnimationPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            execute_animations.run_if(in_state(GameState::Running)),
+            execute_animations
+                .run_if(in_state(GameState::Running).or_else(in_state(GameState::Battle))),
         );
     }
 }
