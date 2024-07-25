@@ -10,6 +10,7 @@ use crate::GlobalState;
 use super::{
     circle_sectors::{SectorIdx, SectorPosition},
     items::ItemIdx,
+    player::DamagePlayer,
     spells::SpellIdx,
     AttackSpeed, Damage, Defense, GameState, Health,
 };
@@ -20,7 +21,10 @@ impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<DamageEnemy>()
             .add_systems(Startup, prepare_enemy_resources)
-            .add_systems(Update, damage_enemy.run_if(in_state(GameState::Battle)));
+            .add_systems(
+                Update,
+                (enemy_attack, enemy_take_damage).run_if(in_state(GameState::Battle)),
+            );
     }
 }
 
@@ -146,7 +150,23 @@ pub fn spawn_enemy<'a>(
     ))
 }
 
-fn damage_enemy(
+fn enemy_attack(
+    time: Res<Time>,
+    mut enemy: Query<(&Damage, &mut AttackSpeed), With<BattleEnemy>>,
+    mut event_writer: EventWriter<DamagePlayer>,
+) {
+    let Ok((damage, mut attack_speed)) = enemy.get_single_mut() else {
+        return;
+    };
+
+    attack_speed.0.tick(time.delta());
+
+    if attack_speed.0.finished() {
+        event_writer.send(DamagePlayer(damage.0));
+    }
+}
+
+fn enemy_take_damage(
     mut enemy: Query<(&Defense, &mut Health), With<BattleEnemy>>,
     mut event_reader: EventReader<DamageEnemy>,
 ) {
@@ -156,6 +176,7 @@ fn damage_enemy(
 
     for e in event_reader.read() {
         let damage = e.0 * (1.0 - enemy_defense.0);
+        println!("enemy takes: {damage} damage");
         enemy_health.0 -= damage;
     }
 }

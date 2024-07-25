@@ -60,10 +60,7 @@ impl Plugin for GamePlugin {
             (on_window_resize, initiate_battle, initiate_pickup)
                 .run_if(in_state(GameState::Running)),
         )
-        .add_systems(
-            Update,
-            (battle_auto_attack, battle_end_check).run_if(in_state(GameState::Battle)),
-        )
+        .add_systems(Update, battle_end_check.run_if(in_state(GameState::Battle)))
         .add_systems(Update, (pickup_end).run_if(in_state(GameState::Pickup)))
         .add_systems(
             OnTransition {
@@ -264,42 +261,6 @@ fn initiate_battle(
             game_sate.set(GameState::Battle);
             player_state.set(PlayerState::Idle);
         }
-    }
-}
-
-fn battle_auto_attack(
-    time: Res<Time>,
-    items: Res<Items>,
-    inventory: Res<Inventory>,
-    mut player: Query<(&Defense, &mut Health), (With<Player>, Without<BattleEnemy>)>,
-    mut enemy: Query<(&Damage, &mut AttackSpeed), (With<BattleEnemy>, Without<Player>)>,
-) {
-    let Ok((player_defense, mut player_health)) = player.get_single_mut() else {
-        return;
-    };
-
-    let Ok((enemy_damage, mut enemy_attack_speed)) = enemy.get_single_mut() else {
-        return;
-    };
-
-    enemy_attack_speed.0.tick(time.delta());
-
-    if enemy_attack_speed.0.finished() {
-        let player_defense = player_defense.0
-            + inventory
-                .active_items
-                .iter()
-                .map(|item_idx| {
-                    if let Some(i) = item_idx {
-                        items[*i].item.add_defense()
-                    } else {
-                        0.0
-                    }
-                })
-                .sum::<f32>();
-
-        let damage = enemy_damage.0 * (1.0 - player_defense);
-        player_health.0 -= damage;
     }
 }
 

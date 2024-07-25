@@ -15,6 +15,7 @@ pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_sub_state::<PlayerState>()
+            .add_event::<DamagePlayer>()
             .add_systems(Startup, prepare_player_resources)
             .add_systems(OnEnter(PlayerState::Idle), player_start_idle)
             .add_systems(OnEnter(PlayerState::Run), player_start_run)
@@ -26,10 +27,14 @@ impl Plugin for PlayerPlugin {
             )
             .add_systems(
                 Update,
-                (player_attack, on_attack_finish).run_if(in_state(GameState::Battle)),
+                (player_attack, on_attack_finish, player_take_damage)
+                    .run_if(in_state(GameState::Battle)),
             );
     }
 }
+
+#[derive(Event, Debug, Clone, PartialEq)]
+pub struct DamagePlayer(pub f32);
 
 #[derive(Resource, Debug)]
 pub struct PlayerResources {
@@ -125,7 +130,7 @@ pub fn spawn_player<'a>(
         player_resources.texture_atlas.clone(),
         player_resources.idle_animation_config.clone(),
         Player,
-        PlayerSpeed(0.1),
+        PlayerSpeed(0.5),
         Health(100.0),
         Damage(5.0),
         AttackSpeed::new(0.5),
@@ -246,6 +251,36 @@ fn on_attack_finish(
             event_writer.send(DamageEnemy(damage));
             player_state.set(PlayerState::Idle);
         }
+    }
+}
+
+fn player_take_damage(
+    items: Res<Items>,
+    inventory: Res<Inventory>,
+    mut player: Query<(&Defense, &mut Health), With<Player>>,
+    mut event_read: EventReader<DamagePlayer>,
+) {
+    let Ok((player_defense, mut player_health)) = player.get_single_mut() else {
+        return;
+    };
+
+    for e in event_read.read() {
+        let player_defense = player_defense.0
+            + inventory
+                .active_items
+                .iter()
+                .map(|item_idx| {
+                    if let Some(i) = item_idx {
+                        items[*i].item.add_defense()
+                    } else {
+                        0.0
+                    }
+                })
+                .sum::<f32>();
+
+        let damage = e.0 * (1.0 - player_defense);
+        println!("player takes: {damage} damage");
+        player_health.0 -= damage;
     }
 }
 
