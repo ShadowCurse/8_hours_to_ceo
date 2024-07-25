@@ -3,7 +3,11 @@ use bevy::{ecs::system::EntityCommands, prelude::*, render::view::RenderLayers};
 use crate::GlobalState;
 
 use super::{
-    animation::AnimationConfig, AttackSpeed, Damage, Defense, GameCamera, GameState, Health,
+    animation::{AllAnimations, AnimationConfig, AnimationFinished},
+    enemy::DamageEnemy,
+    inventory::Inventory,
+    items::Items,
+    AttackSpeed, Damage, Defense, GameCamera, GameState, Health,
 };
 
 pub struct PlayerPlugin;
@@ -19,6 +23,10 @@ impl Plugin for PlayerPlugin {
             .add_systems(
                 Update,
                 (player_run, camera_follow_player).run_if(in_state(GameState::Running)),
+            )
+            .add_systems(
+                Update,
+                (player_attack, on_attack_finish).run_if(in_state(GameState::Battle)),
             );
     }
 }
@@ -26,12 +34,18 @@ impl Plugin for PlayerPlugin {
 #[derive(Resource, Debug)]
 pub struct PlayerResources {
     idle_texture: Handle<Image>,
+    idle_animation_config: AnimationConfig,
+
     run_texture: Handle<Image>,
+    run_animation_config: AnimationConfig,
+
     attack_texture: Handle<Image>,
+    attack_animation_config: AnimationConfig,
+
     dead_texture: Handle<Image>,
+    dead_animation_config: AnimationConfig,
 
     texture_atlas: TextureAtlas,
-    animation_config: AnimationConfig,
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -61,25 +75,38 @@ fn prepare_player_resources(
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     let idle_texture = asset_server.load("player/alex_idle_sheet.png");
+    let idle_animation_config = AnimationConfig::new(1, 5, 10, AllAnimations::PlayerIdle, false);
+
     let run_texture = asset_server.load("player/alex_run_sheet.png");
+    let run_animation_config = AnimationConfig::new(1, 5, 10, AllAnimations::PlayerRun, false);
+
     let attack_texture = asset_server.load("player/alex_attack_sheet.png");
+    let attack_animation_config = AnimationConfig::new(1, 5, 10, AllAnimations::PlayerAttack, true);
+
     let dead_texture = asset_server.load("player/alex_dead_sheet.png");
+    let dead_animation_config = AnimationConfig::new(1, 5, 10, AllAnimations::PlayerDead, true);
 
     let texture_layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 6, 1, None, None);
     let atlas_handle = texture_atlas_layouts.add(texture_layout);
-    let animation_config = AnimationConfig::new(1, 5, 10);
     let texture_atlas = TextureAtlas {
         layout: atlas_handle,
-        index: animation_config.first_sprite_index,
+        index: 1,
     };
 
     commands.insert_resource(PlayerResources {
         idle_texture,
+        idle_animation_config,
+
         run_texture,
+        run_animation_config,
+
         attack_texture,
+        attack_animation_config,
+
         dead_texture,
+        dead_animation_config,
+
         texture_atlas,
-        animation_config,
     });
 }
 
@@ -96,7 +123,7 @@ pub fn spawn_player<'a>(
             ..default()
         },
         player_resources.texture_atlas.clone(),
-        player_resources.animation_config.clone(),
+        player_resources.idle_animation_config.clone(),
         Player,
         PlayerSpeed(0.1),
         Health(100.0),
@@ -117,7 +144,7 @@ fn player_start_idle(
 
     *texture = player_resources.idle_texture.clone();
     atlas.index = config.first_sprite_index;
-    config.frame_timer = AnimationConfig::timer_from_fps(config.fps);
+    *config = player_resources.idle_animation_config.clone();
 }
 
 fn player_start_run(
@@ -131,6 +158,7 @@ fn player_start_run(
     *texture = player_resources.run_texture.clone();
     atlas.index = config.first_sprite_index;
     config.frame_timer = AnimationConfig::timer_from_fps(config.fps);
+    *config = player_resources.run_animation_config.clone();
 }
 
 fn player_start_attack(
@@ -143,7 +171,7 @@ fn player_start_attack(
 
     *texture = player_resources.attack_texture.clone();
     atlas.index = config.first_sprite_index;
-    config.frame_timer = AnimationConfig::timer_from_fps(config.fps);
+    *config = player_resources.attack_animation_config.clone();
 }
 
 fn player_start_dead(
@@ -156,7 +184,7 @@ fn player_start_dead(
 
     *texture = player_resources.dead_texture.clone();
     atlas.index = config.first_sprite_index;
-    config.frame_timer = AnimationConfig::timer_from_fps(config.fps);
+    *config = player_resources.dead_animation_config.clone();
 }
 
 fn player_run(time: Res<Time>, mut player: Query<(&PlayerSpeed, &mut Transform)>) {
@@ -170,6 +198,55 @@ fn player_run(time: Res<Time>, mut player: Query<(&PlayerSpeed, &mut Transform)>
 
     transform.translation = rotated;
     transform.rotation *= rotation;
+}
+
+fn player_attack(
+    time: Res<Time>,
+    mut player: Query<&mut AttackSpeed, With<Player>>,
+    mut player_state: ResMut<NextState<PlayerState>>,
+) {
+    let Ok(mut player_attack_speed) = player.get_single_mut() else {
+        return;
+    };
+
+    player_attack_speed.0.tick(time.delta());
+
+    if player_attack_speed.0.finished() {
+        player_state.set(PlayerState::Attack);
+    }
+}
+
+fn on_attack_finish(
+    items: Res<Items>,
+    inventory: Res<Inventory>,
+    player: Query<&Damage, With<Player>>,
+    mut event_reader: EventReader<AnimationFinished>,
+    mut event_writer: EventWriter<DamageEnemy>,
+    mut player_state: ResMut<NextState<PlayerState>>,
+) {
+    let Ok(player_damage) = player.get_single() else {
+        return;
+    };
+
+    for e in event_reader.read() {
+        if e.0 == AllAnimations::PlayerAttack {
+            let damage = player_damage.0
+                + inventory
+                    .active_items
+                    .iter()
+                    .map(|item_idx| {
+                        if let Some(i) = item_idx {
+                            items[*i].item.add_damage()
+                        } else {
+                            0.0
+                        }
+                    })
+                    .sum::<f32>();
+
+            event_writer.send(DamageEnemy(damage));
+            player_state.set(PlayerState::Idle);
+        }
+    }
 }
 
 fn camera_follow_player(

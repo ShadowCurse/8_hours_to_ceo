@@ -11,16 +11,21 @@ use super::{
     circle_sectors::{SectorIdx, SectorPosition},
     items::ItemIdx,
     spells::SpellIdx,
-    AttackSpeed, Damage, Defense, Health,
+    AttackSpeed, Damage, Defense, GameState, Health,
 };
 
 pub struct EnemyPlugin;
 
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, prepare_enemy_resources);
+        app.add_event::<DamageEnemy>()
+            .add_systems(Startup, prepare_enemy_resources)
+            .add_systems(Update, damage_enemy.run_if(in_state(GameState::Battle)));
     }
 }
+
+#[derive(Event, Debug, Clone, PartialEq)]
+pub struct DamageEnemy(pub f32);
 
 #[derive(Resource, Debug, Clone, PartialEq, Eq)]
 pub struct EnemyResources {
@@ -139,4 +144,18 @@ pub fn spawn_enemy<'a>(
         render_layer,
         StateScoped(GlobalState::InGame),
     ))
+}
+
+fn damage_enemy(
+    mut enemy: Query<(&Defense, &mut Health), With<BattleEnemy>>,
+    mut event_reader: EventReader<DamageEnemy>,
+) {
+    let Ok((enemy_defense, mut enemy_health)) = enemy.get_single_mut() else {
+        return;
+    };
+
+    for e in event_reader.read() {
+        let damage = e.0 * (1.0 - enemy_defense.0);
+        enemy_health.0 -= damage;
+    }
 }
