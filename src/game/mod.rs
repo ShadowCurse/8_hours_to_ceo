@@ -8,7 +8,6 @@ use bevy::{
     },
     window::{PrimaryWindow, WindowResized},
 };
-use rand::Rng;
 
 use crate::{
     ui::in_game::{UI_RIGHT_SIZE, UI_TOP_SIZE},
@@ -26,14 +25,14 @@ pub mod player;
 pub mod spells;
 
 use animation::AnimationPlugin;
-use chest::{Chest, ChestIdx, ChestOppened, Chests, ChestsPlugin, InteractedChest};
-use circle_sectors::{position_to_sector_position, SectorPosition, Sectors, SectorsPlugin};
+use chest::{Chest, ChestOppened, ChestsPlugin, InteractedChest};
+use circle_sectors::{position_to_sector_position, SectorPosition, SectorsPlugin};
 use cursor::CursorPlugin;
-use enemy::{BattleEnemy, BattleEnemyDead, Enemies, Enemy, EnemyIdx, EnemyPlugin};
-use inventory::{Inventory, InventoryPlugin, InventoryUpdate};
-use items::{Items, ItemsPlugin};
+use enemy::{BattleEnemy, BattleEnemyDead, Enemy, EnemyPlugin};
+use inventory::InventoryPlugin;
+use items::ItemsPlugin;
 use player::{spawn_player, Player, PlayerPlugin, PlayerResources, PlayerState};
-use spells::{Spells, SpellsPlugin};
+use spells::SpellsPlugin;
 
 const INTERACTION_DISTANCE: f32 = 30.0;
 
