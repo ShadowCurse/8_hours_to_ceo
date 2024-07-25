@@ -22,6 +22,7 @@ pub mod cursor;
 pub mod enemy;
 pub mod inventory;
 pub mod items;
+pub mod player;
 pub mod spells;
 
 use chest::{Chest, ChestIdx, Chests, ChestsPlugin, InteractedChest};
@@ -30,6 +31,7 @@ use cursor::CursorPlugin;
 use enemy::{BattleEnemy, Enemies, Enemy, EnemyIdx, EnemyPlugin};
 use inventory::{Inventory, InventoryPlugin, InventoryUpdate};
 use items::{Items, ItemsPlugin};
+use player::{Player, PlayerPlugin, PlayerSpeed};
 use spells::{Spells, SpellsPlugin};
 
 const INTERACTION_DISTANCE: f32 = 30.0;
@@ -45,6 +47,7 @@ impl Plugin for GamePlugin {
             EnemyPlugin,
             InventoryPlugin,
             ItemsPlugin,
+            PlayerPlugin,
             SpellsPlugin,
         ))
         .add_sub_state::<GameState>()
@@ -52,13 +55,7 @@ impl Plugin for GamePlugin {
         .add_systems(OnEnter(GameState::Preparing), spawn_base_game)
         .add_systems(
             Update,
-            (
-                on_window_resize,
-                player_run,
-                camera_follow_player,
-                initiate_battle,
-                initiate_pickup,
-            )
+            (on_window_resize, initiate_battle, initiate_pickup)
                 .run_if(in_state(GameState::Running)),
         )
         .add_systems(
@@ -100,12 +97,6 @@ pub struct GameRenderLayer {
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct GameCamera;
-
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Player;
-
-#[derive(Component, Debug, Clone, Copy, PartialEq)]
-pub struct PlayerSpeed(f32);
 
 #[derive(Component, Debug, Clone, Copy, PartialEq)]
 pub struct Health(pub f32);
@@ -234,19 +225,6 @@ fn spawn_base_game(
     game_state.set(GameState::Running);
 }
 
-fn player_run(time: Res<Time>, mut player: Query<(&PlayerSpeed, &mut Transform)>) {
-    let Ok((speed, mut transform)) = player.get_single_mut() else {
-        return;
-    };
-
-    let to_center = transform.translation;
-    let rotation = Quat::from_rotation_z(-speed.0 * time.delta_seconds());
-    let rotated = rotation * to_center;
-
-    transform.translation = rotated;
-    transform.rotation *= rotation;
-}
-
 fn game_pause(
     key_input: Res<ButtonInput<KeyCode>>,
     game_state: Res<State<GameState>>,
@@ -261,23 +239,6 @@ fn game_pause(
             game_state_next.set(GameState::Paused);
         }
     }
-}
-
-fn camera_follow_player(
-    player: Query<&Transform, (With<Player>, Without<GameCamera>)>,
-    mut camera: Query<&mut Transform, (Without<Player>, With<GameCamera>)>,
-) {
-    let Ok(player_transform) = player.get_single() else {
-        return;
-    };
-
-    let Ok(mut camera_transform) = camera.get_single_mut() else {
-        return;
-    };
-
-    let mut t = *player_transform;
-    t.scale = Vec3::new(0.5, 0.5, 0.5);
-    *camera_transform = t;
 }
 
 fn move_camera_default(mut camera: Query<&mut Transform, With<GameCamera>>) {
