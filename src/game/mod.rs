@@ -6,7 +6,6 @@ use bevy::{
         },
         view::RenderLayers,
     },
-    sprite::{MaterialMesh2dBundle, Wireframe2d},
     window::{PrimaryWindow, WindowResized},
 };
 use rand::Rng;
@@ -33,7 +32,7 @@ use cursor::CursorPlugin;
 use enemy::{BattleEnemy, Enemies, Enemy, EnemyIdx, EnemyPlugin};
 use inventory::{Inventory, InventoryPlugin, InventoryUpdate};
 use items::{Items, ItemsPlugin};
-use player::{spawn_player, Player, PlayerPlugin, PlayerResources, PlayerSpeed};
+use player::{spawn_player, Player, PlayerPlugin, PlayerResources};
 use spells::{Spells, SpellsPlugin};
 
 const INTERACTION_DISTANCE: f32 = 30.0;
