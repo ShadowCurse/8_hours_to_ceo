@@ -91,16 +91,20 @@ fn prepare_player_resources(
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     let idle_texture = asset_server.load("player/alex_idle_sheet.png");
-    let idle_animation_config = AnimationConfig::new(1, 5, 10, AllAnimations::PlayerIdle, false);
+    let idle_animation_config =
+        AnimationConfig::new(1, 5, 10, AllAnimations::PlayerIdle, false, true);
 
     let run_texture = asset_server.load("player/alex_run_sheet.png");
-    let run_animation_config = AnimationConfig::new(1, 5, 10, AllAnimations::PlayerRun, false);
+    let run_animation_config =
+        AnimationConfig::new(1, 5, 10, AllAnimations::PlayerRun, false, true);
 
     let attack_texture = asset_server.load("player/alex_attack_sheet.png");
-    let attack_animation_config = AnimationConfig::new(1, 5, 10, AllAnimations::PlayerAttack, true);
+    let attack_animation_config =
+        AnimationConfig::new(1, 5, 10, AllAnimations::PlayerAttack, true, false);
 
     let dead_texture = asset_server.load("player/alex_dead_sheet.png");
-    let dead_animation_config = AnimationConfig::new(1, 5, 10, AllAnimations::PlayerDead, true);
+    let dead_animation_config =
+        AnimationConfig::new(1, 5, 10, AllAnimations::PlayerDead, true, false);
 
     let texture_layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 6, 1, None, None);
     let atlas_handle = texture_atlas_layouts.add(texture_layout);

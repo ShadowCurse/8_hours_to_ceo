@@ -39,6 +39,7 @@ pub struct AnimationConfig {
     pub frame_timer: Timer,
     pub animation: AllAnimations,
     pub send_finish_event: bool,
+    pub continues: bool,
 }
 
 impl AnimationConfig {
@@ -48,6 +49,7 @@ impl AnimationConfig {
         fps: u8,
         animation: AllAnimations,
         send_finish_event: bool,
+        continues: bool,
     ) -> Self {
         Self {
             first_sprite_index: first,
@@ -56,6 +58,7 @@ impl AnimationConfig {
             frame_timer: Self::timer_from_fps(fps),
             animation,
             send_finish_event,
+            continues,
         }
     }
 
@@ -74,14 +77,17 @@ fn execute_animations(
 
         if config.frame_timer.just_finished() {
             if atlas.index == config.last_sprite_index {
-                atlas.index = config.first_sprite_index;
+                if config.continues {
+                    atlas.index = config.first_sprite_index;
+                    config.frame_timer = AnimationConfig::timer_from_fps(config.fps);
+                }
                 if config.send_finish_event {
                     event_writer.send(AnimationFinishedEvent(config.animation));
                 }
             } else {
                 atlas.index += 1;
+                config.frame_timer = AnimationConfig::timer_from_fps(config.fps);
             }
-            config.frame_timer = AnimationConfig::timer_from_fps(config.fps);
         }
     }
 }
