@@ -33,7 +33,7 @@ use cursor::CursorPlugin;
 use enemy::{BattleEnemy, Enemies, Enemy, EnemyIdx, EnemyPlugin};
 use inventory::{Inventory, InventoryPlugin, InventoryUpdate};
 use items::{Items, ItemsPlugin};
-use player::{Player, PlayerPlugin, PlayerSpeed};
+use player::{spawn_player, Player, PlayerPlugin, PlayerResources, PlayerSpeed};
 use spells::{Spells, SpellsPlugin};
 
 const INTERACTION_DISTANCE: f32 = 30.0;
@@ -198,32 +198,16 @@ fn on_window_resize(
 
 fn spawn_base_game(
     game_render_layer: Res<GameRenderLayer>,
+    player_resources: Res<PlayerResources>,
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
     mut game_state: ResMut<NextState<GameState>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let mesh = meshes.add(Circle { radius: 20.0 });
-    let material = materials.add(Color::srgb(0.1, 0.9, 0.2));
-
-    // Player
-    commands.spawn((
-        MaterialMesh2dBundle {
-            mesh: mesh.into(),
-            material,
-            transform: Transform::from_xyz(0.0, 220.0, 1.0),
-            ..default()
-        },
-        Player,
-        PlayerSpeed(0.1),
-        Health(100.0),
-        Damage(5.0),
-        AttackSpeed::new(0.5),
-        Defense(0.0),
-        Wireframe2d,
+    spawn_player(
+        &mut commands,
+        player_resources.as_ref(),
+        Transform::from_xyz(0.0, 230.0, 1.0).with_scale(Vec3::new(2.0, 2.0, 2.0)),
         game_render_layer.layer.clone(),
-        StateScoped(GlobalState::InGame),
-    ));
+    );
 
     game_state.set(GameState::Running);
 }

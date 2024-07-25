@@ -10,7 +10,7 @@ impl Plugin for AnimationPlugin {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Debug, Clone)]
 pub struct AnimationConfig {
     pub first_sprite_index: usize,
     pub last_sprite_index: usize,
@@ -45,8 +45,8 @@ fn execute_animations(
                 atlas.index = config.first_sprite_index;
             } else {
                 atlas.index += 1;
-                config.frame_timer = AnimationConfig::timer_from_fps(config.fps);
             }
+            config.frame_timer = AnimationConfig::timer_from_fps(config.fps);
         }
     }
 }
