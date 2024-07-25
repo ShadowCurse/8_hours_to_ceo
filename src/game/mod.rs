@@ -16,6 +16,7 @@ use crate::{
     GlobalState,
 };
 
+pub mod animation;
 pub mod chest;
 pub mod circle_sectors;
 pub mod cursor;
@@ -25,6 +26,7 @@ pub mod items;
 pub mod player;
 pub mod spells;
 
+use animation::AnimationPlugin;
 use chest::{Chest, ChestIdx, Chests, ChestsPlugin, InteractedChest};
 use circle_sectors::{position_to_sector_position, SectorPosition, Sectors, SectorsPlugin};
 use cursor::CursorPlugin;
@@ -41,6 +43,7 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((
+            AnimationPlugin,
             ChestsPlugin,
             SectorsPlugin,
             CursorPlugin,
