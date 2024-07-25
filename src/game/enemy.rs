@@ -6,7 +6,7 @@ use rand::Rng;
 use crate::GlobalState;
 
 use super::{
-    animation::{AllAnimations, AnimationConfig},
+    animation::{AllAnimations, AnimationConfig, AnimationFinished},
     circle_sectors::{SectorIdx, SectorPosition, Sectors},
     inventory::{Inventory, InventoryUpdate},
     items::{ItemIdx, Items},
@@ -24,7 +24,12 @@ impl Plugin for EnemyPlugin {
             .add_systems(Startup, prepare_enemy_resources)
             .add_systems(
                 Update,
-                (enemy_attack, enemy_take_damage, enemy_check_dead)
+                (
+                    enemy_attack,
+                    on_attack_finish,
+                    enemy_take_damage,
+                    enemy_check_dead,
+                )
                     .run_if(in_state(GameState::Battle)),
             );
     }
@@ -290,17 +295,48 @@ pub fn spawn_enemy<'a>(
 
 fn enemy_attack(
     time: Res<Time>,
-    mut enemy: Query<(&Damage, &mut AttackSpeed), With<BattleEnemy>>,
-    mut event_writer: EventWriter<DamagePlayer>,
+    enemies: Res<Enemies>,
+    mut enemy: Query<
+        (
+            &EnemyIdx,
+            &mut AttackSpeed,
+            &mut AnimationConfig,
+            &mut Handle<Image>,
+            &mut TextureAtlas,
+        ),
+        With<BattleEnemy>,
+    >,
 ) {
-    let Ok((damage, mut attack_speed)) = enemy.get_single_mut() else {
+    let Ok((enemy_idx, mut attack_speed, mut config, mut texture, mut atlas)) =
+        enemy.get_single_mut()
+    else {
         return;
     };
 
     attack_speed.0.tick(time.delta());
 
     if attack_speed.0.finished() {
-        event_writer.send(DamagePlayer(damage.0));
+        let enemy_info = &enemies[*enemy_idx];
+
+        *texture = enemy_info.attack_texture.clone();
+        atlas.index = enemy_info.attack_animation_config.first_sprite_index;
+        *config = enemy_info.attack_animation_config.clone();
+    }
+}
+
+fn on_attack_finish(
+    enemy: Query<&Damage, With<BattleEnemy>>,
+    mut event_reader: EventReader<AnimationFinished>,
+    mut event_writer: EventWriter<DamagePlayer>,
+) {
+    let Ok(damage) = enemy.get_single() else {
+        return;
+    };
+
+    for e in event_reader.read() {
+        if e.0 == AllAnimations::BossAttack {
+            event_writer.send(DamagePlayer(damage.0));
+        }
     }
 }
 

@@ -170,7 +170,6 @@ fn player_start_run(
 
     *texture = player_resources.run_texture.clone();
     atlas.index = config.first_sprite_index;
-    config.frame_timer = AnimationConfig::timer_from_fps(config.fps);
     *config = player_resources.run_animation_config.clone();
 }
 
