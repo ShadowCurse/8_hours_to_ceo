@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use crate::ui::in_game::{BackpackSectorId, SelectedSectionButton};
 
 use super::{
-    circle_sectors::{SectorIdx, SectorPlaced, SectorPosition},
+    circle_sectors::{SectorIdx, SectorPlaced},
     items::ItemIdx,
     spells::SpellIdx,
     GameState,
