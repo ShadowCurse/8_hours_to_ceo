@@ -5,7 +5,7 @@ use crate::GlobalState;
 use super::{
     animation::{AllAnimations, AnimationConfig, AnimationFinished},
     chest::ChestOppened,
-    enemy::{BattleEnemyDead, DamageEnemy},
+    enemy::{EnemyDeadEvent, DamageEnemy},
     inventory::Inventory,
     items::Items,
     AttackSpeed, Damage, Defense, GameCamera, GameState, Health,
@@ -296,7 +296,7 @@ fn battle_end_check(
     inventory: Res<Inventory>,
     mut player: Query<(&mut Health, &mut AttackSpeed), With<Player>>,
     mut player_state: ResMut<NextState<PlayerState>>,
-    mut event_reader: EventReader<BattleEnemyDead>,
+    mut event_reader: EventReader<EnemyDeadEvent>,
 ) {
     let Ok((mut player_health, mut player_attack_speed)) = player.get_single_mut() else {
         return;

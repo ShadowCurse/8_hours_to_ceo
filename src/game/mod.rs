@@ -28,7 +28,7 @@ use animation::AnimationPlugin;
 use chest::{Chest, ChestOppened, ChestsPlugin, InteractedChest};
 use circle_sectors::{position_to_sector_position, SectorPosition, SectorsPlugin};
 use cursor::CursorPlugin;
-use enemy::{BattleEnemy, BattleEnemyDead, Enemy, EnemyPlugin};
+use enemy::{BattleEnemy, EnemyDeadEvent, Enemy, EnemyPlugin};
 use inventory::InventoryPlugin;
 use items::ItemsPlugin;
 use player::{spawn_player, Player, PlayerPlugin, PlayerResources, PlayerState};
@@ -265,7 +265,7 @@ fn initiate_battle(
 
 fn battle_end_check(
     mut game_state: ResMut<NextState<GameState>>,
-    mut event_reader: EventReader<BattleEnemyDead>,
+    mut event_reader: EventReader<EnemyDeadEvent>,
 ) {
     for _ in event_reader.read() {
         game_state.set(GameState::Running);

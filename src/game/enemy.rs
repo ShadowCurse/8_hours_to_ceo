@@ -20,7 +20,7 @@ pub struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<DamageEnemy>()
-            .add_event::<BattleEnemyDead>()
+            .add_event::<EnemyDeadEvent>()
             .add_systems(Startup, prepare_enemy_resources)
             .add_systems(
                 Update,
@@ -28,6 +28,7 @@ impl Plugin for EnemyPlugin {
                     enemy_attack,
                     on_attack_finish,
                     enemy_take_damage,
+                    on_dead_finish,
                     enemy_check_dead,
                 )
                     .run_if(in_state(GameState::Battle)),
@@ -39,7 +40,7 @@ impl Plugin for EnemyPlugin {
 pub struct DamageEnemy(pub f32);
 
 #[derive(Event, Debug, Clone, PartialEq)]
-pub struct BattleEnemyDead;
+pub struct EnemyDeadEvent;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct EnemyIdx(pub usize);
@@ -49,6 +50,9 @@ pub struct Enemy;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct BattleEnemy;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct BattleEnemyDead;
 
 #[derive(Debug, Clone)]
 pub struct EnemyInfo {
@@ -360,13 +364,24 @@ fn enemy_check_dead(
     spells: Res<Spells>,
     enemies: Res<Enemies>,
     sectors: Res<Sectors>,
-    enemy: Query<(Entity, &Health, &EnemyIdx), With<BattleEnemy>>,
     mut commands: Commands,
+    mut enemy: Query<
+        (
+            Entity,
+            &Health,
+            &EnemyIdx,
+            &mut AnimationConfig,
+            &mut Handle<Image>,
+            &mut TextureAtlas,
+        ),
+        With<BattleEnemy>,
+    >,
     mut inventory: ResMut<Inventory>,
-    mut inventory_update_event: EventWriter<InventoryUpdate>,
-    mut battle_enemy_dead_event: EventWriter<BattleEnemyDead>,
+    mut event_writer: EventWriter<InventoryUpdate>,
 ) {
-    let Ok((enemy_entity, enemy_health, enemy_idx)) = enemy.get_single() else {
+    let Ok((enemy_entity, enemy_health, enemy_idx, mut config, mut texture, mut atlas)) =
+        enemy.get_single_mut()
+    else {
         return;
     };
 
@@ -374,9 +389,14 @@ fn enemy_check_dead(
         commands
             .get_entity(enemy_entity)
             .unwrap()
-            .despawn_recursive();
+            .remove::<BattleEnemy>()
+            .insert(BattleEnemyDead);
 
         let enemy_info = &enemies[*enemy_idx];
+
+        *texture = enemy_info.dead_texture.clone();
+        atlas.index = enemy_info.dead_animation_config.first_sprite_index;
+        *config = enemy_info.dead_animation_config.clone();
 
         let mut thread_rng = rand::thread_rng();
 
@@ -406,7 +426,24 @@ fn enemy_check_dead(
             }
         }
 
-        inventory_update_event.send(InventoryUpdate);
-        battle_enemy_dead_event.send(BattleEnemyDead);
+        event_writer.send(InventoryUpdate);
+    }
+}
+
+fn on_dead_finish(
+    enemy: Query<Entity, With<BattleEnemyDead>>,
+    mut commands: Commands,
+    mut event_reader: EventReader<AnimationFinished>,
+    mut event_writer: EventWriter<EnemyDeadEvent>,
+) {
+    let Ok(entity) = enemy.get_single() else {
+        return;
+    };
+
+    for e in event_reader.read() {
+        if e.0 == AllAnimations::BossDead {
+            commands.get_entity(entity).unwrap().despawn_recursive();
+            event_writer.send(EnemyDeadEvent);
+        }
     }
 }
