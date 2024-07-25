@@ -648,7 +648,6 @@ fn backpack_sectors_button_system(
             Interaction::Pressed => {
                 *color = ui_style.btn_color_pressed.into();
                 selected_section_button.0 = Some(entity);
-                println!("aa");
             }
             Interaction::Hovered => {
                 *color = ui_style.btn_color_hover.into();

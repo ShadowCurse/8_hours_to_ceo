@@ -201,7 +201,7 @@ fn spawn_base_game(
     spawn_player(
         &mut commands,
         player_resources.as_ref(),
-        Transform::from_xyz(0.0, 230.0, 1.0).with_scale(Vec3::new(2.0, 2.0, 2.0)),
+        Transform::from_xyz(0.0, 230.0, 2.0).with_scale(Vec3::new(2.0, 2.0, 2.0)),
         game_render_layer.layer.clone(),
     );
 

@@ -17,7 +17,7 @@ use crate::{
 use super::{
     chest::{spawn_chest, ChestIdx, ChestResources, Chests},
     cursor::CursorSector,
-    enemy::{spawn_enemy, Enemies, EnemyIdx, EnemyResources},
+    enemy::{spawn_enemy, Enemies, EnemyIdx},
     inventory::Inventory,
     GameRenderLayer, GameState, Player,
 };
@@ -337,7 +337,6 @@ fn sector_spawn_things(
     chests: Res<Chests>,
     enemies: Res<Enemies>,
     sectors: Res<Sectors>,
-    enemy_resources: Res<EnemyResources>,
     chest_resources: Res<ChestResources>,
     game_render_layer: Res<GameRenderLayer>,
     player: Query<&Transform, With<Player>>,
@@ -380,13 +379,13 @@ fn sector_spawn_things(
                     if thread_rng.gen_bool(enemy_info.spawn_rate as f64) {
                         slots.0[empty_slot_position] = Some(SlotType::Enemy);
 
-                        let mut t = Transform::from_xyz(0.0, CIRCLE_RADIUS + 10.0, 0.0);
+                        let mut t = Transform::from_xyz(0.0, CIRCLE_RADIUS + 30.0, 1.0)
+                            .with_scale(Vec3::new(2.0, 2.0, 2.0));
                         t.rotate_around(Vec3::ZERO, Quat::from_rotation_z(-angle));
 
                         spawn_enemy(
                             &mut commands,
                             enemies.as_ref(),
-                            enemy_resources.as_ref(),
                             random_enemy_idx,
                             *id,
                             t,

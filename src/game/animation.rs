@@ -25,6 +25,10 @@ pub enum AllAnimations {
     PlayerRun,
     PlayerAttack,
     PlayerDead,
+    BossIdle,
+    BossRun,
+    BossAttack,
+    BossDead,
 }
 
 #[derive(Component, Debug, Clone)]
