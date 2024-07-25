@@ -54,10 +54,10 @@ impl Plugin for GamePlugin {
         .add_sub_state::<GameState>()
         .add_systems(Startup, setup_game)
         .add_systems(OnEnter(GameState::Preparing), spawn_base_game)
+        .add_systems(Update, on_window_resize)
         .add_systems(
             Update,
-            (on_window_resize, initiate_battle, initiate_pickup)
-                .run_if(in_state(GameState::Running)),
+            (initiate_battle, initiate_pickup).run_if(in_state(GameState::Running)),
         )
         .add_systems(Update, battle_end_check.run_if(in_state(GameState::Battle)))
         .add_systems(Update, pickup_end_check.run_if(in_state(GameState::Pickup)))
