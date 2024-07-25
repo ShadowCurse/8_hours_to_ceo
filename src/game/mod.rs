@@ -32,7 +32,7 @@ use cursor::CursorPlugin;
 use enemy::{BattleEnemy, Enemies, Enemy, EnemyIdx, EnemyPlugin};
 use inventory::{Inventory, InventoryPlugin, InventoryUpdate};
 use items::{Items, ItemsPlugin};
-use player::{spawn_player, Player, PlayerPlugin, PlayerResources};
+use player::{spawn_player, Player, PlayerPlugin, PlayerResources, PlayerState};
 use spells::{Spells, SpellsPlugin};
 
 const INTERACTION_DISTANCE: f32 = 30.0;
@@ -200,6 +200,7 @@ fn spawn_base_game(
     player_resources: Res<PlayerResources>,
     mut commands: Commands,
     mut game_state: ResMut<NextState<GameState>>,
+    mut player_state: ResMut<NextState<PlayerState>>,
 ) {
     spawn_player(
         &mut commands,
@@ -209,6 +210,7 @@ fn spawn_base_game(
     );
 
     game_state.set(GameState::Running);
+    player_state.set(PlayerState::Run);
 }
 
 fn game_pause(
@@ -239,6 +241,7 @@ fn initiate_battle(
     enemies: Query<(Entity, &Transform, &SectorPosition), (With<Enemy>, Without<Player>)>,
     mut commands: Commands,
     mut game_sate: ResMut<NextState<GameState>>,
+    mut player_state: ResMut<NextState<PlayerState>>,
 ) {
     let Ok(player_transform) = player.get_single() else {
         return;
@@ -259,6 +262,7 @@ fn initiate_battle(
                 .insert(BattleEnemy);
 
             game_sate.set(GameState::Battle);
+            player_state.set(PlayerState::Idle);
         }
     }
 }
@@ -338,6 +342,7 @@ fn battle_end_check(
     mut inventory: ResMut<Inventory>,
     mut event_writer: EventWriter<InventoryUpdate>,
     mut game_state: ResMut<NextState<GameState>>,
+    mut player_state: ResMut<NextState<PlayerState>>,
     mut player: Query<(&mut Health, &mut AttackSpeed), (With<Player>, Without<BattleEnemy>)>,
 ) {
     let Ok((mut player_health, mut player_attack_speed)) = player.get_single_mut() else {
@@ -400,6 +405,7 @@ fn battle_end_check(
 
         event_writer.send(InventoryUpdate);
         game_state.set(GameState::Running);
+        player_state.set(PlayerState::Run);
     }
 
     if player_health.0 == 0.0 {

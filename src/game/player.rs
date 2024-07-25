@@ -1,5 +1,7 @@
 use bevy::{ecs::system::EntityCommands, prelude::*, render::view::RenderLayers};
 
+use crate::GlobalState;
+
 use super::{
     animation::AnimationConfig, AttackSpeed, Damage, Defense, GameCamera, GameState, Health,
 };
@@ -8,7 +10,12 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, prepare_player_resources)
+        app.add_sub_state::<PlayerState>()
+            .add_systems(Startup, prepare_player_resources)
+            .add_systems(OnEnter(PlayerState::Idle), player_start_idle)
+            .add_systems(OnEnter(PlayerState::Run), player_start_run)
+            .add_systems(OnEnter(PlayerState::Attack), player_start_attack)
+            .add_systems(OnEnter(PlayerState::Dead), player_start_dead)
             .add_systems(
                 Update,
                 (player_run, camera_follow_player).run_if(in_state(GameState::Running)),
@@ -32,6 +39,21 @@ pub struct Player;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq)]
 pub struct PlayerSpeed(pub f32);
+
+// Run -> Idle -> Run
+//         |   -> Attack
+//         |      |
+//          <---- Idle
+//             -> Dead
+#[derive(SubStates, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+#[source(GlobalState = GlobalState::InGame)]
+pub enum PlayerState {
+    #[default]
+    Idle,
+    Run,
+    Attack,
+    Dead,
+}
 
 fn prepare_player_resources(
     asset_server: Res<AssetServer>,
@@ -70,7 +92,7 @@ pub fn spawn_player<'a>(
     commands.spawn((
         SpriteBundle {
             transform,
-            texture: player_resources.run_texture.clone(),
+            texture: player_resources.idle_texture.clone(),
             ..default()
         },
         player_resources.texture_atlas.clone(),
@@ -83,6 +105,58 @@ pub fn spawn_player<'a>(
         Defense(0.0),
         render_layer,
     ))
+}
+
+fn player_start_idle(
+    player_resources: Res<PlayerResources>,
+    mut player: Query<(&mut AnimationConfig, &mut Handle<Image>, &mut TextureAtlas)>,
+) {
+    let Ok((mut config, mut texture, mut atlas)) = player.get_single_mut() else {
+        return;
+    };
+
+    *texture = player_resources.idle_texture.clone();
+    atlas.index = config.first_sprite_index;
+    config.frame_timer = AnimationConfig::timer_from_fps(config.fps);
+}
+
+fn player_start_run(
+    player_resources: Res<PlayerResources>,
+    mut player: Query<(&mut AnimationConfig, &mut Handle<Image>, &mut TextureAtlas)>,
+) {
+    let Ok((mut config, mut texture, mut atlas)) = player.get_single_mut() else {
+        return;
+    };
+
+    *texture = player_resources.run_texture.clone();
+    atlas.index = config.first_sprite_index;
+    config.frame_timer = AnimationConfig::timer_from_fps(config.fps);
+}
+
+fn player_start_attack(
+    player_resources: Res<PlayerResources>,
+    mut player: Query<(&mut AnimationConfig, &mut Handle<Image>, &mut TextureAtlas)>,
+) {
+    let Ok((mut config, mut texture, mut atlas)) = player.get_single_mut() else {
+        return;
+    };
+
+    *texture = player_resources.attack_texture.clone();
+    atlas.index = config.first_sprite_index;
+    config.frame_timer = AnimationConfig::timer_from_fps(config.fps);
+}
+
+fn player_start_dead(
+    player_resources: Res<PlayerResources>,
+    mut player: Query<(&mut AnimationConfig, &mut Handle<Image>, &mut TextureAtlas)>,
+) {
+    let Ok((mut config, mut texture, mut atlas)) = player.get_single_mut() else {
+        return;
+    };
+
+    *texture = player_resources.dead_texture.clone();
+    atlas.index = config.first_sprite_index;
+    config.frame_timer = AnimationConfig::timer_from_fps(config.fps);
 }
 
 fn player_run(time: Res<Time>, mut player: Query<(&PlayerSpeed, &mut Transform)>) {
