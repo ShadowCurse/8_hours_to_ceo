@@ -26,7 +26,7 @@ pub mod player;
 pub mod spells;
 
 use animation::AnimationPlugin;
-use chest::{Chest, ChestIdx, Chests, ChestsPlugin, InteractedChest};
+use chest::{Chest, ChestIdx, ChestOppened, Chests, ChestsPlugin, InteractedChest};
 use circle_sectors::{position_to_sector_position, SectorPosition, Sectors, SectorsPlugin};
 use cursor::CursorPlugin;
 use enemy::{BattleEnemy, BattleEnemyDead, Enemies, Enemy, EnemyIdx, EnemyPlugin};
@@ -61,7 +61,7 @@ impl Plugin for GamePlugin {
                 .run_if(in_state(GameState::Running)),
         )
         .add_systems(Update, battle_end_check.run_if(in_state(GameState::Battle)))
-        .add_systems(Update, (pickup_end).run_if(in_state(GameState::Pickup)))
+        .add_systems(Update, pickup_end_check.run_if(in_state(GameState::Pickup)))
         .add_systems(
             OnTransition {
                 exited: GameState::Running,
@@ -278,6 +278,7 @@ fn initiate_pickup(
     chests: Query<(Entity, &Transform, &SectorPosition), (With<Chest>, Without<Player>)>,
     mut commands: Commands,
     mut game_sate: ResMut<NextState<GameState>>,
+    mut player_state: ResMut<NextState<PlayerState>>,
 ) {
     let Ok(player_transform) = player.get_single() else {
         return;
@@ -298,59 +299,16 @@ fn initiate_pickup(
                 .insert(InteractedChest);
 
             game_sate.set(GameState::Pickup);
+            player_state.set(PlayerState::Idle);
         }
     }
 }
 
-fn pickup_end(
-    items: Res<Items>,
-    chests: Res<Chests>,
-    spells: Res<Spells>,
-    sectors: Res<Sectors>,
-    chest: Query<(Entity, &ChestIdx), (With<InteractedChest>, Without<Player>)>,
-    mut commands: Commands,
-    mut inventory: ResMut<Inventory>,
-    mut event_writer: EventWriter<InventoryUpdate>,
+fn pickup_end_check(
+    mut event_reader: EventReader<ChestOppened>,
     mut game_state: ResMut<NextState<GameState>>,
 ) {
-    let Ok((chest_entity, chest_idx)) = chest.get_single() else {
-        return;
-    };
-
-    commands
-        .get_entity(chest_entity)
-        .unwrap()
-        .despawn_recursive();
-
-    let chest_info = &chests[*chest_idx];
-
-    let mut thread_rng = rand::thread_rng();
-
-    if !chest_info.items.is_empty() {
-        let random_item_idx = chest_info.items[thread_rng.gen_range(0..chest_info.items.len())];
-        let item = &items[random_item_idx];
-        if thread_rng.gen_bool(item.drop_rate as f64) {
-            inventory.backpack_items.push(random_item_idx);
-        }
+    for _ in event_reader.read() {
+        game_state.set(GameState::Running);
     }
-
-    if !chest_info.spells.is_empty() {
-        let random_spell_idx = chest_info.spells[thread_rng.gen_range(0..chest_info.spells.len())];
-        let spell = &spells[random_spell_idx];
-        if thread_rng.gen_bool(spell.drop_rate as f64) {
-            inventory.backpack_spells.push(random_spell_idx);
-        }
-    }
-
-    if !chest_info.sectors.is_empty() {
-        let random_sector_idx =
-            chest_info.sectors[thread_rng.gen_range(0..chest_info.sectors.len())];
-        let sector = &sectors[random_sector_idx];
-        if thread_rng.gen_bool(sector.drop_rate as f64) {
-            inventory.backpack_sectors.push(random_sector_idx);
-        }
-    }
-
-    event_writer.send(InventoryUpdate);
-    game_state.set(GameState::Running);
 }

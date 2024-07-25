@@ -4,6 +4,7 @@ use crate::GlobalState;
 
 use super::{
     animation::{AllAnimations, AnimationConfig, AnimationFinished},
+    chest::ChestOppened,
     enemy::{BattleEnemyDead, DamageEnemy},
     inventory::Inventory,
     items::Items,
@@ -34,7 +35,8 @@ impl Plugin for PlayerPlugin {
                     battle_end_check,
                 )
                     .run_if(in_state(GameState::Battle)),
-            );
+            )
+            .add_systems(Update, pickup_end_check.run_if(in_state(GameState::Pickup)));
     }
 }
 
@@ -313,6 +315,15 @@ fn battle_end_check(
             })
             .sum::<f32>();
         player_health.0 += heal;
+        player_state.set(PlayerState::Run);
+    }
+}
+
+fn pickup_end_check(
+    mut event_reader: EventReader<ChestOppened>,
+    mut player_state: ResMut<NextState<PlayerState>>,
+) {
+    for _ in event_reader.read() {
         player_state.set(PlayerState::Run);
     }
 }

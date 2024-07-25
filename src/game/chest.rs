@@ -4,22 +4,30 @@ use bevy::{
     ecs::system::EntityCommands, prelude::*, render::view::RenderLayers,
     sprite::MaterialMesh2dBundle,
 };
+use rand::Rng;
 
 use crate::GlobalState;
 
 use super::{
-    circle_sectors::{SectorIdx, SectorPosition},
-    items::ItemIdx,
-    spells::SpellIdx,
+    circle_sectors::{SectorIdx, SectorPosition, Sectors},
+    inventory::{Inventory, InventoryUpdate},
+    items::{ItemIdx, Items},
+    spells::{SpellIdx, Spells},
+    GameState,
 };
 
 pub struct ChestsPlugin;
 
 impl Plugin for ChestsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, prepare_chest_resources);
+        app.add_event::<ChestOppened>()
+            .add_systems(Startup, prepare_chest_resources)
+            .add_systems(Update, chest_open_check.run_if(in_state(GameState::Pickup)));
     }
 }
+
+#[derive(Event, Debug, Clone, PartialEq)]
+pub struct ChestOppened;
 
 #[derive(Resource, Debug, Clone, PartialEq, Eq)]
 pub struct ChestResources {
@@ -132,4 +140,57 @@ pub fn spawn_chest<'a>(
         render_layer,
         StateScoped(GlobalState::InGame),
     ))
+}
+
+fn chest_open_check(
+    items: Res<Items>,
+    chests: Res<Chests>,
+    spells: Res<Spells>,
+    sectors: Res<Sectors>,
+    chest: Query<(Entity, &ChestIdx), With<InteractedChest>>,
+    mut commands: Commands,
+    mut inventory: ResMut<Inventory>,
+    mut inventory_update_event: EventWriter<InventoryUpdate>,
+    mut chest_openned_event: EventWriter<ChestOppened>,
+) {
+    let Ok((chest_entity, chest_idx)) = chest.get_single() else {
+        return;
+    };
+
+    commands
+        .get_entity(chest_entity)
+        .unwrap()
+        .despawn_recursive();
+
+    let chest_info = &chests[*chest_idx];
+
+    let mut thread_rng = rand::thread_rng();
+
+    if !chest_info.items.is_empty() {
+        let random_item_idx = chest_info.items[thread_rng.gen_range(0..chest_info.items.len())];
+        let item = &items[random_item_idx];
+        if thread_rng.gen_bool(item.drop_rate as f64) {
+            inventory.backpack_items.push(random_item_idx);
+        }
+    }
+
+    if !chest_info.spells.is_empty() {
+        let random_spell_idx = chest_info.spells[thread_rng.gen_range(0..chest_info.spells.len())];
+        let spell = &spells[random_spell_idx];
+        if thread_rng.gen_bool(spell.drop_rate as f64) {
+            inventory.backpack_spells.push(random_spell_idx);
+        }
+    }
+
+    if !chest_info.sectors.is_empty() {
+        let random_sector_idx =
+            chest_info.sectors[thread_rng.gen_range(0..chest_info.sectors.len())];
+        let sector = &sectors[random_sector_idx];
+        if thread_rng.gen_bool(sector.drop_rate as f64) {
+            inventory.backpack_sectors.push(random_sector_idx);
+        }
+    }
+
+    inventory_update_event.send(InventoryUpdate);
+    chest_openned_event.send(ChestOppened);
 }

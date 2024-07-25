@@ -373,7 +373,7 @@ fn sector_spawn_things(
                 let sector_info = &sectors.0[sector_idx.0];
                 let mut thread_rng = rand::thread_rng();
 
-                if !sector_info.enemies.is_empty() {
+                let enemy_spawned = if !sector_info.enemies.is_empty() {
                     let random_enemy_idx =
                         sector_info.enemies[thread_rng.gen_range(0..sector_info.enemies.len())];
                     let enemy_info = &enemies[random_enemy_idx];
@@ -396,8 +396,14 @@ fn sector_spawn_things(
                             entity,
                             slot_position: empty_slot_position,
                         });
+                        true
+                    } else {
+                        false
                     }
-                } else if !sector_info.chests.is_empty() {
+                } else {
+                    false
+                };
+                if !enemy_spawned && !sector_info.chests.is_empty() {
                     let random_chest_idx =
                         sector_info.chests[thread_rng.gen_range(0..sector_info.chests.len())];
                     let chest_info = &chests[random_chest_idx];
