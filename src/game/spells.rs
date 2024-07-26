@@ -2,7 +2,7 @@ use std::ops::{Index, IndexMut};
 
 use bevy::prelude::*;
 
-use super::{enemy::BattleEnemy, Defense, GameState, Health, Player};
+use super::{enemy::DamageEnemyEvent, GameState, Health, Player};
 
 pub struct SpellsPlugin;
 
@@ -138,17 +138,12 @@ fn process_lightninig(
     time: Res<Time>,
     mut commands: Commands,
     mut lightnings: Query<(Entity, &mut LightningSpell)>,
-    mut enemy: Query<(&Defense, &mut Health), With<BattleEnemy>>,
+    mut event_writer: EventWriter<DamageEnemyEvent>,
 ) {
-    let Ok((enemy_defense, mut enemy_health)) = enemy.get_single_mut() else {
-        return;
-    };
-
     for (lightning_entity, mut lightning) in lightnings.iter_mut() {
         lightning.timer.tick(time.delta());
         if lightning.timer.finished() {
-            let damage = lightning.damage * (1.0 - enemy_defense.0);
-            enemy_health.0 -= damage;
+            event_writer.send(DamageEnemyEvent(lightning.damage));
             lightning.remaining_strikes -= 1;
 
             if lightning.remaining_strikes == 0 {
