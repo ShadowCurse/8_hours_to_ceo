@@ -68,50 +68,8 @@ enum InGameButton {
 pub const UI_TOP_SIZE: f32 = 10.0;
 pub const UI_MIDDLE_SIZE: f32 = 70.0;
 pub const UI_BOTTOM_SIZE: f32 = 20.0;
-pub const UI_RIGHT_SIZE: f32 = 30.0;
 
 fn spawn_inventory_button<C: Component + Copy>(
-    builder: &mut ChildBuilder,
-    visibility: Visibility,
-    c: C,
-) {
-    builder
-        .spawn((
-            ButtonBundle {
-                style: Style {
-                    width: Val::Percent(100.0),
-                    height: Val::Percent(100.0),
-                    border: UiRect::all(Val::Percent(1.0)),
-                    // horizontally center child text
-                    justify_content: JustifyContent::Center,
-                    // vertically center child text
-                    align_items: AlignItems::Center,
-                    ..default()
-                },
-                visibility,
-                border_color: BorderColor(Color::BLACK),
-                border_radius: BorderRadius::all(Val::Percent(5.0)),
-                background_color: Color::WHITE.into(),
-                ..default()
-            },
-            c,
-        ))
-        .with_children(|builder| {
-            builder.spawn((
-                TextBundle::from_section(
-                    "NaN",
-                    TextStyle {
-                        font_size: 40.0,
-                        color: Color::srgb(0.2, 0.2, 0.2),
-                        ..Default::default()
-                    },
-                ),
-                c,
-            ));
-        });
-}
-
-fn spawn_zone_button<C: Component + Copy>(
     builder: &mut ChildBuilder,
     visibility: Visibility,
     c: C,
@@ -274,10 +232,26 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                             ..default()
                         })
                         .with_children(|builder| {
-                            spawn_zone_button(builder, Visibility::Visible, BackpackSectorId(0));
-                            spawn_zone_button(builder, Visibility::Visible, BackpackSectorId(1));
-                            spawn_zone_button(builder, Visibility::Visible, BackpackSectorId(2));
-                            spawn_zone_button(builder, Visibility::Visible, BackpackSectorId(3));
+                            spawn_inventory_button(
+                                builder,
+                                Visibility::Hidden,
+                                BackpackSectorId(0),
+                            );
+                            spawn_inventory_button(
+                                builder,
+                                Visibility::Hidden,
+                                BackpackSectorId(1),
+                            );
+                            spawn_inventory_button(
+                                builder,
+                                Visibility::Hidden,
+                                BackpackSectorId(2),
+                            );
+                            spawn_inventory_button(
+                                builder,
+                                Visibility::Hidden,
+                                BackpackSectorId(3),
+                            );
                         });
                 });
 
