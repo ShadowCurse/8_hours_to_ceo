@@ -103,18 +103,18 @@ fn prepare_enemy_resources(
     // Default
     let idle_texture = asset_server.load("enemy/boss_idle_sheet.png");
     let idle_animation_config =
-        AnimationConfig::new(1, 5, 10, AllAnimations::BossIdle, false, true);
+        AnimationConfig::new(0, 5, 10, AllAnimations::BossIdle, false, true);
 
     let run_texture = asset_server.load("enemy/boss_run_sheet.png");
-    let run_animation_config = AnimationConfig::new(1, 5, 10, AllAnimations::BossRun, false, true);
+    let run_animation_config = AnimationConfig::new(0, 5, 10, AllAnimations::BossRun, false, true);
 
     let attack_texture = asset_server.load("enemy/boss_attack_sheet.png");
     let attack_animation_config =
-        AnimationConfig::new(1, 5, 10, AllAnimations::BossAttack, true, false);
+        AnimationConfig::new(0, 5, 10, AllAnimations::BossAttack, true, false);
 
     let dead_texture = asset_server.load("enemy/boss_dead_sheet.png");
     let dead_animation_config =
-        AnimationConfig::new(1, 5, 10, AllAnimations::BossDead, true, false);
+        AnimationConfig::new(0, 5, 10, AllAnimations::BossDead, true, false);
 
     let texture_layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 6, 1, None, None);
     let atlas_handle = texture_atlas_layouts.add(texture_layout);
@@ -146,18 +146,18 @@ fn prepare_enemy_resources(
     // Green
     let idle_texture = asset_server.load("enemy/boss_idle_sheet.png");
     let idle_animation_config =
-        AnimationConfig::new(1, 5, 10, AllAnimations::BossIdle, false, true);
+        AnimationConfig::new(0, 5, 10, AllAnimations::BossIdle, false, true);
 
     let run_texture = asset_server.load("enemy/boss_run_sheet.png");
-    let run_animation_config = AnimationConfig::new(1, 5, 10, AllAnimations::BossRun, false, true);
+    let run_animation_config = AnimationConfig::new(0, 5, 10, AllAnimations::BossRun, false, true);
 
     let attack_texture = asset_server.load("enemy/boss_attack_sheet.png");
     let attack_animation_config =
-        AnimationConfig::new(1, 5, 10, AllAnimations::BossAttack, true, false);
+        AnimationConfig::new(0, 5, 10, AllAnimations::BossAttack, true, false);
 
     let dead_texture = asset_server.load("enemy/boss_dead_sheet.png");
     let dead_animation_config =
-        AnimationConfig::new(1, 5, 10, AllAnimations::BossDead, true, false);
+        AnimationConfig::new(0, 5, 10, AllAnimations::BossDead, true, false);
 
     let texture_layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 6, 1, None, None);
     let atlas_handle = texture_atlas_layouts.add(texture_layout);
@@ -189,18 +189,18 @@ fn prepare_enemy_resources(
     // Red
     let idle_texture = asset_server.load("enemy/boss_idle_sheet.png");
     let idle_animation_config =
-        AnimationConfig::new(1, 5, 10, AllAnimations::BossIdle, false, true);
+        AnimationConfig::new(0, 5, 10, AllAnimations::BossIdle, false, true);
 
     let run_texture = asset_server.load("enemy/boss_run_sheet.png");
-    let run_animation_config = AnimationConfig::new(1, 5, 10, AllAnimations::BossRun, false, true);
+    let run_animation_config = AnimationConfig::new(0, 5, 10, AllAnimations::BossRun, false, true);
 
     let attack_texture = asset_server.load("enemy/boss_attack_sheet.png");
     let attack_animation_config =
-        AnimationConfig::new(1, 5, 10, AllAnimations::BossAttack, true, false);
+        AnimationConfig::new(0, 5, 10, AllAnimations::BossAttack, true, false);
 
     let dead_texture = asset_server.load("enemy/boss_dead_sheet.png");
     let dead_animation_config =
-        AnimationConfig::new(1, 5, 10, AllAnimations::BossDead, true, false);
+        AnimationConfig::new(0, 5, 10, AllAnimations::BossDead, true, false);
 
     let texture_layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 6, 1, None, None);
     let atlas_handle = texture_atlas_layouts.add(texture_layout);
@@ -232,18 +232,18 @@ fn prepare_enemy_resources(
     // Orange
     let idle_texture = asset_server.load("enemy/boss_idle_sheet.png");
     let idle_animation_config =
-        AnimationConfig::new(1, 5, 10, AllAnimations::BossIdle, false, true);
+        AnimationConfig::new(0, 5, 10, AllAnimations::BossIdle, false, true);
 
     let run_texture = asset_server.load("enemy/boss_run_sheet.png");
-    let run_animation_config = AnimationConfig::new(1, 5, 10, AllAnimations::BossRun, false, true);
+    let run_animation_config = AnimationConfig::new(0, 5, 10, AllAnimations::BossRun, false, true);
 
     let attack_texture = asset_server.load("enemy/boss_attack_sheet.png");
     let attack_animation_config =
-        AnimationConfig::new(1, 5, 10, AllAnimations::BossAttack, true, false);
+        AnimationConfig::new(0, 5, 10, AllAnimations::BossAttack, true, false);
 
     let dead_texture = asset_server.load("enemy/boss_dead_sheet.png");
     let dead_animation_config =
-        AnimationConfig::new(1, 5, 10, AllAnimations::BossDead, true, false);
+        AnimationConfig::new(0, 5, 10, AllAnimations::BossDead, true, false);
 
     let texture_layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 6, 1, None, None);
     let atlas_handle = texture_atlas_layouts.add(texture_layout);
