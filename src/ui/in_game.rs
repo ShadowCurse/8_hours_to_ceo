@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, text::Text2dBounds};
 
 use crate::{
     game::{
@@ -22,10 +22,12 @@ impl Plugin for InGamePlugin {
                 Update,
                 (
                     button_system,
+                    active_items_button_system,
                     backpack_items_button_system,
                     active_spells_button_system,
                     backpack_spells_button_system,
                     backpack_sectors_button_system,
+                    backpack_sectors_deselect,
                     update_cycles,
                     update_pause,
                     update_inventory,
@@ -59,6 +61,15 @@ struct BackpackSpellId(u8);
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct BackpackSectorId(pub u8);
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct SectorsTooltip;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ItemsTooltip;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct SpellsTooltip;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum InGameButton {
@@ -113,6 +124,231 @@ fn spawn_inventory_button<C: Component + Copy>(
 
 fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
     commands.insert_resource(SelectedSectionButton(None));
+
+    // Tooltip root node
+    commands
+        .spawn(NodeBundle {
+            style: Style {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Column,
+                justify_content: JustifyContent::Center,
+                ..Default::default()
+            },
+            ..default()
+        })
+        .insert(StateScoped(UiState::InGame))
+        .with_children(|builder| {
+            // Top
+            builder.spawn(NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(UI_TOP_SIZE),
+                    flex_direction: FlexDirection::Row,
+                    ..Default::default()
+                },
+                ..default()
+            });
+            // Middle
+            builder
+                .spawn(NodeBundle {
+                    style: Style {
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(UI_MIDDLE_SIZE),
+                        flex_direction: FlexDirection::Column,
+                        ..Default::default()
+                    },
+                    ..default()
+                })
+                .with_children(|builder| {
+                    // Top (unused)
+                    builder.spawn(NodeBundle {
+                        style: Style {
+                            width: Val::Percent(100.0),
+                            height: Val::Percent(25.0),
+                            ..Default::default()
+                        },
+                        ..default()
+                    });
+                    // Zone card tooltip box
+                    builder
+                        .spawn(NodeBundle {
+                            style: Style {
+                                width: Val::Percent(100.0),
+                                height: Val::Percent(50.0),
+                                flex_direction: FlexDirection::Row,
+                                justify_content: JustifyContent::End,
+                                ..Default::default()
+                            },
+                            ..default()
+                        })
+                        .with_children(|builder| {
+                            // Actual sector tooltip zone
+                            builder
+                                .spawn(NodeBundle {
+                                    style: Style {
+                                        width: Val::Percent(15.0),
+                                        height: Val::Percent(100.0),
+                                        flex_direction: FlexDirection::Row,
+                                        align_items: AlignItems::Center,
+                                        justify_items: JustifyItems::Center,
+                                        ..Default::default()
+                                    },
+                                    ..default()
+                                })
+                                .with_children(|builder| {
+                                    // Tooltip box
+                                    builder
+                                        .spawn((NodeBundle {
+                                            style: Style {
+                                                width: Val::Percent(100.0),
+                                                height: Val::Percent(50.0),
+                                                border: UiRect::all(Val::Percent(1.0)),
+                                                align_items: AlignItems::Center,
+                                                justify_items: JustifyItems::Center,
+                                                ..Default::default()
+                                            },
+                                            border_color: BorderColor(Color::BLACK),
+                                            border_radius: BorderRadius::all(Val::Percent(5.0)),
+                                            visibility: Visibility::Hidden,
+                                            ..Default::default()
+                                        },
+                                                SectorsTooltip,
+                                        ))
+                                        .with_children(|builder| {
+                                            builder.spawn((
+                                                TextBundle {
+                                                    text: Text::from_section(
+                                                        "Some very long and interesting explanation for the sectors",
+                                                        TextStyle {
+                                                            font_size: 25.0,
+                                                            color: Color::srgb(0.2, 0.2, 0.2),
+                                                            ..Default::default()
+                                                        },
+                                                ),
+                                                visibility: Visibility::Hidden,
+                                                ..Default::default()
+                                                },
+                                                SectorsTooltip,
+                                            ));
+                                        });
+                                });
+                            // Empty block
+                            builder.spawn(NodeBundle {
+                                style: Style {
+                                    width: Val::Percent(5.0),
+                                    height: Val::Percent(100.0),
+                                    flex_direction: FlexDirection::Row,
+                                    ..Default::default()
+                                },
+                                ..default()
+                            });
+                        });
+                    // Items + spells tooltip
+                    builder.spawn(NodeBundle {
+                        style: Style {
+                            width: Val::Percent(100.0),
+                            height: Val::Percent(25.0),
+                            flex_direction: FlexDirection::Row,
+                            justify_content: JustifyContent::Center,
+                            ..Default::default()
+                        },
+                        ..default()
+                    }).with_children(|builder|{
+                        builder
+                            .spawn(NodeBundle {
+                                style: Style {
+                                    width: Val::Percent(40.0),
+                                    height: Val::Percent(100.0),
+                                    flex_direction: FlexDirection::Row,
+                                    justify_content: JustifyContent::SpaceEvenly,
+                                    ..Default::default()
+                                },
+                                ..default()
+                            })
+                            .with_children(|builder| {
+                                // Items tooltip
+                                builder
+                                    .spawn((NodeBundle {
+                                        style: Style {
+                                            width: Val::Percent(50.0),
+                                                border: UiRect::all(Val::Percent(1.0)),
+                                            flex_direction: FlexDirection::Column,
+                                            justify_content: JustifyContent::Center,
+                                            ..Default::default()
+                                        },
+                                        border_color: BorderColor(Color::BLACK),
+                                        border_radius: BorderRadius::all(Val::Percent(5.0)),
+                                            visibility: Visibility::Hidden,
+                                        ..default()
+                                    },
+                                            ItemsTooltip)
+                                    )
+                                    .with_children(|builder| {
+                                        builder.spawn((
+                                            TextBundle {
+                                                text: Text::from_section(
+                                                    "Some very long and interesting explanation for the items",
+                                                    TextStyle {
+                                                        font_size: 25.0,
+                                                        color: Color::srgb(0.2, 0.2, 0.2),
+                                                        ..Default::default()
+                                                    },
+                                            ),
+                                            visibility: Visibility::Hidden,
+                                            ..Default::default()
+                                            },
+                                            ItemsTooltip
+                                        ));
+                                    });
+
+                                // Spells
+                                builder
+                                    .spawn((NodeBundle {
+                                        style: Style {
+                                            width: Val::Percent(50.0),
+                                                border: UiRect::all(Val::Percent(1.0)),
+                                            flex_direction: FlexDirection::Column,
+                                            justify_content: JustifyContent::Center,
+                                            ..Default::default()
+                                        },
+                                        border_color: BorderColor(Color::BLACK),
+                                        border_radius: BorderRadius::all(Val::Percent(5.0)),
+                                            visibility: Visibility::Hidden,
+                                        ..default()
+                                    }, SpellsTooltip))
+                                    .with_children(|builder| {
+                                        builder.spawn((
+                                            TextBundle {
+                                                text: Text::from_section(
+                                                    "Some very long and interesting explanation for the spells",
+                                                    TextStyle {
+                                                        font_size: 25.0,
+                                                        color: Color::srgb(0.2, 0.2, 0.2),
+                                                        ..Default::default()
+                                                    },
+                                            ),
+                                            visibility: Visibility::Hidden,
+                                            ..Default::default()
+                                            },
+                                            SpellsTooltip
+                                        ));
+                                    });
+                            });
+                        });
+                });
+
+            // Bottom
+            builder.spawn(NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(UI_BOTTOM_SIZE),
+                    flex_direction: FlexDirection::Row,
+                    ..Default::default()
+                },
+                ..default()
+            });
+        });
 
     // Root node
     commands
@@ -478,6 +714,37 @@ fn button_system(
     }
 }
 
+fn active_items_button_system(
+    ui_style: Res<UiStyle>,
+    mut interaction_query: Query<
+        (&Interaction, &mut BackgroundColor),
+        (Changed<Interaction>, With<ActiveItemId>),
+    >,
+    mut tooltip: Query<&mut Visibility, With<ItemsTooltip>>,
+    mut event_writer: EventWriter<InventoryUpdateEvent>,
+) {
+    for (interaction, mut color) in interaction_query.iter_mut() {
+        match *interaction {
+            Interaction::Pressed => {
+                *color = ui_style.btn_color_pressed.into();
+                event_writer.send(InventoryUpdateEvent);
+            }
+            Interaction::Hovered => {
+                *color = ui_style.btn_color_hover.into();
+                for mut tooltip_visibility in tooltip.iter_mut() {
+                    *tooltip_visibility = Visibility::Visible;
+                }
+            }
+            Interaction::None => {
+                *color = ui_style.btn_color_normal.into();
+                for mut tooltip_visibility in tooltip.iter_mut() {
+                    *tooltip_visibility = Visibility::Hidden;
+                }
+            }
+        }
+    }
+}
+
 fn backpack_items_button_system(
     ui_style: Res<UiStyle>,
     mut inventory: ResMut<Inventory>,
@@ -485,6 +752,7 @@ fn backpack_items_button_system(
         (&BackpackItemId, &Interaction, &mut BackgroundColor),
         Changed<Interaction>,
     >,
+    mut tooltip: Query<&mut Visibility, With<ItemsTooltip>>,
     mut event_writer: EventWriter<InventoryUpdateEvent>,
 ) {
     for (item_id, interaction, mut color) in interaction_query.iter_mut() {
@@ -496,9 +764,15 @@ fn backpack_items_button_system(
             }
             Interaction::Hovered => {
                 *color = ui_style.btn_color_hover.into();
+                for mut tooltip_visibility in tooltip.iter_mut() {
+                    *tooltip_visibility = Visibility::Visible;
+                }
             }
             Interaction::None => {
                 *color = ui_style.btn_color_normal.into();
+                for mut tooltip_visibility in tooltip.iter_mut() {
+                    *tooltip_visibility = Visibility::Hidden;
+                }
             }
         }
     }
@@ -513,6 +787,7 @@ fn active_spells_button_system(
         (&ActiveSpellId, &Interaction, &mut BackgroundColor),
         Changed<Interaction>,
     >,
+    mut tooltip: Query<&mut Visibility, With<SpellsTooltip>>,
     mut event_writer: EventWriter<CastSpellEvent>,
 ) {
     for (spell_id, interaction, mut color) in interaction_query.iter_mut() {
@@ -536,9 +811,15 @@ fn active_spells_button_system(
                 }
                 Interaction::Hovered => {
                     *color = ui_style.btn_color_hover.into();
+                    for mut tooltip_visibility in tooltip.iter_mut() {
+                        *tooltip_visibility = Visibility::Visible;
+                    }
                 }
                 Interaction::None => {
                     *color = ui_style.btn_color_normal.into();
+                    for mut tooltip_visibility in tooltip.iter_mut() {
+                        *tooltip_visibility = Visibility::Hidden;
+                    }
                 }
             }
         }
@@ -552,6 +833,7 @@ fn backpack_spells_button_system(
         (&BackpackSpellId, &Interaction, &mut BackgroundColor),
         Changed<Interaction>,
     >,
+    mut tooltip: Query<&mut Visibility, With<SpellsTooltip>>,
     mut event_writer: EventWriter<InventoryUpdateEvent>,
 ) {
     for (spell_id, interaction, mut color) in interaction_query.iter_mut() {
@@ -563,9 +845,15 @@ fn backpack_spells_button_system(
             }
             Interaction::Hovered => {
                 *color = ui_style.btn_color_hover.into();
+                for mut tooltip_visibility in tooltip.iter_mut() {
+                    *tooltip_visibility = Visibility::Visible;
+                }
             }
             Interaction::None => {
                 *color = ui_style.btn_color_normal.into();
+                for mut tooltip_visibility in tooltip.iter_mut() {
+                    *tooltip_visibility = Visibility::Hidden;
+                }
             }
         }
     }
@@ -573,12 +861,12 @@ fn backpack_spells_button_system(
 
 fn backpack_sectors_button_system(
     ui_style: Res<UiStyle>,
-    mouse_input: Res<ButtonInput<MouseButton>>,
     mut selected_section_button: ResMut<SelectedSectionButton>,
     mut interaction_query: Query<
         (Entity, &Interaction, &mut BackgroundColor),
-        With<BackpackSectorId>,
+        (Changed<Interaction>, With<BackpackSectorId>),
     >,
+    mut tooltip: Query<&mut Visibility, With<SectorsTooltip>>,
 ) {
     for (entity, interaction, mut color) in interaction_query.iter_mut() {
         if let Some(e) = selected_section_button.0 {
@@ -594,13 +882,34 @@ fn backpack_sectors_button_system(
             }
             Interaction::Hovered => {
                 *color = ui_style.btn_color_hover.into();
+                for mut tooltip_visibility in tooltip.iter_mut() {
+                    *tooltip_visibility = Visibility::Visible;
+                }
             }
             Interaction::None => {
                 *color = ui_style.btn_color_normal.into();
+                for mut tooltip_visibility in tooltip.iter_mut() {
+                    *tooltip_visibility = Visibility::Hidden;
+                }
             }
         }
     }
+}
+
+fn backpack_sectors_deselect(
+    ui_style: Res<UiStyle>,
+    mouse_input: Res<ButtonInput<MouseButton>>,
+    mut selected_section_button: ResMut<SelectedSectionButton>,
+    mut section_button: Query<&mut BackgroundColor, With<BackpackSectorId>>,
+) {
     if mouse_input.just_pressed(MouseButton::Right) {
+        if let Some(e) = selected_section_button.0 {
+            let Ok(mut color) = section_button.get_mut(e) else {
+                return;
+            };
+
+            *color = ui_style.btn_color_normal.into();
+        }
         selected_section_button.0 = None;
     }
 }
