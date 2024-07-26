@@ -181,18 +181,15 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                     ..default()
                 })
                 .with_children(|builder| {
-                    // Cycles + pause part
+                    // Cycles
                     builder
                         .spawn(NodeBundle {
                             style: Style {
-                                width: Val::Percent(100.0 - UI_RIGHT_SIZE),
-                                flex_direction: FlexDirection::Row,
+                                width: Val::Percent(100.0 / 3.0),
                                 align_items: AlignItems::Center,
-                                justify_items: JustifyItems::Center,
-                                justify_content: JustifyContent::SpaceAround,
+                                justify_content: JustifyContent::Center,
                                 ..Default::default()
                             },
-                            background_color: Color::srgb(0.0, 0.0, 0.3).into(),
                             ..default()
                         })
                         .with_children(|builder| {
@@ -207,7 +204,21 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                                 },
                                 CyclesText,
                             ));
-                            // Pause state
+                        });
+
+                    // Pause state
+                    builder
+                        .spawn(NodeBundle {
+                            style: Style {
+                                width: Val::Percent(100.0 / 3.0),
+                                align_items: AlignItems::Center,
+                                justify_content: JustifyContent::Center,
+                                ..Default::default()
+                            },
+                            ..default()
+                        })
+                        .with_children(|builder| {
+                            // Pause state text
                             builder.spawn((
                                 TextBundle {
                                     text: Text::from_section("Paused", ui_style.text_style.clone()),
@@ -216,18 +227,18 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                                 PauseText,
                             ));
                         });
+
                     // Settings + exit buttons
                     builder
                         .spawn(NodeBundle {
                             style: Style {
-                                width: Val::Percent(UI_RIGHT_SIZE),
+                                width: Val::Percent(100.0 / 3.0),
                                 flex_direction: FlexDirection::Row,
                                 align_items: AlignItems::Center,
                                 justify_items: JustifyItems::Center,
                                 justify_content: JustifyContent::SpaceAround,
                                 ..Default::default()
                             },
-                            background_color: Color::srgb(0.0, 0.5, 0.3).into(),
                             ..default()
                         })
                         .with_children(|builder| {
