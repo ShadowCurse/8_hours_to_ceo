@@ -71,6 +71,7 @@ pub struct SectorIdx(pub usize);
 #[derive(Debug)]
 pub struct SectorInfo {
     pub name: &'static str,
+    pub description: &'static str,
     pub material: Handle<ColorMaterial>,
     pub drop_rate: f32,
     pub enemies: Vec<EnemyIdx>,
@@ -187,6 +188,7 @@ fn prepare_sector_resources(
     let mut sectors = Sectors(vec![]);
     sectors.0.push(SectorInfo {
         name: "Default",
+        description: "Default sector",
         material: material_default,
         drop_rate: 0.9,
         enemies: vec![EnemyIdx(0)],
@@ -194,6 +196,7 @@ fn prepare_sector_resources(
     });
     sectors.0.push(SectorInfo {
         name: "Green",
+        description: "Green sector",
         material: material_green,
         drop_rate: 0.9,
         enemies: vec![EnemyIdx(1)],
@@ -201,6 +204,7 @@ fn prepare_sector_resources(
     });
     sectors.0.push(SectorInfo {
         name: "Red",
+        description: "Red sector",
         material: material_red,
         drop_rate: 0.9,
         enemies: vec![EnemyIdx(2)],
@@ -208,6 +212,7 @@ fn prepare_sector_resources(
     });
     sectors.0.push(SectorInfo {
         name: "Orange",
+        description: "Orange sector",
         material: material_orange,
         drop_rate: 0.9,
         enemies: vec![EnemyIdx(3)],

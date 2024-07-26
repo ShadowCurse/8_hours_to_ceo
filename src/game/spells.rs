@@ -57,6 +57,7 @@ pub enum Spell {
 #[derive(Debug)]
 pub struct SpellInfo {
     pub name: &'static str,
+    pub description: &'static str,
     pub drop_rate: f32,
     pub cooldown: Timer,
     pub spell: Spell,
@@ -83,6 +84,7 @@ fn prepare_spells(mut commands: Commands) {
 
     spells.0.push(SpellInfo {
         name: "Lightning",
+        description: "Flashy lightning",
         drop_rate: 0.9,
         cooldown: Timer::from_seconds(2.0, TimerMode::Once),
         spell: Spell::Lightning(Lightning {
@@ -93,6 +95,7 @@ fn prepare_spells(mut commands: Commands) {
     });
     spells.0.push(SpellInfo {
         name: "Heal",
+        description: "Healing heal",
         drop_rate: 0.9,
         cooldown: Timer::from_seconds(5.0, TimerMode::Once),
         spell: Spell::Heal(Heal { heal: 20.0 }),

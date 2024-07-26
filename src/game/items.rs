@@ -49,6 +49,7 @@ impl Item {
 #[derive(Debug)]
 pub struct ItemInfo {
     pub name: &'static str,
+    pub description: &'static str,
     pub drop_rate: f32,
     pub item: Item,
 }
@@ -74,16 +75,19 @@ fn prepare_items(mut commands: Commands) {
 
     items.0.push(ItemInfo {
         name: "Scissors",
+        description: "Sharp scissors",
         drop_rate: 0.9,
         item: Item::Scissors,
     });
     items.0.push(ItemInfo {
         name: "Bucket",
+        description: "Strudy bucket",
         drop_rate: 0.9,
         item: Item::Bucket,
     });
     items.0.push(ItemInfo {
         name: "Plant",
+        description: "Green plant",
         drop_rate: 0.9,
         item: Item::Plant,
     });
