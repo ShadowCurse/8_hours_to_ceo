@@ -1,6 +1,6 @@
 use bevy::{ecs::system::EntityCommands, prelude::*};
 
-use crate::GlobalState;
+use crate::{game::animation::DamageText, GlobalState};
 
 use super::{
     animation::{AllAnimations, AnimationConfig, AnimationFinishedEvent},
@@ -270,10 +270,11 @@ fn on_attack_finish(
 fn player_take_damage(
     items: Res<Items>,
     inventory: Res<Inventory>,
-    mut player: Query<(&Defense, &mut Health), With<Player>>,
+    mut commands: Commands,
+    mut player: Query<(&Transform, &Defense, &mut Health), With<Player>>,
     mut event_read: EventReader<DamagePlayerEvent>,
 ) {
-    let Ok((player_defense, mut player_health)) = player.get_single_mut() else {
+    let Ok((player_transform, player_defense, mut player_health)) = player.get_single_mut() else {
         return;
     };
 
@@ -294,6 +295,24 @@ fn player_take_damage(
         let damage = e.0 * (1.0 - player_defense);
         println!("player takes: {damage} damage");
         player_health.0 -= damage;
+
+        commands.spawn((
+            Text2dBundle {
+                text: Text::from_section(
+                    format!("{}", damage),
+                    TextStyle {
+                        font_size: 40.0,
+                        color: Color::srgb(1.0, 0.0, 0.0),
+                        ..Default::default()
+                    },
+                ),
+                transform: *player_transform,
+                ..default()
+            },
+            DamageText {
+                direction: player_transform.translation.normalize(),
+            },
+        ));
     }
 }
 
