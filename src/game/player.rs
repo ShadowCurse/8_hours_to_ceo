@@ -6,6 +6,7 @@ use super::{
     animation::{AllAnimations, AnimationConfig, AnimationFinishedEvent},
     chest::ChestOppenedEvent,
     enemy::{DamageEnemyEvent, EnemyDeadEvent},
+    hp_bar::{hp_bar_bundle, HpBarResources},
     inventory::Inventory,
     items::Items,
     AttackSpeed, Damage, Defense, GameCamera, GameState, Health,
@@ -133,9 +134,10 @@ fn prepare_player_resources(
 pub fn spawn_player<'a>(
     commands: &'a mut Commands,
     player_resources: &PlayerResources,
+    hp_bar_resources: &HpBarResources,
     transform: Transform,
 ) -> EntityCommands<'a> {
-    commands.spawn((
+    let mut c = commands.spawn((
         SpriteBundle {
             transform,
             texture: player_resources.idle_texture.clone(),
@@ -145,12 +147,20 @@ pub fn spawn_player<'a>(
         player_resources.idle_animation_config.clone(),
         Player,
         PlayerSpeed(0.5),
-        Health(100.0),
+        Health {
+            max: 100.0,
+            current: 100.0,
+        },
         Damage(5.0),
         AttackSpeed::new(0.5),
         Defense(0.0),
         StateScoped(GlobalState::InGame),
-    ))
+    ));
+    let parent_entity = c.id();
+    c.with_children(|builder| {
+        builder.spawn(hp_bar_bundle(hp_bar_resources, parent_entity));
+    });
+    c
 }
 
 fn player_start_idle(
@@ -261,7 +271,7 @@ fn on_attack_finish(
                     })
                     .sum::<f32>();
 
-            event_writer.send(DamageEnemyEvent{
+            event_writer.send(DamageEnemyEvent {
                 damage,
                 color: Color::srgb(1.0, 0.0, 0.0),
             });
@@ -297,7 +307,7 @@ fn player_take_damage(
 
         let damage = e.0 * (1.0 - player_defense);
         println!("player takes: {damage} damage");
-        player_health.0 -= damage;
+        player_health.current -= damage;
 
         commands.spawn((
             Text2dBundle {
@@ -342,7 +352,7 @@ fn battle_end_check(
                 }
             })
             .sum::<f32>();
-        player_health.0 += heal;
+        player_health.current += heal;
         player_state.set(PlayerState::Run);
     }
 }

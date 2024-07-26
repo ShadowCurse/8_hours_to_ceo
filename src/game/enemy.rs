@@ -8,6 +8,7 @@ use crate::{game::animation::DamageText, GlobalState};
 use super::{
     animation::{AllAnimations, AnimationConfig, AnimationFinishedEvent},
     circle_sectors::{SectorIdx, SectorPosition, Sectors},
+    hp_bar::{hp_bar_bundle, HpBarResources},
     inventory::{Inventory, InventoryUpdateEvent},
     items::{ItemIdx, Items},
     player::DamagePlayerEvent,
@@ -284,10 +285,11 @@ pub fn spawn_enemy<'a>(
     enemies: &Enemies,
     enemy_idx: EnemyIdx,
     sector_id: SectorPosition,
+    hp_bar_resources: &HpBarResources,
     transform: Transform,
 ) -> EntityCommands<'a> {
     let enemy_info = &enemies[enemy_idx];
-    commands.spawn((
+    let mut c = commands.spawn((
         SpriteBundle {
             sprite: Sprite {
                 color: enemy_info.tint,
@@ -300,14 +302,22 @@ pub fn spawn_enemy<'a>(
         enemy_info.texture_atlas.clone(),
         enemy_info.idle_animation_config.clone(),
         Enemy,
-        Health(30.0),
+        Health {
+            max: 30.0,
+            current: 30.0,
+        },
         Damage(1.0),
         AttackSpeed::new(1.0),
         Defense(0.0),
         sector_id,
         enemy_idx,
         StateScoped(GlobalState::InGame),
-    ))
+    ));
+    let parent_entity = c.id();
+    c.with_children(|builder| {
+        builder.spawn(hp_bar_bundle(hp_bar_resources, parent_entity));
+    });
+    c
 }
 
 fn enemy_attack(
@@ -369,7 +379,7 @@ fn enemy_take_damage(
     for e in event_reader.read() {
         let damage = e.damage * (1.0 - enemy_defense.0);
         println!("enemy takes: {damage} damage");
-        enemy_health.0 -= damage;
+        enemy_health.current -= damage;
 
         commands.spawn((
             Text2dBundle {
@@ -417,7 +427,7 @@ fn enemy_check_dead(
         return;
     };
 
-    if enemy_health.0 <= 0.0 {
+    if enemy_health.current <= 0.0 {
         commands
             .get_entity(enemy_entity)
             .unwrap()

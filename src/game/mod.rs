@@ -7,6 +7,7 @@ pub mod chest;
 pub mod circle_sectors;
 pub mod cursor;
 pub mod enemy;
+pub mod hp_bar;
 pub mod inventory;
 pub mod items;
 pub mod player;
@@ -17,6 +18,7 @@ use chest::{Chest, ChestOppenedEvent, ChestsPlugin, InteractedChest};
 use circle_sectors::{position_to_sector_position, SectorPosition, SectorsPlugin};
 use cursor::CursorPlugin;
 use enemy::{BattleEnemy, Enemy, EnemyDeadEvent, EnemyPlugin};
+use hp_bar::{HpBarPlugin, HpBarResources};
 use inventory::InventoryPlugin;
 use items::ItemsPlugin;
 use player::{spawn_player, Player, PlayerPlugin, PlayerResources, PlayerState};
@@ -34,6 +36,7 @@ impl Plugin for GamePlugin {
             SectorsPlugin,
             CursorPlugin,
             EnemyPlugin,
+            HpBarPlugin,
             InventoryPlugin,
             ItemsPlugin,
             PlayerPlugin,
@@ -68,7 +71,10 @@ pub enum GameState {
 pub struct GameCamera;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq)]
-pub struct Health(pub f32);
+pub struct Health {
+    pub max: f32,
+    pub current: f32,
+}
 
 #[derive(Component, Debug, Clone, Copy, PartialEq)]
 pub struct Damage(pub f32);
@@ -90,6 +96,7 @@ fn setup_game(mut commands: Commands) {
 }
 
 fn spawn_base_game(
+    hp_bar_resources: Res<HpBarResources>,
     player_resources: Res<PlayerResources>,
     mut commands: Commands,
     mut game_state: ResMut<NextState<GameState>>,
@@ -98,6 +105,7 @@ fn spawn_base_game(
     spawn_player(
         &mut commands,
         player_resources.as_ref(),
+        hp_bar_resources.as_ref(),
         Transform::from_xyz(0.0, 230.0, 2.0).with_scale(Vec3::new(2.0, 2.0, 2.0)),
     );
 
