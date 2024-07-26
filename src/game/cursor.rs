@@ -1,6 +1,6 @@
 use bevy::{prelude::*, window::PrimaryWindow};
 
-use crate::ui::in_game::{SelectedSectionButton, UI_RIGHT_SIZE, UI_TOP_SIZE};
+use crate::ui::in_game::SelectedSectionButton;
 
 use super::{
     circle_sectors::{
@@ -28,7 +28,7 @@ fn prepare_cursor_resources(mut commands: Commands) {
 fn update_cursor(
     selected_section_button: Res<SelectedSectionButton>,
     window: Query<&Window, With<PrimaryWindow>>,
-    camera: Query<(&Camera, &GlobalTransform), Without<GameCamera>>,
+    camera: Query<(&Camera, &GlobalTransform), With<GameCamera>>,
     mut cursor_sector: ResMut<CursorSector>,
 ) {
     if selected_section_button.0.is_none() {
@@ -45,13 +45,9 @@ fn update_cursor(
         return;
     };
 
-    let Some(mut world_pos) = camera.viewport_to_world_2d(camera_transform, cursor_position) else {
+    let Some(world_pos) = camera.viewport_to_world_2d(camera_transform, cursor_position) else {
         return;
     };
-
-    // adjust to account for texture is moved to the side
-    world_pos.x += window.width() * (UI_RIGHT_SIZE / 100.0) / 2.0;
-    world_pos.y += window.height() * (UI_TOP_SIZE / 100.0) / 2.0;
 
     if world_pos.length() < CIRCLE_INNER_RADIUS || CIRCLE_RADIUS < world_pos.length() {
         cursor_sector.0 = None;

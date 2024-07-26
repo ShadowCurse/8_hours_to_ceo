@@ -1,18 +1,6 @@
-use bevy::{
-    prelude::*,
-    render::{
-        render_resource::{
-            Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages,
-        },
-        view::RenderLayers,
-    },
-    window::{PrimaryWindow, WindowResized},
-};
+use bevy::prelude::*;
 
-use crate::{
-    ui::in_game::{UI_RIGHT_SIZE, UI_TOP_SIZE},
-    GlobalState,
-};
+use crate::GlobalState;
 
 pub mod animation;
 pub mod chest;
@@ -54,7 +42,6 @@ impl Plugin for GamePlugin {
         .add_sub_state::<GameState>()
         .add_systems(Startup, setup_game)
         .add_systems(OnEnter(GameState::Preparing), spawn_base_game)
-        .add_systems(Update, on_window_resize)
         .add_systems(
             Update,
             (initiate_battle, initiate_pickup).run_if(in_state(GameState::Running)),
@@ -75,16 +62,6 @@ pub enum GameState {
     Pickup,
     Battle,
     Paused,
-}
-
-#[derive(Resource, Debug, Clone, PartialEq, Eq, Hash)]
-pub struct GameImage {
-    pub image: Handle<Image>,
-}
-
-#[derive(Resource, Debug, Clone, PartialEq, Eq)]
-pub struct GameRenderLayer {
-    layer: RenderLayers,
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -108,85 +85,11 @@ impl AttackSpeed {
     }
 }
 
-fn setup_game(
-    mut commands: Commands,
-    windows: Query<&Window, With<PrimaryWindow>>,
-    mut images: ResMut<Assets<Image>>,
-) {
-    let Ok(primary_window) = windows.get_single() else {
-        return;
-    };
-
-    let size = Extent3d {
-        width: (primary_window.resolution.width() * (100.0 - UI_RIGHT_SIZE) / 100.0) as u32,
-        height: (primary_window.resolution.height() * (100.0 - UI_TOP_SIZE) / 100.0) as u32,
-        ..default()
-    };
-
-    let mut image = Image {
-        texture_descriptor: TextureDescriptor {
-            label: None,
-            size,
-            dimension: TextureDimension::D2,
-            format: TextureFormat::Bgra8UnormSrgb,
-            mip_level_count: 1,
-            sample_count: 1,
-            usage: TextureUsages::TEXTURE_BINDING
-                | TextureUsages::COPY_DST
-                | TextureUsages::RENDER_ATTACHMENT,
-            view_formats: &[],
-        },
-        ..default()
-    };
-
-    // fill image.data with zeroes
-    image.resize(size);
-
-    let image_handle = images.add(image);
-
-    let first_pass_layer = RenderLayers::layer(1);
-
-    commands.spawn((
-        Camera2dBundle {
-            camera: Camera {
-                // render before the "main pass" camera
-                order: -1,
-                target: image_handle.clone().into(),
-                clear_color: Color::BLACK.into(),
-                ..default()
-            },
-            ..default()
-        },
-        GameCamera,
-        first_pass_layer.clone(),
-    ));
-
-    commands.insert_resource(GameRenderLayer {
-        layer: first_pass_layer,
-    });
-    commands.insert_resource(GameImage {
-        image: image_handle,
-    });
-}
-
-fn on_window_resize(
-    game_image: Res<GameImage>,
-    mut images: ResMut<Assets<Image>>,
-    mut resize_reader: EventReader<WindowResized>,
-) {
-    for e in resize_reader.read() {
-        let image = images.get_mut(&game_image.image).unwrap();
-        let size = Extent3d {
-            width: (e.width * (100.0 - UI_RIGHT_SIZE) / 100.0) as u32,
-            height: (e.height * (100.0 - UI_TOP_SIZE) / 100.0) as u32,
-            ..default()
-        };
-        image.resize(size);
-    }
+fn setup_game(mut commands: Commands) {
+    commands.spawn((Camera2dBundle::default(), GameCamera));
 }
 
 fn spawn_base_game(
-    game_render_layer: Res<GameRenderLayer>,
     player_resources: Res<PlayerResources>,
     mut commands: Commands,
     mut game_state: ResMut<NextState<GameState>>,
@@ -196,7 +99,6 @@ fn spawn_base_game(
         &mut commands,
         player_resources.as_ref(),
         Transform::from_xyz(0.0, 230.0, 2.0).with_scale(Vec3::new(2.0, 2.0, 2.0)),
-        game_render_layer.layer.clone(),
     );
 
     game_state.set(GameState::Running);

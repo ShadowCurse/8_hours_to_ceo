@@ -32,7 +32,6 @@ fn main() {
         ))
         .init_state::<GlobalState>()
         .enable_state_scoped_entities::<GlobalState>()
-        .add_systems(Startup, setup)
         .run();
 }
 
@@ -41,8 +40,4 @@ pub enum GlobalState {
     #[default]
     MainMenu,
     InGame,
-}
-
-fn setup(mut commands: Commands) {
-    commands.spawn(Camera2dBundle::default());
 }

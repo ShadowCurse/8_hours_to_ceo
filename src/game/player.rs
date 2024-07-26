@@ -1,4 +1,4 @@
-use bevy::{ecs::system::EntityCommands, prelude::*, render::view::RenderLayers};
+use bevy::{ecs::system::EntityCommands, prelude::*};
 
 use crate::GlobalState;
 
@@ -134,7 +134,6 @@ pub fn spawn_player<'a>(
     commands: &'a mut Commands,
     player_resources: &PlayerResources,
     transform: Transform,
-    render_layer: RenderLayers,
 ) -> EntityCommands<'a> {
     commands.spawn((
         SpriteBundle {
@@ -150,7 +149,6 @@ pub fn spawn_player<'a>(
         Damage(5.0),
         AttackSpeed::new(0.5),
         Defense(0.0),
-        render_layer,
         StateScoped(GlobalState::InGame),
     ))
 }

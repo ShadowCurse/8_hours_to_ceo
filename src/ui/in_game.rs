@@ -6,7 +6,7 @@ use crate::{
         inventory::{Inventory, InventoryUpdateEvent},
         items::Items,
         spells::{CastSpellEvent, Spells},
-        GameImage, GameState,
+        GameState,
     },
     GlobalState,
 };
@@ -66,6 +66,8 @@ enum InGameButton {
 }
 
 pub const UI_TOP_SIZE: f32 = 10.0;
+pub const UI_MIDDLE_SIZE: f32 = 70.0;
+pub const UI_BOTTOM_SIZE: f32 = 20.0;
 pub const UI_RIGHT_SIZE: f32 = 30.0;
 
 fn spawn_inventory_button<C: Component + Copy>(
@@ -77,9 +79,9 @@ fn spawn_inventory_button<C: Component + Copy>(
         .spawn((
             ButtonBundle {
                 style: Style {
-                    width: Val::Px(80.0),
-                    height: Val::Px(80.0),
-                    border: UiRect::all(Val::Px(5.0)),
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    border: UiRect::all(Val::Percent(1.0)),
                     // horizontally center child text
                     justify_content: JustifyContent::Center,
                     // vertically center child text
@@ -109,7 +111,48 @@ fn spawn_inventory_button<C: Component + Copy>(
         });
 }
 
-fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>, game_image: Res<GameImage>) {
+fn spawn_zone_button<C: Component + Copy>(
+    builder: &mut ChildBuilder,
+    visibility: Visibility,
+    c: C,
+) {
+    builder
+        .spawn((
+            ButtonBundle {
+                style: Style {
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    border: UiRect::all(Val::Percent(1.0)),
+                    // horizontally center child text
+                    justify_content: JustifyContent::Center,
+                    // vertically center child text
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                visibility,
+                border_color: BorderColor(Color::BLACK),
+                border_radius: BorderRadius::all(Val::Percent(5.0)),
+                background_color: Color::WHITE.into(),
+                ..default()
+            },
+            c,
+        ))
+        .with_children(|builder| {
+            builder.spawn((
+                TextBundle::from_section(
+                    "NaN",
+                    TextStyle {
+                        font_size: 40.0,
+                        color: Color::srgb(0.2, 0.2, 0.2),
+                        ..Default::default()
+                    },
+                ),
+                c,
+            ));
+        });
+}
+
+fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
     commands.insert_resource(SelectedSectionButton(None));
 
     // Root node
@@ -193,93 +236,60 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>, game_image: Res
                         });
                 });
 
-            // Main part
+            // Zones cards on the right
             builder
                 .spawn(NodeBundle {
                     style: Style {
                         width: Val::Percent(100.0),
-                        height: Val::Percent(100.0 - UI_TOP_SIZE),
+                        height: Val::Percent(UI_MIDDLE_SIZE),
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::End,
                         ..Default::default()
                     },
                     ..default()
                 })
                 .with_children(|builder| {
-                    // Game window + dynamic ui
-                    builder
-                        .spawn((
-                            NodeBundle {
-                                style: Style {
-                                    width: Val::Percent(100.0 - UI_RIGHT_SIZE),
-                                    flex_direction: FlexDirection::Column,
-                                    justify_content: JustifyContent::End,
-                                    ..Default::default()
-                                },
-                                ..default()
-                            },
-                            UiImage::new(game_image.image.clone()),
-                        ))
-                        .with_children(|builder| {
-                            // Sectors UI
-                            builder
-                                .spawn(NodeBundle {
-                                    style: Style {
-                                        width: Val::Percent(100.0),
-                                        height: Val::Percent(15.0),
-                                        align_items: AlignItems::Center,
-                                        justify_content: JustifyContent::Center,
-                                        ..Default::default()
-                                    },
-                                    ..default()
-                                })
-                                .with_children(|builder| {
-                                    spawn_inventory_button(
-                                        builder,
-                                        Visibility::Hidden,
-                                        BackpackSectorId(0),
-                                    );
-                                    spawn_inventory_button(
-                                        builder,
-                                        Visibility::Hidden,
-                                        BackpackSectorId(1),
-                                    );
-                                    spawn_inventory_button(
-                                        builder,
-                                        Visibility::Hidden,
-                                        BackpackSectorId(2),
-                                    );
-                                    spawn_inventory_button(
-                                        builder,
-                                        Visibility::Hidden,
-                                        BackpackSectorId(3),
-                                    );
-                                    spawn_inventory_button(
-                                        builder,
-                                        Visibility::Hidden,
-                                        BackpackSectorId(4),
-                                    );
-                                    spawn_inventory_button(
-                                        builder,
-                                        Visibility::Hidden,
-                                        BackpackSectorId(5),
-                                    );
-                                    spawn_inventory_button(
-                                        builder,
-                                        Visibility::Hidden,
-                                        BackpackSectorId(6),
-                                    );
-                                    spawn_inventory_button(
-                                        builder,
-                                        Visibility::Hidden,
-                                        BackpackSectorId(7),
-                                    );
-                                });
-                        });
-                    // Items and spells
+                    // Inner container for zone buttons
                     builder
                         .spawn(NodeBundle {
                             style: Style {
-                                width: Val::Percent(UI_RIGHT_SIZE),
+                                width: Val::Percent(5.0),
+                                height: Val::Percent(80.0),
                                 flex_direction: FlexDirection::Column,
+                                align_items: AlignItems::Center,
+                                justify_content: JustifyContent::Center,
+                                ..Default::default()
+                            },
+                            ..default()
+                        })
+                        .with_children(|builder| {
+                            spawn_zone_button(builder, Visibility::Visible, BackpackSectorId(0));
+                            spawn_zone_button(builder, Visibility::Visible, BackpackSectorId(1));
+                            spawn_zone_button(builder, Visibility::Visible, BackpackSectorId(2));
+                            spawn_zone_button(builder, Visibility::Visible, BackpackSectorId(3));
+                        });
+                });
+
+            // Items and spells
+            builder
+                .spawn(NodeBundle {
+                    style: Style {
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(UI_BOTTOM_SIZE),
+                        justify_content: JustifyContent::Center,
+                        ..Default::default()
+                    },
+                    ..default()
+                })
+                .with_children(|builder| {
+                    // Center container
+                    builder
+                        .spawn(NodeBundle {
+                            style: Style {
+                                width: Val::Percent(40.0),
+                                height: Val::Percent(100.0),
+                                flex_direction: FlexDirection::Row,
+                                justify_content: JustifyContent::SpaceEvenly,
                                 ..Default::default()
                             },
                             ..default()
@@ -289,8 +299,9 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>, game_image: Res
                             builder
                                 .spawn(NodeBundle {
                                     style: Style {
-                                        height: Val::Percent(50.0),
+                                        width: Val::Percent(50.0),
                                         flex_direction: FlexDirection::Column,
+                                        justify_content: JustifyContent::Center,
                                         ..Default::default()
                                     },
                                     ..default()
@@ -300,13 +311,11 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>, game_image: Res
                                     builder
                                         .spawn(NodeBundle {
                                             style: Style {
-                                                height: Val::Percent(30.0),
                                                 flex_direction: FlexDirection::Row,
                                                 align_items: AlignItems::Center,
-                                                justify_content: JustifyContent::SpaceAround,
+                                                justify_content: JustifyContent::Center,
                                                 ..Default::default()
                                             },
-                                            background_color: Color::srgb(0.8, 0.8, 0.0).into(),
                                             ..default()
                                         })
                                         .with_children(|builder| {
@@ -336,16 +345,11 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>, game_image: Res
                                     builder
                                         .spawn(NodeBundle {
                                             style: Style {
-                                                height: Val::Percent(70.0),
-                                                display: Display::Grid,
+                                                flex_direction: FlexDirection::Row,
                                                 align_items: AlignItems::Center,
-                                                justify_items: JustifyItems::Center,
-                                                grid_template_columns: RepeatedGridTrack::flex(
-                                                    4, 1.0,
-                                                ),
+                                                justify_content: JustifyContent::Center,
                                                 ..Default::default()
                                             },
-                                            background_color: Color::srgb(0.2, 0.8, 0.0).into(),
                                             ..default()
                                         })
                                         .with_children(|builder| {
@@ -369,26 +373,6 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>, game_image: Res
                                                 Visibility::default(),
                                                 BackpackItemId(3),
                                             );
-                                            spawn_inventory_button(
-                                                builder,
-                                                Visibility::default(),
-                                                BackpackItemId(4),
-                                            );
-                                            spawn_inventory_button(
-                                                builder,
-                                                Visibility::default(),
-                                                BackpackItemId(5),
-                                            );
-                                            spawn_inventory_button(
-                                                builder,
-                                                Visibility::default(),
-                                                BackpackItemId(6),
-                                            );
-                                            spawn_inventory_button(
-                                                builder,
-                                                Visibility::default(),
-                                                BackpackItemId(7),
-                                            );
                                         });
                                 });
 
@@ -396,11 +380,11 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>, game_image: Res
                             builder
                                 .spawn(NodeBundle {
                                     style: Style {
-                                        height: Val::Percent(50.0),
+                                        width: Val::Percent(50.0),
                                         flex_direction: FlexDirection::Column,
+                                        justify_content: JustifyContent::Center,
                                         ..Default::default()
                                     },
-                                    background_color: Color::srgb(0.4, 0.4, 0.8).into(),
                                     ..default()
                                 })
                                 .with_children(|builder| {
@@ -408,13 +392,11 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>, game_image: Res
                                     builder
                                         .spawn(NodeBundle {
                                             style: Style {
-                                                height: Val::Percent(30.0),
                                                 flex_direction: FlexDirection::Row,
                                                 align_items: AlignItems::Center,
-                                                justify_content: JustifyContent::SpaceAround,
+                                                justify_content: JustifyContent::Center,
                                                 ..Default::default()
                                             },
-                                            background_color: Color::srgb(0.8, 0.8, 0.0).into(),
                                             ..default()
                                         })
                                         .with_children(|builder| {
@@ -444,16 +426,11 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>, game_image: Res
                                     builder
                                         .spawn(NodeBundle {
                                             style: Style {
-                                                height: Val::Percent(70.0),
-                                                display: Display::Grid,
+                                                flex_direction: FlexDirection::Row,
                                                 align_items: AlignItems::Center,
-                                                justify_items: JustifyItems::Center,
-                                                grid_template_columns: RepeatedGridTrack::flex(
-                                                    4, 1.0,
-                                                ),
+                                                justify_content: JustifyContent::Center,
                                                 ..Default::default()
                                             },
-                                            background_color: Color::srgb(0.2, 0.8, 0.0).into(),
                                             ..default()
                                         })
                                         .with_children(|builder| {
@@ -476,26 +453,6 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>, game_image: Res
                                                 builder,
                                                 Visibility::default(),
                                                 BackpackSpellId(3),
-                                            );
-                                            spawn_inventory_button(
-                                                builder,
-                                                Visibility::default(),
-                                                BackpackSpellId(4),
-                                            );
-                                            spawn_inventory_button(
-                                                builder,
-                                                Visibility::default(),
-                                                BackpackSpellId(5),
-                                            );
-                                            spawn_inventory_button(
-                                                builder,
-                                                Visibility::default(),
-                                                BackpackSpellId(6),
-                                            );
-                                            spawn_inventory_button(
-                                                builder,
-                                                Visibility::default(),
-                                                BackpackSpellId(7),
                                             );
                                         });
                                 });

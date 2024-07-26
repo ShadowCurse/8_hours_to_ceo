@@ -19,7 +19,7 @@ use super::{
     cursor::CursorSector,
     enemy::{spawn_enemy, Enemies, EnemyIdx},
     inventory::Inventory,
-    GameRenderLayer, GameState, Player,
+    GameState, Player,
 };
 
 pub const CIRCLE_RADIUS: f32 = 200.0;
@@ -215,7 +215,6 @@ fn prepare_sector_resources(
 fn spawn_sectors(
     sectors: Res<Sectors>,
     sector_resources: Res<SectorResources>,
-    game_render_layer: Res<GameRenderLayer>,
     mut commands: Commands,
 ) {
     // Sectors
@@ -238,7 +237,6 @@ fn spawn_sectors(
             sector_idx,
             SectorTimer::default(),
             SectorSlots::default(),
-            game_render_layer.layer.clone(),
             StateScoped(GlobalState::InGame),
         ));
     }
@@ -252,7 +250,6 @@ fn spawn_sectors(
             ..default()
         },
         Wireframe2d,
-        game_render_layer.layer.clone(),
         StateScoped(GlobalState::InGame),
     ));
 }
@@ -338,7 +335,6 @@ fn sector_spawn_things(
     enemies: Res<Enemies>,
     sectors: Res<Sectors>,
     chest_resources: Res<ChestResources>,
-    game_render_layer: Res<GameRenderLayer>,
     player: Query<&Transform, With<Player>>,
     mut commands: Commands,
     mut s: Query<(
@@ -383,18 +379,11 @@ fn sector_spawn_things(
                             .with_scale(Vec3::new(2.0, 2.0, 2.0));
                         t.rotate_around(Vec3::ZERO, Quat::from_rotation_z(-angle));
 
-                        spawn_enemy(
-                            &mut commands,
-                            enemies.as_ref(),
-                            random_enemy_idx,
-                            *id,
-                            t,
-                            game_render_layer.layer.clone(),
-                        )
-                        .insert(SectorSlotEntity {
-                            entity,
-                            slot_position: empty_slot_position,
-                        });
+                        spawn_enemy(&mut commands, enemies.as_ref(), random_enemy_idx, *id, t)
+                            .insert(SectorSlotEntity {
+                                entity,
+                                slot_position: empty_slot_position,
+                            });
                         true
                     } else {
                         false
@@ -420,7 +409,6 @@ fn sector_spawn_things(
                             random_chest_idx,
                             *id,
                             t,
-                            game_render_layer.layer.clone(),
                         )
                         .insert(SectorSlotEntity {
                             entity,

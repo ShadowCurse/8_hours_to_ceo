@@ -1,9 +1,6 @@
 use std::ops::{Index, IndexMut};
 
-use bevy::{
-    ecs::system::EntityCommands, prelude::*, render::view::RenderLayers,
-    sprite::MaterialMesh2dBundle,
-};
+use bevy::{ecs::system::EntityCommands, prelude::*, sprite::MaterialMesh2dBundle};
 use rand::Rng;
 
 use crate::GlobalState;
@@ -124,7 +121,6 @@ pub fn spawn_chest<'a>(
     chest_idx: ChestIdx,
     sector_id: SectorPosition,
     transform: Transform,
-    render_layer: RenderLayers,
 ) -> EntityCommands<'a> {
     let material = chests.0[chest_idx.0].material.clone();
     commands.spawn((
@@ -137,7 +133,6 @@ pub fn spawn_chest<'a>(
         Chest,
         sector_id,
         chest_idx,
-        render_layer,
         StateScoped(GlobalState::InGame),
     ))
 }

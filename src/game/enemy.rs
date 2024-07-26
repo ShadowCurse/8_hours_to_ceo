@@ -1,6 +1,6 @@
 use std::ops::{Index, IndexMut};
 
-use bevy::{ecs::system::EntityCommands, prelude::*, render::view::RenderLayers};
+use bevy::{ecs::system::EntityCommands, prelude::*};
 use rand::Rng;
 
 use crate::GlobalState;
@@ -282,7 +282,6 @@ pub fn spawn_enemy<'a>(
     enemy_idx: EnemyIdx,
     sector_id: SectorPosition,
     transform: Transform,
-    render_layer: RenderLayers,
 ) -> EntityCommands<'a> {
     let enemy_info = &enemies[enemy_idx];
     commands.spawn((
@@ -304,7 +303,6 @@ pub fn spawn_enemy<'a>(
         Defense(0.0),
         sector_id,
         enemy_idx,
-        render_layer,
         StateScoped(GlobalState::InGame),
     ))
 }
