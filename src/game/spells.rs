@@ -169,7 +169,7 @@ fn process_heal(
     };
 
     for (heal_entity, heal) in heals.iter() {
-        player_health.current += heal.heal;
+        player_health.heal(heal.heal);
         commands
             .get_entity(heal_entity)
             .unwrap()

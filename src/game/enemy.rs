@@ -379,7 +379,7 @@ fn enemy_take_damage(
     for e in event_reader.read() {
         let damage = e.damage * (1.0 - enemy_defense.0);
         println!("enemy takes: {damage} damage");
-        enemy_health.current -= damage;
+        enemy_health.take_damage(damage);
 
         commands.spawn((
             Text2dBundle {
@@ -427,7 +427,7 @@ fn enemy_check_dead(
         return;
     };
 
-    if enemy_health.current <= 0.0 {
+    if enemy_health.current() <= 0.0 {
         commands
             .get_entity(enemy_entity)
             .unwrap()

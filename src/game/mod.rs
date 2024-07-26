@@ -72,8 +72,30 @@ pub struct GameCamera;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq)]
 pub struct Health {
-    pub max: f32,
-    pub current: f32,
+    current: f32,
+    max: f32,
+}
+
+impl Health {
+    pub fn new(max: f32) -> Self {
+        Self { current: max, max }
+    }
+
+    pub fn current(&self) -> f32 {
+        self.current
+    }
+
+    pub fn percent(&self) -> f32 {
+        self.current / self.max
+    }
+
+    pub fn take_damage(&mut self, damage: f32) {
+        self.current = (self.current - damage).max(0.0);
+    }
+
+    pub fn heal(&mut self, heal: f32) {
+        self.current = (self.current + heal).min(self.max);
+    }
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq)]

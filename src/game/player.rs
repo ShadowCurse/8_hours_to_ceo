@@ -307,7 +307,7 @@ fn player_take_damage(
 
         let damage = e.0 * (1.0 - player_defense);
         println!("player takes: {damage} damage");
-        player_health.current -= damage;
+        player_health.take_damage(damage);
 
         commands.spawn((
             Text2dBundle {
@@ -352,7 +352,7 @@ fn battle_end_check(
                 }
             })
             .sum::<f32>();
-        player_health.current += heal;
+        player_health.heal(heal);
         player_state.set(PlayerState::Run);
     }
 }
