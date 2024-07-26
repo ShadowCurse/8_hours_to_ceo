@@ -41,6 +41,7 @@ fn setup_ui_style(mut commands: Commands, asset_server: Res<AssetServer>) {
         btn_style: Style {
             margin: UiRect::all(Val::Percent(10.0)),
             padding: UiRect::all(Val::Percent(10.0)),
+            border: UiRect::all(Val::Percent(1.0)),
             // make text in the middle
             justify_content: JustifyContent::Center,
             ..default()
@@ -64,6 +65,8 @@ where
     child_builder
         .spawn(ButtonBundle {
             style: style.btn_style.clone(),
+            border_color: BorderColor(Color::BLACK),
+            border_radius: BorderRadius::all(Val::Percent(5.0)),
             background_color: style.btn_color_normal.into(),
             ..default()
         })
