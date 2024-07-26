@@ -11,6 +11,7 @@ mod game;
 mod ui;
 
 use bevy::sprite::Wireframe2dPlugin;
+use bevy::window::{WindowResized, WindowResolution};
 use game::GamePlugin;
 use ui::UiPlugin;
 
@@ -32,6 +33,7 @@ fn main() {
         ))
         .init_state::<GlobalState>()
         .enable_state_scoped_entities::<GlobalState>()
+        .add_systems(Update, on_window_resize)
         .run();
 }
 
@@ -40,4 +42,11 @@ pub enum GlobalState {
     #[default]
     MainMenu,
     InGame,
+}
+
+fn on_window_resize(mut ui_scale: ResMut<UiScale>, mut resize_reader: EventReader<WindowResized>) {
+    for e in resize_reader.read() {
+        let scale = e.width / WindowResolution::default().physical_width() as f32;
+        ui_scale.0 = scale;
+    }
 }

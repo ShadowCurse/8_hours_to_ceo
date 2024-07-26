@@ -367,6 +367,7 @@ fn pickup_end_check(
 }
 
 fn camera_follow_player(
+    ui_scale: Res<UiScale>,
     player: Query<&Transform, (With<Player>, Without<GameCamera>)>,
     mut camera: Query<&mut Transform, (Without<Player>, With<GameCamera>)>,
 ) {
@@ -379,6 +380,6 @@ fn camera_follow_player(
     };
 
     let mut t = *player_transform;
-    t.scale = Vec3::new(0.5, 0.5, 0.5);
+    t.scale = Vec3::new(0.5 / ui_scale.0, 0.5 / ui_scale.0, 0.5 / ui_scale.0);
     *camera_transform = t;
 }
