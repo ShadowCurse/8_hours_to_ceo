@@ -100,13 +100,13 @@ fn run_sprite_animations(
 fn run_damage_text_animations(
     time: Res<Time>,
     mut commands: Commands,
-    mut damage_texts: Query<(Entity, &DamageText, &mut Transform, &mut Text)>,
+    mut damage_texts: Query<(Entity, &DamageText, &mut Transform)>,
 ) {
-    for (e, dt, mut t, mut text) in damage_texts.iter_mut() {
+    for (e, dt, mut t) in damage_texts.iter_mut() {
         t.translation += dt.direction * time.delta_seconds() * 100.0;
-        text.sections[0].style.font_size -= time.delta_seconds() * 40.0;
+        t.scale -= time.delta_seconds() * 4.0;
 
-        if text.sections[0].style.font_size <= 1.0 {
+        if t.scale.x <= 0.1 {
             commands.get_entity(e).unwrap().despawn_recursive();
         }
     }
