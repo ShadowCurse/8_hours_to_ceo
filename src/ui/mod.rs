@@ -36,7 +36,7 @@ pub struct UiStyle {
     pub text_style: TextStyle,
 }
 
-fn setup_ui_style(mut commands: Commands) {
+fn setup_ui_style(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(UiStyle {
         btn_style: Style {
             margin: UiRect::all(Val::Percent(10.0)),
@@ -50,9 +50,9 @@ fn setup_ui_style(mut commands: Commands) {
         btn_color_hover: Color::srgb(0.25, 0.25, 0.25),
         btn_color_pressed: Color::srgb(0.35, 0.75, 0.35),
         text_style: TextStyle {
+            font: asset_server.load("fonts/8bitOperatorPlus8-Regular.ttf"),
             font_size: 20.0,
             color: Color::srgb_u8(0xfa, 0xa3, 0x07),
-            ..Default::default()
         },
     });
 }
