@@ -52,7 +52,7 @@ fn update_hp_bar(with_hp: Query<&Health>, mut hp_bars: Query<(&HpBar, &mut Trans
         let Ok(health) = with_hp.get(hp_bar.parent_entity) else {
             continue;
         };
-        let percent = health.current / health.max;
+        let percent = (health.current / health.max).max(0.0);
 
         hp_bar_transform.scale.x = percent;
         let offset = HP_BAR_WIDTH / 2.0 * (1.0 - percent);
