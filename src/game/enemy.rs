@@ -3,7 +3,7 @@ use std::ops::{Index, IndexMut};
 use bevy::{ecs::system::EntityCommands, prelude::*};
 use rand::Rng;
 
-use crate::GlobalState;
+use crate::{game::animation::DamageText, GlobalState};
 
 use super::{
     animation::{AllAnimations, AnimationConfig, AnimationFinishedEvent},
@@ -355,10 +355,11 @@ fn on_attack_finish(
 }
 
 fn enemy_take_damage(
-    mut enemy: Query<(&Defense, &mut Health), With<BattleEnemy>>,
+    mut commands: Commands,
+    mut enemy: Query<(&Transform, &Defense, &mut Health), With<BattleEnemy>>,
     mut event_reader: EventReader<DamageEnemyEvent>,
 ) {
-    let Ok((enemy_defense, mut enemy_health)) = enemy.get_single_mut() else {
+    let Ok((enemy_transform, enemy_defense, mut enemy_health)) = enemy.get_single_mut() else {
         return;
     };
 
@@ -366,6 +367,24 @@ fn enemy_take_damage(
         let damage = e.0 * (1.0 - enemy_defense.0);
         println!("enemy takes: {damage} damage");
         enemy_health.0 -= damage;
+
+        commands.spawn((
+            Text2dBundle {
+                text: Text::from_section(
+                    format!("{}", damage),
+                    TextStyle {
+                        font_size: 40.0,
+                        color: Color::srgb(1.0, 0.0, 0.0),
+                        ..Default::default()
+                    },
+                ),
+                transform: *enemy_transform,
+                ..default()
+            },
+            DamageText {
+                direction: enemy_transform.translation.normalize(),
+            },
+        ));
     }
 }
 

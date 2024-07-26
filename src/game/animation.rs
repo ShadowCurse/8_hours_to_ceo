@@ -10,14 +10,19 @@ impl Plugin for AnimationPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<AnimationFinishedEvent>().add_systems(
             Update,
-            execute_animations
+            (run_sprite_animations, run_damage_text_animations)
                 .run_if(in_state(GameState::Running).or_else(in_state(GameState::Battle))),
         );
     }
 }
 
-#[derive(Event, Debug, Clone)]
+#[derive(Event, Debug, Clone, Copy)]
 pub struct AnimationFinishedEvent(pub AllAnimations);
+
+#[derive(Component, Debug, Clone, Copy)]
+pub struct DamageText {
+    pub direction: Vec3,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AllAnimations {
@@ -67,7 +72,7 @@ impl AnimationConfig {
     }
 }
 
-fn execute_animations(
+fn run_sprite_animations(
     time: Res<Time>,
     mut query: Query<(&mut AnimationConfig, &mut TextureAtlas)>,
     mut event_writer: EventWriter<AnimationFinishedEvent>,
@@ -88,6 +93,21 @@ fn execute_animations(
                 atlas.index += 1;
                 config.frame_timer = AnimationConfig::timer_from_fps(config.fps);
             }
+        }
+    }
+}
+
+fn run_damage_text_animations(
+    time: Res<Time>,
+    mut commands: Commands,
+    mut damage_texts: Query<(Entity, &DamageText, &mut Transform, &mut Text)>,
+) {
+    for (e, dt, mut t, mut text) in damage_texts.iter_mut() {
+        t.translation += dt.direction * time.delta_seconds() * 100.0;
+        text.sections[0].style.font_size -= time.delta_seconds() * 40.0;
+
+        if text.sections[0].style.font_size <= 1.0 {
+            commands.get_entity(e).unwrap().despawn_recursive();
         }
     }
 }
