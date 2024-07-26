@@ -58,6 +58,9 @@ pub struct SectorResources {
     circle_mesh_default: Handle<Mesh>,
 }
 
+#[derive(Resource, Debug, Clone, PartialEq, Eq)]
+pub struct FullCycles(pub u8);
+
 #[derive(Event, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SectorPlacedEvent;
 
@@ -210,6 +213,8 @@ fn prepare_sector_resources(
         chests: vec![ChestIdx(3)],
     });
     commands.insert_resource(sectors);
+
+    commands.insert_resource(FullCycles(0));
 }
 
 fn spawn_sectors(
@@ -254,7 +259,11 @@ fn spawn_sectors(
     ));
 }
 
-fn sector_detect_player(player: Query<&Transform, With<Player>>, mut local: Local<u8>) {
+fn sector_detect_player(
+    player: Query<&Transform, With<Player>>,
+    mut full_cycles: ResMut<FullCycles>,
+    mut local: Local<u8>,
+) {
     let Ok(player_transform) = player.get_single() else {
         return;
     };
@@ -262,6 +271,9 @@ fn sector_detect_player(player: Query<&Transform, With<Player>>, mut local: Loca
     let sector_id = position_to_sector_position(player_transform.translation);
 
     if sector_id != *local {
+        if sector_id == 0 {
+            full_cycles.0 += 1;
+        }
         println!("player is in the sector: {sector_id}");
         *local = sector_id;
     }

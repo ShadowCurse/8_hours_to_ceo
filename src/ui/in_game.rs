@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     game::{
-        circle_sectors::Sectors,
+        circle_sectors::{FullCycles, Sectors},
         inventory::{Inventory, InventoryUpdateEvent},
         items::Items,
         spells::{CastSpellEvent, Spells},
@@ -26,6 +26,7 @@ impl Plugin for InGamePlugin {
                     active_spells_button_system,
                     backpack_spells_button_system,
                     backpack_sectors_button_system,
+                    update_cycles,
                     update_pause,
                     update_inventory,
                     update_sectors,
@@ -602,6 +603,14 @@ fn backpack_sectors_button_system(
     if mouse_input.just_pressed(MouseButton::Right) {
         selected_section_button.0 = None;
     }
+}
+
+fn update_cycles(full_cycles: Res<FullCycles>, mut pause_text: Query<&mut Text, With<CyclesText>>) {
+    let Ok(mut pause_text) = pause_text.get_single_mut() else {
+        return;
+    };
+
+    pause_text.sections[0].value = format!("Cycles: {}", full_cycles.0);
 }
 
 fn update_pause(
