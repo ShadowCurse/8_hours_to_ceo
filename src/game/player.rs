@@ -261,7 +261,10 @@ fn on_attack_finish(
                     })
                     .sum::<f32>();
 
-            event_writer.send(DamageEnemyEvent(damage));
+            event_writer.send(DamageEnemyEvent{
+                damage,
+                color: Color::srgb(1.0, 0.0, 0.0),
+            });
             player_state.set(PlayerState::Idle);
         }
     }

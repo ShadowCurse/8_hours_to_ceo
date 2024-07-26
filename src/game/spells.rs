@@ -143,7 +143,10 @@ fn process_lightninig(
     for (lightning_entity, mut lightning) in lightnings.iter_mut() {
         lightning.timer.tick(time.delta());
         if lightning.timer.finished() {
-            event_writer.send(DamageEnemyEvent(lightning.damage));
+            event_writer.send(DamageEnemyEvent {
+                damage: lightning.damage,
+                color: Color::srgb(0.0, 0.0, 1.0),
+            });
             lightning.remaining_strikes -= 1;
 
             if lightning.remaining_strikes == 0 {

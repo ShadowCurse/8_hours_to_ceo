@@ -37,7 +37,10 @@ impl Plugin for EnemyPlugin {
 }
 
 #[derive(Event, Debug, Clone, PartialEq)]
-pub struct DamageEnemyEvent(pub f32);
+pub struct DamageEnemyEvent {
+    pub damage: f32,
+    pub color: Color,
+}
 
 #[derive(Event, Debug, Clone, PartialEq)]
 pub struct EnemyDeadEvent;
@@ -364,7 +367,7 @@ fn enemy_take_damage(
     };
 
     for e in event_reader.read() {
-        let damage = e.0 * (1.0 - enemy_defense.0);
+        let damage = e.damage * (1.0 - enemy_defense.0);
         println!("enemy takes: {damage} damage");
         enemy_health.0 -= damage;
 
@@ -374,7 +377,7 @@ fn enemy_take_damage(
                     format!("{}", damage),
                     TextStyle {
                         font_size: 40.0,
-                        color: Color::srgb(1.0, 0.0, 0.0),
+                        color: e.color,
                         ..Default::default()
                     },
                 ),
