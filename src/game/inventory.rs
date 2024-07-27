@@ -14,8 +14,8 @@ use super::{
 pub struct InventoryPlugin;
 
 const INVENTORY_ITEMS: usize = 4;
-const INVENTORY_BACKPACK_ITEMS: usize = 8;
-const INVENTORY_BACKPACK_SECTORS: usize = 8;
+const INVENTORY_BACKPACK_ITEMS: usize = 4;
+const INVENTORY_BACKPACK_SECTORS: usize = 4;
 
 impl Plugin for InventoryPlugin {
     fn build(&self, app: &mut App) {
