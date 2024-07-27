@@ -1175,8 +1175,9 @@ fn update_inventory(
         for (i, item) in inventory.active_items.iter().enumerate() {
             for (id, mut ui_image) in active_items_text.iter_mut() {
                 if id.0 == i as u8 {
-                    if let Some(idx) = item {
-                        *ui_image = items[*idx].image.clone().into();
+                    *ui_image = match item {
+                        Some(idx) => items[*idx].image.clone().into(),
+                        None => Handle::default().into(),
                     }
                 }
             }
@@ -1184,8 +1185,9 @@ fn update_inventory(
         for (i, item) in inventory.backpack_items.iter().enumerate() {
             for (id, mut ui_image) in backpack_items_text.iter_mut() {
                 if id.0 == i as u8 {
-                    if let Some(idx) = item {
-                        *ui_image = items[*idx].image.clone().into();
+                    *ui_image = match item {
+                        Some(idx) => items[*idx].image.clone().into(),
+                        None => Handle::default().into(),
                     }
                 }
             }
@@ -1193,8 +1195,9 @@ fn update_inventory(
         for (i, spell) in inventory.active_spells.iter().enumerate() {
             for (id, mut ui_image) in active_spells_text.iter_mut() {
                 if id.0 == i as u8 {
-                    if let Some(idx) = spell {
-                        *ui_image = spells[*idx].image.clone().into();
+                    *ui_image = match spell {
+                        Some(idx) => spells[*idx].image.clone().into(),
+                        None => Handle::default().into(),
                     }
                 }
             }
@@ -1202,8 +1205,9 @@ fn update_inventory(
         for (i, spell) in inventory.backpack_spells.iter().enumerate() {
             for (id, mut ui_image) in backpack_spells_text.iter_mut() {
                 if id.0 == i as u8 {
-                    if let Some(idx) = spell {
-                        *ui_image = spells[*idx].image.clone().into();
+                    *ui_image = match spell {
+                        Some(idx) => spells[*idx].image.clone().into(),
+                        None => Handle::default().into(),
                     }
                 }
             }
