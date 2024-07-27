@@ -1,7 +1,7 @@
 use bevy::{
     ecs::component::{ComponentHooks, StorageType},
     prelude::*,
-    sprite::{MaterialMesh2dBundle, Wireframe2d},
+    sprite::MaterialMesh2dBundle,
 };
 use rand::Rng;
 use std::{
@@ -20,7 +20,8 @@ use super::{
     enemy::{spawn_enemy, Enemies, EnemyIdx},
     hp_bar::HpBarResources,
     inventory::Inventory,
-    GameState, Player, Z_CHEST, Z_CLOCK, Z_ENEMY, Z_SECTOR_BACKGROUND, Z_SECTOR_GROUND,
+    GameState, Player, Z_CHEST, Z_CLOCK_ARROWS, Z_CLOCK_CENTER, Z_CLOCK_KNOB, Z_CLOCK_NUMBERS,
+    Z_ENEMY, Z_SECTOR_BACKGROUND, Z_SECTOR_GROUND,
 };
 
 pub const CIRCLE_RADIUS: f32 = 200.0;
@@ -30,6 +31,10 @@ const SECTORS_NUM: u8 = 8;
 const SECTOR_ANGLE: f32 = PI * 2.0 / SECTORS_NUM as f32;
 pub const SECTOR_THINGS: usize = 4;
 const SECTOR_THING_GAP: f32 = SECTOR_ANGLE / 8.0;
+
+const CLOCK_MINUTE_ARROW_TRANSFORM: Transform = Transform::from_xyz(0.0, 70.0, Z_CLOCK_ARROWS);
+const CLOCK_HOUR_ARROW_TRANSFORM: Transform =
+    Transform::from_xyz(0.0, 50.0, Z_CLOCK_ARROWS).with_scale(Vec3::new(2.0, 0.8, 1.0));
 
 pub struct SectorsPlugin;
 
@@ -310,7 +315,7 @@ fn spawn_sectors(
         MaterialMesh2dBundle {
             mesh: sector_resources.circle_mesh_default.clone().into(),
             material: sector_resources.material_default.clone(),
-            transform: Transform::from_xyz(0.0, 0.0, Z_CLOCK),
+            transform: Transform::from_xyz(0.0, 0.0, Z_CLOCK_CENTER),
             ..default()
         },
         StateScoped(GlobalState::InGame),
@@ -321,7 +326,7 @@ fn spawn_sectors(
         MaterialMesh2dBundle {
             mesh: sector_resources.arrow_mesh_default.clone().into(),
             material: sector_resources.material_arrow_default.clone(),
-            transform: Transform::from_xyz(0.0, 70.0, Z_CLOCK + 2.0),
+            transform: CLOCK_MINUTE_ARROW_TRANSFORM,
             ..default()
         },
         MinuteArrow,
@@ -333,8 +338,7 @@ fn spawn_sectors(
         MaterialMesh2dBundle {
             mesh: sector_resources.arrow_mesh_default.clone().into(),
             material: sector_resources.material_arrow_default.clone(),
-            transform: Transform::from_xyz(0.0, 50.0, Z_CLOCK + 2.0)
-                .with_scale(Vec3::new(2.0, 0.8, 1.0)),
+            transform: CLOCK_HOUR_ARROW_TRANSFORM,
             ..default()
         },
         HourArrow,
@@ -346,7 +350,7 @@ fn spawn_sectors(
         MaterialMesh2dBundle {
             mesh: sector_resources.knob_mesh_default.clone().into(),
             material: sector_resources.material_knob_default.clone(),
-            transform: Transform::from_xyz(0.0, 0.0, Z_CLOCK + 3.0),
+            transform: Transform::from_xyz(0.0, 0.0, Z_CLOCK_KNOB),
             ..default()
         },
         StateScoped(GlobalState::InGame),
@@ -354,7 +358,7 @@ fn spawn_sectors(
 
     // Numbers
     for i in 1..=12 {
-        let top_position = Vec3::new(0.0, 150.0, Z_CLOCK + 1.0);
+        let top_position = Vec3::new(0.0, 150.0, Z_CLOCK_NUMBERS);
         let angle = PI / 6.0 * i as f32;
         let rotation = Quat::from_rotation_z(-angle);
         let rotated = rotation.mul_vec3(top_position);
@@ -384,7 +388,7 @@ fn update_minute_arrow(
     let Ok(mut minute_transform) = minute_arrow.get_single_mut() else {
         return;
     };
-    let mut t = Transform::from_xyz(0.0, 70.0, Z_CLOCK + 2.0);
+    let mut t = CLOCK_MINUTE_ARROW_TRANSFORM;
     t.rotate_around(Vec3::ZERO, player_transform.rotation);
     *minute_transform = t;
 }
@@ -414,7 +418,7 @@ fn update_hour_arrow(
 
     let hour_arrow_angle = PI / 6.0 * full_cycles.0 as f32 + PI / 6.0 * minute_angle / (2.0 * PI);
 
-    let mut t = Transform::from_xyz(0.0, 50.0, Z_CLOCK + 2.0).with_scale(Vec3::new(2.0, 0.8, 1.0));
+    let mut t = CLOCK_HOUR_ARROW_TRANSFORM;
     t.rotate_around(Vec3::ZERO, Quat::from_rotation_z(-hour_arrow_angle));
     *hour_transform = t;
 }

@@ -27,7 +27,10 @@ use spells::SpellsPlugin;
 const INTERACTION_DISTANCE: f32 = 30.0;
 
 pub const Z_SECTOR_GROUND: f32 = 0.0;
-pub const Z_CLOCK: f32 = 1.0;
+pub const Z_CLOCK_CENTER: f32 = 1.0;
+pub const Z_CLOCK_NUMBERS: f32 = 2.0;
+pub const Z_CLOCK_ARROWS: f32 = 3.0;
+pub const Z_CLOCK_KNOB: f32 = 4.0;
 pub const Z_SECTOR_BACKGROUND: f32 = 1.0;
 pub const Z_ENEMY: f32 = 2.0;
 pub const Z_CHEST: f32 = 2.0;

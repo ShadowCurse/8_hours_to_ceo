@@ -1,4 +1,4 @@
-use bevy::{prelude::*, text::Text2dBounds};
+use bevy::prelude::*;
 
 use crate::{
     game::{
@@ -884,7 +884,6 @@ fn active_spells_button_system(
 
 fn backpack_spells_button_system(
     spells: Res<Spells>,
-    ui_style: Res<UiStyle>,
     mut inventory: ResMut<Inventory>,
     mut interaction_query: Query<
         (&BackpackSpellId, &Interaction, &mut Style),
