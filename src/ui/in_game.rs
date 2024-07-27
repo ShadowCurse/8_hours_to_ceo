@@ -69,7 +69,7 @@ struct BackpackSpellId(u8);
 pub struct BackpackSectorId(pub u8);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum UiItemId {
+enum UiItemId {
     ActiveItemId(ActiveItemId),
     BackpackItemId(BackpackItemId),
 }
@@ -79,7 +79,7 @@ pub struct ItemsTooltipContainer(Option<UiItemId>);
 pub struct ItemsTooltipText;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum UiSpellId {
+enum UiSpellId {
     ActiveSpellId(ActiveSpellId),
     BackpackSpellId(BackpackSpellId),
 }
@@ -1145,7 +1145,7 @@ fn update_inventory(
                 if id.0 == i as u8 {
                     *ui_image = match item {
                         Some(idx) => items[*idx].image.clone().into(),
-                        None => Handle::default().into(),
+                        None => Default::default(),
                     };
                     ui_image.color = BUTTON_IMAGE_TINT_DEFAULT;
                 }
@@ -1156,7 +1156,7 @@ fn update_inventory(
                 if id.0 == i as u8 {
                     *ui_image = match item {
                         Some(idx) => items[*idx].image.clone().into(),
-                        None => Handle::default().into(),
+                        None => Default::default(),
                     };
                     ui_image.color = BUTTON_IMAGE_TINT_DEFAULT;
                 }
@@ -1167,7 +1167,7 @@ fn update_inventory(
                 if id.0 == i as u8 {
                     *ui_image = match spell {
                         Some(idx) => spells[*idx].image.clone().into(),
-                        None => Handle::default().into(),
+                        None => Default::default(),
                     };
                     ui_image.color = BUTTON_IMAGE_TINT_DEFAULT;
                 }
@@ -1178,7 +1178,7 @@ fn update_inventory(
                 if id.0 == i as u8 {
                     *ui_image = match spell {
                         Some(idx) => spells[*idx].image.clone().into(),
-                        None => Handle::default().into(),
+                        None => Default::default(),
                     };
                     ui_image.color = BUTTON_IMAGE_TINT_DEFAULT;
                 }
