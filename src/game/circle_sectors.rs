@@ -70,6 +70,8 @@ pub struct SectorResources {
     circle_mesh_default: Handle<Mesh>,
     arrow_mesh_default: Handle<Mesh>,
     knob_mesh_default: Handle<Mesh>,
+
+    wall_image: Handle<Image>,
 }
 
 #[derive(Resource, Debug, Clone, PartialEq, Eq)]
@@ -197,6 +199,8 @@ fn prepare_sector_resources(
     let arrow_mesh_default = meshes.add(Rectangle::new(5.0, 200.0));
     let knob_mesh_default = meshes.add(Circle { radius: 15.0 });
 
+    let wall_image = asset_server.load("wall/wall.png");
+
     commands.insert_resource(SectorResources {
         material_default: material_default.clone(),
         material_arrow_default,
@@ -205,6 +209,8 @@ fn prepare_sector_resources(
         circle_mesh_default,
         arrow_mesh_default,
         knob_mesh_default,
+
+        wall_image,
     });
 
     let mut sectors = Sectors(vec![]);
@@ -268,6 +274,15 @@ fn spawn_clock(
     sector_resources: Res<SectorResources>,
     mut commands: Commands,
 ) {
+    // Wall
+
+    commands.spawn((SpriteBundle {
+        sprite: Sprite::default(),
+        transform: Transform::default().with_scale(Vec3::new(10.0, 10.0, 10.0)),
+        texture: sector_resources.wall_image.clone(),
+        ..Default::default()
+    },));
+
     // Sectors
     for i in 0..SECTORS_NUM {
         let mut transform = Transform::from_xyz(0.0, 0.0, Z_SECTOR_GROUND);
