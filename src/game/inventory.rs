@@ -108,11 +108,11 @@ fn prepare_inventory(mut commands: Commands) {
 }
 
 fn on_sector_placed(
+    selected_section_button: Res<SelectedSectionButton>,
     section_buttons: Query<&BackpackSectorId, With<UiImage>>,
     mut inventory: ResMut<Inventory>,
     mut event_reader: EventReader<SectorPlacedEvent>,
     mut event_writer: EventWriter<InventoryUpdateEvent>,
-    mut selected_section_button: ResMut<SelectedSectionButton>,
 ) {
     for _ in event_reader.read() {
         let Some(button_entity) = selected_section_button.0 else {
@@ -122,7 +122,6 @@ fn on_sector_placed(
             return;
         };
         inventory.backpack_sectors.remove(sector_id.0 as usize);
-        selected_section_button.0 = None;
         event_writer.send(InventoryUpdateEvent);
     }
 }

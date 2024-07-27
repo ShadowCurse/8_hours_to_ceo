@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     game::{
-        circle_sectors::{FullCycles, Sectors},
+        circle_sectors::{FullCycles, SectorPlacedEvent, Sectors},
         inventory::{Inventory, InventoryUpdateEvent},
         items::Items,
         spells::{CastSpellEvent, Spells},
@@ -34,6 +34,7 @@ impl Plugin for InGamePlugin {
                     backpack_spells_button_system,
                     backpack_sectors_button_system,
                     backpack_sectors_deselect,
+                    backpack_sectors_on_sector_placed,
                     update_cycles,
                     update_pause,
                     update_inventory,
@@ -1002,12 +1003,6 @@ fn backpack_sectors_button_system(
     mut tooltip_container: Query<(&mut Visibility, &mut SectorsTooltipContainer)>,
 ) {
     for (entity, sector_id, interaction, mut ui_image) in interaction_query.iter_mut() {
-        if let Some(e) = selected_section_button.0 {
-            if e == entity {
-                ui_image.color = BUTTON_IMAGE_TINT_PRESSED;
-                continue;
-            }
-        }
         match *interaction {
             Interaction::Pressed => {
                 selected_section_button.0 = Some(entity);
@@ -1051,6 +1046,12 @@ fn backpack_sectors_button_system(
                 }
             }
         }
+
+        if let Some(e) = selected_section_button.0 {
+            if e == entity {
+                ui_image.color = BUTTON_IMAGE_TINT_PRESSED;
+            }
+        }
     }
 }
 
@@ -1068,6 +1069,21 @@ fn backpack_sectors_deselect(
             ui_image.color = BUTTON_IMAGE_TINT_DEFAULT;
         }
         selected_section_button.0 = None;
+    }
+}
+
+fn backpack_sectors_on_sector_placed(
+    mut event_reader: EventReader<SectorPlacedEvent>,
+    mut tooltip_container: Query<(&mut Visibility, &mut SectorsTooltipContainer)>,
+) {
+    for _ in event_reader.read() {
+        let Ok((mut tooltip_container_visibility, mut tooltip_container_sector_id)) =
+            tooltip_container.get_single_mut()
+        else {
+            return;
+        };
+        tooltip_container_sector_id.0 = None;
+        *tooltip_container_visibility = Visibility::Hidden;
     }
 }
 
@@ -1190,6 +1206,8 @@ fn update_inventory(
 fn update_sectors(
     sectors: Res<Sectors>,
     inventory: Res<Inventory>,
+    mut selected_section_button: ResMut<SelectedSectionButton>,
+    mut tooltip_container: Query<(&mut Visibility, &mut SectorsTooltipContainer), Without<UiImage>>,
     mut sectors_buttons: Query<(&BackpackSectorId, &mut Visibility, &mut UiImage)>,
     mut event_reader: EventReader<InventoryUpdateEvent>,
 ) {
@@ -1205,5 +1223,15 @@ fn update_sectors(
                 *button_visibility = Visibility::Hidden;
             }
         }
+
+        selected_section_button.0 = None;
+
+        let Ok((mut tooltip_container_visibility, mut tooltip_container_sector_id)) =
+            tooltip_container.get_single_mut()
+        else {
+            return;
+        };
+        tooltip_container_sector_id.0 = None;
+        *tooltip_container_visibility = Visibility::Hidden;
     }
 }
