@@ -144,7 +144,13 @@ fn prepare_enemy_resources(
 
         spawn_rate: 0.3,
         items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
-        spells: vec![SpellIdx(0), SpellIdx(1)],
+        spells: vec![
+            SpellIdx(0),
+            SpellIdx(1),
+            SpellIdx(2),
+            SpellIdx(3),
+            SpellIdx(4),
+        ],
         sectors: vec![SectorIdx(0)],
     });
     // Green
@@ -187,7 +193,13 @@ fn prepare_enemy_resources(
 
         spawn_rate: 0.3,
         items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
-        spells: vec![SpellIdx(0), SpellIdx(1)],
+        spells: vec![
+            SpellIdx(0),
+            SpellIdx(1),
+            SpellIdx(2),
+            SpellIdx(3),
+            SpellIdx(4),
+        ],
         sectors: vec![SectorIdx(0)],
     });
     // Red
@@ -230,7 +242,13 @@ fn prepare_enemy_resources(
 
         spawn_rate: 0.3,
         items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
-        spells: vec![SpellIdx(0), SpellIdx(1)],
+        spells: vec![
+            SpellIdx(0),
+            SpellIdx(1),
+            SpellIdx(2),
+            SpellIdx(3),
+            SpellIdx(4),
+        ],
         sectors: vec![SectorIdx(0)],
     });
     // Orange
@@ -273,7 +291,13 @@ fn prepare_enemy_resources(
 
         spawn_rate: 0.3,
         items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
-        spells: vec![SpellIdx(0), SpellIdx(1)],
+        spells: vec![
+            SpellIdx(0),
+            SpellIdx(1),
+            SpellIdx(2),
+            SpellIdx(3),
+            SpellIdx(4),
+        ],
         sectors: vec![SectorIdx(0)],
     });
 
