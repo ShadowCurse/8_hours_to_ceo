@@ -543,6 +543,7 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                                 .spawn(NodeBundle {
                                     style: Style {
                                         width: Val::Percent(50.0),
+                                        margin: UiRect::all(Val::Percent(1.0)),
                                         flex_direction: FlexDirection::Column,
                                         justify_content: JustifyContent::Center,
                                         ..Default::default()
@@ -554,6 +555,7 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                                     builder
                                         .spawn(NodeBundle {
                                             style: Style {
+                                                margin: UiRect::all(Val::Percent(1.0)),
                                                 flex_direction: FlexDirection::Row,
                                                 align_items: AlignItems::Center,
                                                 justify_content: JustifyContent::Center,
@@ -588,6 +590,7 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                                     builder
                                         .spawn(NodeBundle {
                                             style: Style {
+                                                margin: UiRect::all(Val::Percent(1.0)),
                                                 flex_direction: FlexDirection::Row,
                                                 align_items: AlignItems::Center,
                                                 justify_content: JustifyContent::Center,
@@ -619,11 +622,25 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                                         });
                                 });
 
+                            // Vertical line
+                            builder.spawn(NodeBundle {
+                                style: Style {
+                                    width: Val::Percent(1.0),
+                                    height: Val::Percent(50.0),
+                                    margin: UiRect::all(Val::Percent(1.0)),
+                                    align_self: AlignSelf::Center,
+                                    ..Default::default()
+                                },
+                                background_color: Color::BLACK.into(),
+                                ..default()
+                            });
+
                             // Spells
                             builder
                                 .spawn(NodeBundle {
                                     style: Style {
                                         width: Val::Percent(50.0),
+                                        margin: UiRect::all(Val::Percent(1.0)),
                                         flex_direction: FlexDirection::Column,
                                         justify_content: JustifyContent::Center,
                                         ..Default::default()
@@ -635,6 +652,7 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                                     builder
                                         .spawn(NodeBundle {
                                             style: Style {
+                                                margin: UiRect::all(Val::Percent(1.0)),
                                                 flex_direction: FlexDirection::Row,
                                                 align_items: AlignItems::Center,
                                                 justify_content: JustifyContent::Center,
@@ -669,6 +687,7 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                                     builder
                                         .spawn(NodeBundle {
                                             style: Style {
+                                                margin: UiRect::all(Val::Percent(1.0)),
                                                 flex_direction: FlexDirection::Row,
                                                 align_items: AlignItems::Center,
                                                 justify_content: JustifyContent::Center,
