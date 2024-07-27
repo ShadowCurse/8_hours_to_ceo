@@ -29,6 +29,7 @@ impl Plugin for InGamePlugin {
                     button_system,
                     active_items_button_system,
                     backpack_items_button_system,
+                    active_spells_update_state,
                     active_spells_button_system,
                     backpack_spells_button_system,
                     backpack_sectors_button_system,
@@ -875,19 +876,13 @@ fn backpack_items_button_system(
     }
 }
 
-fn active_spells_button_system(
+fn active_spells_update_state(
     spells: Res<Spells>,
     inventory: Res<Inventory>,
     game_state: Res<State<GameState>>,
-    mut interaction_query: Query<
-        (&ActiveSpellId, &Interaction, &mut UiImage),
-        Changed<Interaction>,
-    >,
-    mut tooltip_text: Query<&mut Text, With<SpellsTooltipText>>,
-    mut tooltip_container: Query<(&mut Visibility, &mut SpellsTooltipContainer)>,
-    mut event_writer: EventWriter<CastSpellEvent>,
+    mut interaction_query: Query<(&ActiveSpellId, &mut UiImage)>,
 ) {
-    for (spell_id, interaction, mut ui_image) in interaction_query.iter_mut() {
+    for (spell_id, mut ui_image) in interaction_query.iter_mut() {
         let on_cooldown = || {
             if let Some(spell_idx) = inventory.get_spell_idx(spell_id.0 as usize) {
                 let spell = &spells[spell_idx];
@@ -899,51 +894,67 @@ fn active_spells_button_system(
         if on_cooldown() || game_state.get() != &GameState::Battle {
             ui_image.color = BUTTON_IMAGE_TINT_DISABLED;
         } else {
-            match *interaction {
-                Interaction::Pressed => {
-                    ui_image.color = BUTTON_IMAGE_TINT_PRESSED;
+            ui_image.color = BUTTON_IMAGE_TINT_DEFAULT;
+        }
+    }
+}
 
-                    if let Some(spell_idx) = inventory.get_spell_idx(spell_id.0 as usize) {
-                        event_writer.send(CastSpellEvent(spell_idx));
-                    }
+fn active_spells_button_system(
+    spells: Res<Spells>,
+    inventory: Res<Inventory>,
+    mut interaction_query: Query<
+        (&ActiveSpellId, &Interaction, &mut UiImage),
+        Changed<Interaction>,
+    >,
+    mut tooltip_text: Query<&mut Text, With<SpellsTooltipText>>,
+    mut tooltip_container: Query<(&mut Visibility, &mut SpellsTooltipContainer)>,
+    mut event_writer: EventWriter<CastSpellEvent>,
+) {
+    for (spell_id, interaction, mut ui_image) in interaction_query.iter_mut() {
+        match *interaction {
+            Interaction::Pressed => {
+                ui_image.color = BUTTON_IMAGE_TINT_PRESSED;
+
+                if let Some(spell_idx) = inventory.get_spell_idx(spell_id.0 as usize) {
+                    event_writer.send(CastSpellEvent(spell_idx));
                 }
-                Interaction::Hovered => {
-                    ui_image.color = BUTTON_IMAGE_TINT_HOVER;
+            }
+            Interaction::Hovered => {
+                ui_image.color = BUTTON_IMAGE_TINT_HOVER;
 
-                    let Ok((mut tooltip_container_visibility, mut tooltip_container_spell_id)) =
-                        tooltip_container.get_single_mut()
-                    else {
-                        return;
-                    };
-                    let Ok(mut tooltip_container_text) = tooltip_text.get_single_mut() else {
-                        return;
-                    };
+                let Ok((mut tooltip_container_visibility, mut tooltip_container_spell_id)) =
+                    tooltip_container.get_single_mut()
+                else {
+                    return;
+                };
+                let Ok(mut tooltip_container_text) = tooltip_text.get_single_mut() else {
+                    return;
+                };
 
-                    let Some(spell_idx) = inventory.active_spells[spell_id.0 as usize] else {
-                        return;
-                    };
+                let Some(spell_idx) = inventory.active_spells[spell_id.0 as usize] else {
+                    return;
+                };
 
-                    let spell_info = &spells[spell_idx];
+                let spell_info = &spells[spell_idx];
 
-                    *tooltip_container_visibility = Visibility::Visible;
-                    tooltip_container_spell_id.0 = Some(UiSpellId::ActiveSpellId(*spell_id));
-                    tooltip_container_text.sections[0].value = spell_info.description.into();
-                }
-                Interaction::None => {
-                    ui_image.color = BUTTON_IMAGE_TINT_DEFAULT;
+                *tooltip_container_visibility = Visibility::Visible;
+                tooltip_container_spell_id.0 = Some(UiSpellId::ActiveSpellId(*spell_id));
+                tooltip_container_text.sections[0].value = spell_info.description.into();
+            }
+            Interaction::None => {
+                ui_image.color = BUTTON_IMAGE_TINT_DEFAULT;
 
-                    let Ok((mut tooltip_container_visibility, mut tooltip_container_spell_id)) =
-                        tooltip_container.get_single_mut()
-                    else {
-                        return;
-                    };
-                    let Some(tooltip_spell_id) = tooltip_container_spell_id.0 else {
-                        return;
-                    };
-                    if tooltip_spell_id == UiSpellId::ActiveSpellId(*spell_id) {
-                        tooltip_container_spell_id.0 = None;
-                        *tooltip_container_visibility = Visibility::Hidden;
-                    }
+                let Ok((mut tooltip_container_visibility, mut tooltip_container_spell_id)) =
+                    tooltip_container.get_single_mut()
+                else {
+                    return;
+                };
+                let Some(tooltip_spell_id) = tooltip_container_spell_id.0 else {
+                    return;
+                };
+                if tooltip_spell_id == UiSpellId::ActiveSpellId(*spell_id) {
+                    tooltip_container_spell_id.0 = None;
+                    *tooltip_container_visibility = Visibility::Hidden;
                 }
             }
         }
