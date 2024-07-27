@@ -563,12 +563,17 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                                         .spawn(NodeBundle {
                                             style: Style {
                                                 margin: UiRect::all(Val::Percent(1.0)),
+                                                padding: UiRect::all(Val::Percent(5.0)),
                                                 flex_direction: FlexDirection::Row,
                                                 align_items: AlignItems::Center,
                                                 justify_content: JustifyContent::Center,
+                                                border: UiRect::all(Val::Percent(1.0)),
                                                 ..Default::default()
                                             },
-                                            ..default()
+                                            border_color: BorderColor(Color::BLACK),
+                                            border_radius: BorderRadius::all(Val::Percent(10.0)),
+                                            background_color: Color::srgb(0.85, 0.6, 0.15).into(),
+                                            ..Default::default()
                                         })
                                         .with_children(|builder| {
                                             spawn_inventory_button(
@@ -660,12 +665,17 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                                         .spawn(NodeBundle {
                                             style: Style {
                                                 margin: UiRect::all(Val::Percent(1.0)),
+                                                padding: UiRect::all(Val::Percent(5.0)),
                                                 flex_direction: FlexDirection::Row,
                                                 align_items: AlignItems::Center,
                                                 justify_content: JustifyContent::Center,
+                                                border: UiRect::all(Val::Percent(1.0)),
                                                 ..Default::default()
                                             },
-                                            ..default()
+                                            border_color: BorderColor(Color::BLACK),
+                                            border_radius: BorderRadius::all(Val::Percent(10.0)),
+                                            background_color: Color::srgb(0.3, 0.6, 1.0).into(),
+                                            ..Default::default()
                                         })
                                         .with_children(|builder| {
                                             spawn_inventory_button(
