@@ -248,7 +248,7 @@ fn spawn_sectors(
         // Rotation happens ccw, so make it cw.
         transform.rotate_local_z(-rotation);
 
-        let sector_idx = SectorIdx(rand::thread_rng().gen_range(0..4));
+        let sector_idx = SectorIdx(rand::thread_rng().gen_range(0..5));
         let sector_info = &sectors.0[sector_idx.0];
         let material = sector_info.material.clone();
         commands
