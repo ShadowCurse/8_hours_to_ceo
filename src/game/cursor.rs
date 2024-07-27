@@ -49,7 +49,7 @@ fn update_cursor(
         return;
     };
 
-    if world_pos.length() < CIRCLE_INNER_RADIUS || CIRCLE_RADIUS < world_pos.length() {
+    if world_pos.length() < CIRCLE_INNER_RADIUS || CIRCLE_RADIUS + 50.0 < world_pos.length() {
         cursor_sector.0 = None;
         return;
     }

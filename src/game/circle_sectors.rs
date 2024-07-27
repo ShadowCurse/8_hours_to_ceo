@@ -27,9 +27,7 @@ pub const CIRCLE_RADIUS: f32 = 200.0;
 pub const CIRCLE_INNER_RADIUS: f32 = 180.0;
 
 const SECTORS_NUM: u8 = 8;
-const SECTOR_GAP: f32 = PI * 2.0 / 256.0;
 const SECTOR_ANGLE: f32 = PI * 2.0 / SECTORS_NUM as f32;
-const SECTOR_ANGLE_WITH_GAP: f32 = SECTOR_ANGLE - SECTOR_GAP * 2.0;
 pub const SECTOR_THINGS: usize = 4;
 const SECTOR_THING_GAP: f32 = SECTOR_ANGLE / 8.0;
 
@@ -38,8 +36,8 @@ pub struct SectorsPlugin;
 impl Plugin for SectorsPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<SectorPlacedEvent>()
-            .add_systems(Startup, prepare_sector_resources)
-            .add_systems(OnEnter(GameState::Preparing), spawn_sectors)
+            .add_systems(PreStartup, prepare_sector_resources)
+            .add_systems(Startup, spawn_sectors)
             .add_systems(
                 Update,
                 (sector_detect_player, sector_spawn_things).run_if(in_state(GameState::Running)),
@@ -73,6 +71,7 @@ pub struct SectorInfo {
     pub name: &'static str,
     pub description: &'static str,
     pub material: Handle<ColorMaterial>,
+    pub background: Handle<Image>,
     pub drop_rate: f32,
     pub enemies: Vec<EnemyIdx>,
     pub chests: Vec<ChestIdx>,
@@ -161,19 +160,18 @@ pub fn next_section_position(section_id: u8) -> u8 {
 }
 
 fn prepare_sector_resources(
+    asset_server: Res<AssetServer>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     let material_default = materials.add(Color::srgb(0.7, 0.7, 0.7));
     let material_green = materials.add(Color::srgb(0.2, 0.8, 0.2));
-    let material_red = materials.add(Color::srgb(0.8, 0.2, 0.2));
-    let material_orange = materials.add(Color::srgb(0.8, 0.4, 0.2));
+    let material_yellow = materials.add(Color::srgb(0.95, 0.9, 0.2));
+    let material_grey = materials.add(Color::srgb(0.7, 0.7, 0.7));
+    let material_brown = materials.add(Color::srgb(0.6, 0.4, 0.5));
     // CircularSector uses half_angle underneath
-    let mesh_default = meshes.add(CircularSector::new(
-        CIRCLE_RADIUS,
-        SECTOR_ANGLE_WITH_GAP / 2.0,
-    ));
+    let mesh_default = meshes.add(CircularSector::new(CIRCLE_RADIUS, SECTOR_ANGLE / 2.0));
 
     let circle_mesh_default = meshes.add(Circle {
         radius: CIRCLE_INNER_RADIUS,
@@ -189,7 +187,8 @@ fn prepare_sector_resources(
     sectors.0.push(SectorInfo {
         name: "Default",
         description: "Default sector",
-        material: material_default,
+        material: materials.add(Color::srgb_u8(174, 174, 169)),
+        background: asset_server.load("sectors/zone_default_bent.png"),
         drop_rate: 0.9,
         enemies: vec![EnemyIdx(0)],
         chests: vec![ChestIdx(0)],
@@ -197,23 +196,35 @@ fn prepare_sector_resources(
     sectors.0.push(SectorInfo {
         name: "Green",
         description: "Green sector",
-        material: material_green,
+        material: materials.add(Color::srgb_u8(180, 195, 190)),
+        background: asset_server.load("sectors/zone_green_bent.png"),
         drop_rate: 0.9,
         enemies: vec![EnemyIdx(1)],
         chests: vec![ChestIdx(1)],
     });
     sectors.0.push(SectorInfo {
-        name: "Red",
-        description: "Red sector",
-        material: material_red,
+        name: "Yellow",
+        description: "Yellow sector",
+        material: materials.add(Color::srgb_u8(253, 252, 205)),
+        background: asset_server.load("sectors/zone_yellow_bent.png"),
         drop_rate: 0.9,
         enemies: vec![EnemyIdx(2)],
         chests: vec![ChestIdx(2)],
     });
     sectors.0.push(SectorInfo {
-        name: "Orange",
-        description: "Orange sector",
-        material: material_orange,
+        name: "Grey",
+        description: "Grey sector",
+        material: materials.add(Color::srgb_u8(125, 169, 157)),
+        background: asset_server.load("sectors/zone_grey_bent.png"),
+        drop_rate: 0.9,
+        enemies: vec![EnemyIdx(3)],
+        chests: vec![ChestIdx(3)],
+    });
+    sectors.0.push(SectorInfo {
+        name: "Brown",
+        description: "Brown sector",
+        material: materials.add(Color::srgb_u8(128, 93, 71)),
+        background: asset_server.load("sectors/zone_brown_bent.png"),
         drop_rate: 0.9,
         enemies: vec![EnemyIdx(3)],
         chests: vec![ChestIdx(3)],
@@ -236,20 +247,33 @@ fn spawn_sectors(
         transform.rotate_local_z(-rotation);
 
         let sector_idx = SectorIdx(rand::thread_rng().gen_range(0..4));
-        let material = sectors.0[sector_idx.0].material.clone();
-        commands.spawn((
-            MaterialMesh2dBundle {
-                mesh: sector_resources.mesh_default.clone().into(),
-                material,
-                transform,
-                ..default()
-            },
-            SectorPosition(i),
-            sector_idx,
-            SectorTimer::default(),
-            SectorSlots::default(),
-            StateScoped(GlobalState::InGame),
-        ));
+        let sector_info = &sectors.0[sector_idx.0];
+        let material = sector_info.material.clone();
+        commands
+            .spawn((
+                MaterialMesh2dBundle {
+                    mesh: sector_resources.mesh_default.clone().into(),
+                    material,
+                    transform,
+                    ..default()
+                },
+                SectorPosition(i),
+                sector_idx,
+                SectorTimer::default(),
+                SectorSlots::default(),
+            ))
+            .with_children(|builder| {
+                builder.spawn((
+                    SpriteBundle {
+                        sprite: Sprite::default(),
+                        transform: Transform::from_xyz(0.0, CIRCLE_RADIUS + 15.0, 0.0)
+                            .with_scale(Vec3::ONE * 0.35),
+                        texture: sector_info.background.clone(),
+                        ..Default::default()
+                    },
+                    SectorPosition(i),
+                ));
+            });
     }
 
     // Center
@@ -292,7 +316,8 @@ fn sector_update_selected(
     selected_section_button: Res<SelectedSectionButton>,
     buttons: Query<&BackpackSectorId>,
     mouse_input: Res<ButtonInput<MouseButton>>,
-    mut s: Query<(&SectorPosition, &mut SectorIdx, &mut Handle<ColorMaterial>)>,
+    mut sectors_bottom: Query<(&SectorPosition, &mut SectorIdx, &mut Handle<ColorMaterial>)>,
+    mut sectors_background: Query<(&SectorPosition, &mut Handle<Image>)>,
     mut event_writer: EventWriter<SectorPlacedEvent>,
 ) {
     let Some(cursor_sector_position) = cursor_sector.0 else {
@@ -313,7 +338,7 @@ fn sector_update_selected(
 
     let to_be_placed_sector_info = &sectors[sector_idx];
 
-    for (sector_position, mut current_sector_idx, mut material) in s.iter_mut() {
+    for (sector_position, mut current_sector_idx, mut material) in sectors_bottom.iter_mut() {
         if *sector_position == cursor_sector_position {
             *material = to_be_placed_sector_info.material.clone();
             if mouse_input.just_pressed(MouseButton::Left) {
@@ -323,12 +348,20 @@ fn sector_update_selected(
             break;
         }
     }
+
+    for (sector_position, mut background) in sectors_background.iter_mut() {
+        if *sector_position == cursor_sector_position {
+            *background = to_be_placed_sector_info.background.clone();
+            break;
+        }
+    }
 }
 
 fn sector_update_not_selected(
     sectors: Res<Sectors>,
     cursor_sector: Res<CursorSector>,
-    mut s: Query<(&SectorPosition, &SectorIdx, &mut Handle<ColorMaterial>)>,
+    mut sectors_bottom: Query<(&SectorPosition, &SectorIdx, &mut Handle<ColorMaterial>)>,
+    mut sectors_background: Query<(&SectorPosition, &mut Handle<Image>)>,
     mut local: Local<Option<SectorPosition>>,
 ) {
     if *local == cursor_sector.0 {
@@ -336,7 +369,7 @@ fn sector_update_not_selected(
     }
     *local = cursor_sector.0;
 
-    for (sector_position, sector_idx, mut material) in s.iter_mut() {
+    for (sector_position, sector_idx, mut material) in sectors_bottom.iter_mut() {
         let sector_info = &sectors[*sector_idx];
         if let Some(cs) = cursor_sector.0 {
             if *sector_position == cs {
@@ -344,6 +377,13 @@ fn sector_update_not_selected(
             }
         }
         *material = sector_info.material.clone();
+
+        for (bg_sector_position, mut background) in sectors_background.iter_mut() {
+            if *sector_position == *bg_sector_position {
+                *background = sector_info.background.clone();
+                break;
+            }
+        }
     }
 }
 
