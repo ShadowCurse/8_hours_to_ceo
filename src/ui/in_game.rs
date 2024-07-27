@@ -13,9 +13,9 @@ use crate::{
 
 use super::{UiState, UiStyle};
 
-const BUTTON_IMAGE_TINT_DEFAULT: Color = Color::WHITE;
-const BUTTON_IMAGE_TINT_HOVER: Color = Color::srgb(0.8, 0.8, 0.8);
-const BUTTON_IMAGE_TINT_PRESSED: Color = Color::srgb(0.5, 0.5, 0.5);
+const BUTTON_IMAGE_TINT_DEFAULT: Color = Color::srgb(0.8, 0.8, 0.8);
+const BUTTON_IMAGE_TINT_HOVER: Color = Color::srgb(0.7, 0.7, 0.7);
+const BUTTON_IMAGE_TINT_PRESSED: Color = Color::srgb(0.6, 0.6, 0.6);
 const BUTTON_IMAGE_TINT_DISABLED: Color = Color::srgb(0.2, 0.2, 0.2);
 
 pub struct InGamePlugin;
@@ -145,7 +145,7 @@ fn spawn_inventory_button<C: Component + Copy>(
                 ..Default::default()
             },
             visibility,
-            background_color: Color::srgb(0.8, 0.8, 0.8).into(),
+            background_color: BUTTON_IMAGE_TINT_DEFAULT.into(),
             ..Default::default()
         },
         Interaction::default(),
@@ -762,20 +762,17 @@ fn button_system(
 fn active_items_button_system(
     items: Res<Items>,
     inventory: Res<Inventory>,
-    mut interaction_query: Query<(&ActiveItemId, &Interaction, &mut UiImage), Changed<Interaction>>,
+    mut interaction_query: Query<(&ActiveItemId, &Interaction), Changed<Interaction>>,
     mut tooltip_text: Query<&mut Text, With<ItemsTooltipText>>,
     mut tooltip_container: Query<(&mut Visibility, &mut ItemsTooltipContainer)>,
     mut event_writer: EventWriter<InventoryUpdateEvent>,
 ) {
-    for (item_id, interaction, mut ui_image) in interaction_query.iter_mut() {
+    for (item_id, interaction) in interaction_query.iter_mut() {
         match *interaction {
             Interaction::Pressed => {
-                ui_image.color = BUTTON_IMAGE_TINT_PRESSED;
                 event_writer.send(InventoryUpdateEvent);
             }
             Interaction::Hovered => {
-                ui_image.color = BUTTON_IMAGE_TINT_HOVER;
-
                 let Ok((mut tooltip_container_visibility, mut tooltip_container_item_id)) =
                     tooltip_container.get_single_mut()
                 else {
@@ -796,8 +793,6 @@ fn active_items_button_system(
                 tooltip_container_text.sections[0].value = item_info.description.into();
             }
             Interaction::None => {
-                ui_image.color = BUTTON_IMAGE_TINT_DEFAULT;
-
                 let Ok((mut tooltip_container_visibility, mut tooltip_container_item_id)) =
                     tooltip_container.get_single_mut()
                 else {
@@ -818,25 +813,18 @@ fn active_items_button_system(
 fn backpack_items_button_system(
     items: Res<Items>,
     mut inventory: ResMut<Inventory>,
-    mut interaction_query: Query<
-        (&BackpackItemId, &Interaction, &mut UiImage),
-        Changed<Interaction>,
-    >,
+    mut interaction_query: Query<(&BackpackItemId, &Interaction), Changed<Interaction>>,
     mut tooltip_text: Query<&mut Text, With<ItemsTooltipText>>,
     mut tooltip_container: Query<(&mut Visibility, &mut ItemsTooltipContainer)>,
     mut event_writer: EventWriter<InventoryUpdateEvent>,
 ) {
-    for (item_id, interaction, mut ui_image) in interaction_query.iter_mut() {
+    for (item_id, interaction) in interaction_query.iter_mut() {
         match *interaction {
             Interaction::Pressed => {
-                ui_image.color = BUTTON_IMAGE_TINT_PRESSED;
-
                 inventory.equip_item(item_id.0 as usize);
                 event_writer.send(InventoryUpdateEvent);
             }
             Interaction::Hovered => {
-                ui_image.color = BUTTON_IMAGE_TINT_HOVER;
-
                 let Ok((mut tooltip_container_visibility, mut tooltip_container_item_id)) =
                     tooltip_container.get_single_mut()
                 else {
@@ -857,8 +845,6 @@ fn backpack_items_button_system(
                 tooltip_container_text.sections[0].value = item_info.description.into();
             }
             Interaction::None => {
-                ui_image.color = BUTTON_IMAGE_TINT_DEFAULT;
-
                 let Ok((mut tooltip_container_visibility, mut tooltip_container_item_id)) =
                     tooltip_container.get_single_mut()
                 else {
@@ -902,26 +888,19 @@ fn active_spells_update_state(
 fn active_spells_button_system(
     spells: Res<Spells>,
     inventory: Res<Inventory>,
-    mut interaction_query: Query<
-        (&ActiveSpellId, &Interaction, &mut UiImage),
-        Changed<Interaction>,
-    >,
+    mut interaction_query: Query<(&ActiveSpellId, &Interaction), Changed<Interaction>>,
     mut tooltip_text: Query<&mut Text, With<SpellsTooltipText>>,
     mut tooltip_container: Query<(&mut Visibility, &mut SpellsTooltipContainer)>,
     mut event_writer: EventWriter<CastSpellEvent>,
 ) {
-    for (spell_id, interaction, mut ui_image) in interaction_query.iter_mut() {
+    for (spell_id, interaction) in interaction_query.iter_mut() {
         match *interaction {
             Interaction::Pressed => {
-                ui_image.color = BUTTON_IMAGE_TINT_PRESSED;
-
                 if let Some(spell_idx) = inventory.get_spell_idx(spell_id.0 as usize) {
                     event_writer.send(CastSpellEvent(spell_idx));
                 }
             }
             Interaction::Hovered => {
-                ui_image.color = BUTTON_IMAGE_TINT_HOVER;
-
                 let Ok((mut tooltip_container_visibility, mut tooltip_container_spell_id)) =
                     tooltip_container.get_single_mut()
                 else {
@@ -942,8 +921,6 @@ fn active_spells_button_system(
                 tooltip_container_text.sections[0].value = spell_info.description.into();
             }
             Interaction::None => {
-                ui_image.color = BUTTON_IMAGE_TINT_DEFAULT;
-
                 let Ok((mut tooltip_container_visibility, mut tooltip_container_spell_id)) =
                     tooltip_container.get_single_mut()
                 else {
@@ -964,25 +941,18 @@ fn active_spells_button_system(
 fn backpack_spells_button_system(
     spells: Res<Spells>,
     mut inventory: ResMut<Inventory>,
-    mut interaction_query: Query<
-        (&BackpackSpellId, &Interaction, &mut UiImage),
-        Changed<Interaction>,
-    >,
+    mut interaction_query: Query<(&BackpackSpellId, &Interaction), Changed<Interaction>>,
     mut tooltip_text: Query<&mut Text, With<SpellsTooltipText>>,
     mut tooltip_container: Query<(&mut Visibility, &mut SpellsTooltipContainer)>,
     mut event_writer: EventWriter<InventoryUpdateEvent>,
 ) {
-    for (spell_id, interaction, mut ui_image) in interaction_query.iter_mut() {
+    for (spell_id, interaction) in interaction_query.iter_mut() {
         match *interaction {
             Interaction::Pressed => {
-                ui_image.color = BUTTON_IMAGE_TINT_PRESSED;
-
                 inventory.equip_spell(spell_id.0 as usize);
                 event_writer.send(InventoryUpdateEvent);
             }
             Interaction::Hovered => {
-                ui_image.color = BUTTON_IMAGE_TINT_HOVER;
-
                 let Ok((mut tooltip_container_visibility, mut tooltip_container_spell_id)) =
                     tooltip_container.get_single_mut()
                 else {
@@ -1003,8 +973,6 @@ fn backpack_spells_button_system(
                 tooltip_container_text.sections[0].value = spell_info.description.into();
             }
             Interaction::None => {
-                ui_image.color = BUTTON_IMAGE_TINT_DEFAULT;
-
                 let Ok((mut tooltip_container_visibility, mut tooltip_container_spell_id)) =
                     tooltip_container.get_single_mut()
                 else {
@@ -1089,15 +1057,15 @@ fn backpack_sectors_button_system(
 fn backpack_sectors_deselect(
     mouse_input: Res<ButtonInput<MouseButton>>,
     mut selected_section_button: ResMut<SelectedSectionButton>,
-    mut section_button: Query<&mut Style, With<BackpackSectorId>>,
+    mut section_image: Query<&mut UiImage, With<BackpackSectorId>>,
 ) {
     if mouse_input.just_pressed(MouseButton::Right) {
         if let Some(e) = selected_section_button.0 {
-            let Ok(mut style) = section_button.get_mut(e) else {
+            let Ok(mut ui_image) = section_image.get_mut(e) else {
                 return;
             };
 
-            style.border = UiRect::all(Val::Percent(1.0));
+            ui_image.color = BUTTON_IMAGE_TINT_DEFAULT;
         }
         selected_section_button.0 = None;
     }
@@ -1178,7 +1146,8 @@ fn update_inventory(
                     *ui_image = match item {
                         Some(idx) => items[*idx].image.clone().into(),
                         None => Handle::default().into(),
-                    }
+                    };
+                    ui_image.color = BUTTON_IMAGE_TINT_DEFAULT;
                 }
             }
         }
@@ -1188,7 +1157,8 @@ fn update_inventory(
                     *ui_image = match item {
                         Some(idx) => items[*idx].image.clone().into(),
                         None => Handle::default().into(),
-                    }
+                    };
+                    ui_image.color = BUTTON_IMAGE_TINT_DEFAULT;
                 }
             }
         }
@@ -1198,7 +1168,8 @@ fn update_inventory(
                     *ui_image = match spell {
                         Some(idx) => spells[*idx].image.clone().into(),
                         None => Handle::default().into(),
-                    }
+                    };
+                    ui_image.color = BUTTON_IMAGE_TINT_DEFAULT;
                 }
             }
         }
@@ -1208,7 +1179,8 @@ fn update_inventory(
                     *ui_image = match spell {
                         Some(idx) => spells[*idx].image.clone().into(),
                         None => Handle::default().into(),
-                    }
+                    };
+                    ui_image.color = BUTTON_IMAGE_TINT_DEFAULT;
                 }
             }
         }
@@ -1228,6 +1200,7 @@ fn update_sectors(
 
                 *button_visibility = Visibility::Visible;
                 *ui_image = sector_info.card.clone().into();
+                ui_image.color = BUTTON_IMAGE_TINT_DEFAULT;
             } else {
                 *button_visibility = Visibility::Hidden;
             }
