@@ -13,10 +13,10 @@ use crate::{
 
 use super::{UiState, UiStyle};
 
-const DEFAULT_BUTTON_BORDER_SIZE: f32 = 1.0;
-const HOVER_BUTTON_BORDER_SIZE: f32 = 3.0;
-const SELECT_BUTTON_BORDER_SIZE: f32 = 5.0;
-const DISABLED_BUTTON_BORDER_SIZE: f32 = 10.0;
+const BUTTON_IMAGE_TINT_DEFAULT: Color = Color::WHITE;
+const BUTTON_IMAGE_TINT_HOVER: Color = Color::srgb(0.8, 0.8, 0.8);
+const BUTTON_IMAGE_TINT_PRESSED: Color = Color::srgb(0.5, 0.5, 0.5);
+const BUTTON_IMAGE_TINT_DISABLED: Color = Color::srgb(0.2, 0.2, 0.2);
 
 pub struct InGamePlugin;
 
@@ -67,13 +67,13 @@ struct BackpackSpellId(u8);
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct BackpackSectorId(pub u8);
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum UiItemId {
+    ActiveItemId(ActiveItemId),
+    BackpackItemId(BackpackItemId),
+}
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct SectorsTooltipContainer;
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct SectorsTooltipText;
-
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ItemsTooltipContainer;
+pub struct ItemsTooltipContainer(Option<UiItemId>);
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ItemsTooltipText;
 
@@ -81,6 +81,11 @@ pub struct ItemsTooltipText;
 pub struct SpellsTooltipContainer;
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SpellsTooltipText;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct SectorsTooltipContainer;
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct SectorsTooltipText;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum InGameButton {
@@ -125,40 +130,21 @@ fn spawn_inventory_button<C: Component + Copy>(
     visibility: Visibility,
     c: C,
 ) {
-    builder
-        .spawn((
-            ButtonBundle {
-                style: Style {
-                    width: Val::Percent(100.0),
-                    height: Val::Percent(100.0),
-                    border: UiRect::all(Val::Percent(DEFAULT_BUTTON_BORDER_SIZE)),
-                    // horizontally center child text
-                    justify_content: JustifyContent::Center,
-                    // vertically center child text
-                    align_items: AlignItems::Center,
-                    ..Default::default()
-                },
-                visibility,
-                border_color: BorderColor(Color::BLACK),
-                border_radius: BorderRadius::all(Val::Percent(5.0)),
-                background_color: Color::WHITE.into(),
+    builder.spawn((
+        ImageBundle {
+            style: Style {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                margin: UiRect::all(Val::Percent(1.0)),
                 ..Default::default()
             },
-            c,
-        ))
-        .with_children(|builder| {
-            builder.spawn((
-                ImageBundle {
-                    style: Style {
-                        width: Val::Percent(100.0),
-                        height: Val::Percent(100.0),
-                        ..Default::default()
-                    },
-                    ..Default::default()
-                },
-                c,
-            ));
-        });
+            visibility,
+            background_color: Color::srgb(0.8, 0.8, 0.8).into(),
+            ..Default::default()
+        },
+        Interaction::default(),
+        c,
+    ));
 }
 
 fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
@@ -320,7 +306,7 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                                             visibility: Visibility::Hidden,
                                         ..default()
                                     },
-                                            ItemsTooltipContainer)
+                                            ItemsTooltipContainer(None))
                                     )
                                     .with_children(|builder| {
                                         builder.spawn((
@@ -751,21 +737,22 @@ fn button_system(
 fn active_items_button_system(
     items: Res<Items>,
     inventory: Res<Inventory>,
-    mut interaction_query: Query<(&ActiveItemId, &Interaction, &mut Style), Changed<Interaction>>,
+    mut interaction_query: Query<(&ActiveItemId, &Interaction, &mut UiImage), Changed<Interaction>>,
     mut tooltip_text: Query<&mut Text, With<ItemsTooltipText>>,
-    mut tooltip_container: Query<&mut Visibility, With<ItemsTooltipContainer>>,
+    mut tooltip_container: Query<(&mut Visibility, &mut ItemsTooltipContainer)>,
     mut event_writer: EventWriter<InventoryUpdateEvent>,
 ) {
-    for (item_id, interaction, mut style) in interaction_query.iter_mut() {
+    for (item_id, interaction, mut ui_image) in interaction_query.iter_mut() {
         match *interaction {
             Interaction::Pressed => {
-                style.border = UiRect::all(Val::Percent(SELECT_BUTTON_BORDER_SIZE));
+                ui_image.color = BUTTON_IMAGE_TINT_PRESSED;
                 event_writer.send(InventoryUpdateEvent);
             }
             Interaction::Hovered => {
-                style.border = UiRect::all(Val::Percent(HOVER_BUTTON_BORDER_SIZE));
+                ui_image.color = BUTTON_IMAGE_TINT_HOVER;
 
-                let Ok(mut tooltip_container_visibility) = tooltip_container.get_single_mut()
+                let Ok((mut tooltip_container_visibility, mut tooltip_container_item_id)) =
+                    tooltip_container.get_single_mut()
                 else {
                     return;
                 };
@@ -780,16 +767,24 @@ fn active_items_button_system(
                 let item_info = &items[item_idx];
 
                 *tooltip_container_visibility = Visibility::Visible;
+                tooltip_container_item_id.0 = Some(UiItemId::ActiveItemId(*item_id));
                 tooltip_container_text.sections[0].value = item_info.description.into();
             }
             Interaction::None => {
-                style.border = UiRect::all(Val::Percent(DEFAULT_BUTTON_BORDER_SIZE));
+                ui_image.color = BUTTON_IMAGE_TINT_DEFAULT;
 
-                let Ok(mut tooltip_container_visibility) = tooltip_container.get_single_mut()
+                let Ok((mut tooltip_container_visibility, mut tooltip_container_item_id)) =
+                    tooltip_container.get_single_mut()
                 else {
                     return;
                 };
-                *tooltip_container_visibility = Visibility::Hidden;
+                let Some(tooltip_item_id) = tooltip_container_item_id.0 else {
+                    return;
+                };
+                if tooltip_item_id == UiItemId::ActiveItemId(*item_id) {
+                    tooltip_container_item_id.0 = None;
+                    *tooltip_container_visibility = Visibility::Hidden;
+                }
             }
         }
     }
@@ -798,23 +793,27 @@ fn active_items_button_system(
 fn backpack_items_button_system(
     items: Res<Items>,
     mut inventory: ResMut<Inventory>,
-    mut interaction_query: Query<(&BackpackItemId, &Interaction, &mut Style), Changed<Interaction>>,
+    mut interaction_query: Query<
+        (&BackpackItemId, &Interaction, &mut UiImage),
+        Changed<Interaction>,
+    >,
     mut tooltip_text: Query<&mut Text, With<ItemsTooltipText>>,
-    mut tooltip_container: Query<&mut Visibility, With<ItemsTooltipContainer>>,
+    mut tooltip_container: Query<(&mut Visibility, &mut ItemsTooltipContainer)>,
     mut event_writer: EventWriter<InventoryUpdateEvent>,
 ) {
-    for (item_id, interaction, mut style) in interaction_query.iter_mut() {
+    for (item_id, interaction, mut ui_image) in interaction_query.iter_mut() {
         match *interaction {
             Interaction::Pressed => {
-                style.border = UiRect::all(Val::Percent(SELECT_BUTTON_BORDER_SIZE));
+                ui_image.color = BUTTON_IMAGE_TINT_PRESSED;
 
                 inventory.equip_item(item_id.0 as usize);
                 event_writer.send(InventoryUpdateEvent);
             }
             Interaction::Hovered => {
-                style.border = UiRect::all(Val::Percent(HOVER_BUTTON_BORDER_SIZE));
+                ui_image.color = BUTTON_IMAGE_TINT_HOVER;
 
-                let Ok(mut tooltip_container_visibility) = tooltip_container.get_single_mut()
+                let Ok((mut tooltip_container_visibility, mut tooltip_container_item_id)) =
+                    tooltip_container.get_single_mut()
                 else {
                     return;
                 };
@@ -829,16 +828,24 @@ fn backpack_items_button_system(
                 let item_info = &items[item_idx];
 
                 *tooltip_container_visibility = Visibility::Visible;
+                tooltip_container_item_id.0 = Some(UiItemId::BackpackItemId(*item_id));
                 tooltip_container_text.sections[0].value = item_info.description.into();
             }
             Interaction::None => {
-                style.border = UiRect::all(Val::Percent(DEFAULT_BUTTON_BORDER_SIZE));
+                ui_image.color = BUTTON_IMAGE_TINT_DEFAULT;
 
-                let Ok(mut tooltip_container_visibility) = tooltip_container.get_single_mut()
+                let Ok((mut tooltip_container_visibility, mut tooltip_container_item_id)) =
+                    tooltip_container.get_single_mut()
                 else {
                     return;
                 };
-                *tooltip_container_visibility = Visibility::Hidden;
+                let Some(tooltip_item_id) = tooltip_container_item_id.0 else {
+                    return;
+                };
+                if tooltip_item_id == UiItemId::BackpackItemId(*item_id) {
+                    tooltip_container_item_id.0 = None;
+                    *tooltip_container_visibility = Visibility::Hidden;
+                }
             }
         }
     }
@@ -848,12 +855,15 @@ fn active_spells_button_system(
     spells: Res<Spells>,
     inventory: Res<Inventory>,
     game_state: Res<State<GameState>>,
-    mut interaction_query: Query<(&ActiveSpellId, &Interaction, &mut Style), Changed<Interaction>>,
+    mut interaction_query: Query<
+        (&ActiveSpellId, &Interaction, &mut UiImage),
+        Changed<Interaction>,
+    >,
     mut tooltip_text: Query<&mut Text, With<SpellsTooltipText>>,
     mut tooltip_container: Query<&mut Visibility, With<SpellsTooltipContainer>>,
     mut event_writer: EventWriter<CastSpellEvent>,
 ) {
-    for (spell_id, interaction, mut style) in interaction_query.iter_mut() {
+    for (spell_id, interaction, mut ui_image) in interaction_query.iter_mut() {
         let on_cooldown = || {
             if let Some(spell_idx) = inventory.get_spell_idx(spell_id.0 as usize) {
                 let spell = &spells[spell_idx];
@@ -863,19 +873,18 @@ fn active_spells_button_system(
         };
 
         if on_cooldown() || game_state.get() != &GameState::Battle {
-            // TODO how to show that spell is on cooldown
-            style.border = UiRect::all(Val::Percent(DISABLED_BUTTON_BORDER_SIZE));
+            ui_image.color = BUTTON_IMAGE_TINT_DISABLED;
         } else {
             match *interaction {
                 Interaction::Pressed => {
-                    style.border = UiRect::all(Val::Percent(SELECT_BUTTON_BORDER_SIZE));
+                    ui_image.color = BUTTON_IMAGE_TINT_PRESSED;
 
                     if let Some(spell_idx) = inventory.get_spell_idx(spell_id.0 as usize) {
                         event_writer.send(CastSpellEvent(spell_idx));
                     }
                 }
                 Interaction::Hovered => {
-                    style.border = UiRect::all(Val::Percent(HOVER_BUTTON_BORDER_SIZE));
+                    ui_image.color = BUTTON_IMAGE_TINT_HOVER;
 
                     let Ok(mut tooltip_container_visibility) = tooltip_container.get_single_mut()
                     else {
@@ -895,7 +904,7 @@ fn active_spells_button_system(
                     tooltip_container_text.sections[0].value = spell_info.description.into();
                 }
                 Interaction::None => {
-                    style.border = UiRect::all(Val::Percent(DEFAULT_BUTTON_BORDER_SIZE));
+                    ui_image.color = BUTTON_IMAGE_TINT_DEFAULT;
 
                     let Ok(mut tooltip_container_visibility) = tooltip_container.get_single_mut()
                     else {
@@ -912,23 +921,23 @@ fn backpack_spells_button_system(
     spells: Res<Spells>,
     mut inventory: ResMut<Inventory>,
     mut interaction_query: Query<
-        (&BackpackSpellId, &Interaction, &mut Style),
+        (&BackpackSpellId, &Interaction, &mut UiImage),
         Changed<Interaction>,
     >,
     mut tooltip_text: Query<&mut Text, With<SpellsTooltipText>>,
     mut tooltip_container: Query<&mut Visibility, With<SpellsTooltipContainer>>,
     mut event_writer: EventWriter<InventoryUpdateEvent>,
 ) {
-    for (spell_id, interaction, mut style) in interaction_query.iter_mut() {
+    for (spell_id, interaction, mut ui_image) in interaction_query.iter_mut() {
         match *interaction {
             Interaction::Pressed => {
-                style.border = UiRect::all(Val::Percent(SELECT_BUTTON_BORDER_SIZE));
+                ui_image.color = BUTTON_IMAGE_TINT_PRESSED;
 
                 inventory.equip_spell(spell_id.0 as usize);
                 event_writer.send(InventoryUpdateEvent);
             }
             Interaction::Hovered => {
-                style.border = UiRect::all(Val::Percent(HOVER_BUTTON_BORDER_SIZE));
+                ui_image.color = BUTTON_IMAGE_TINT_HOVER;
 
                 let Ok(mut tooltip_container_visibility) = tooltip_container.get_single_mut()
                 else {
@@ -948,7 +957,7 @@ fn backpack_spells_button_system(
                 tooltip_container_text.sections[0].value = spell_info.description.into();
             }
             Interaction::None => {
-                style.border = UiRect::all(Val::Percent(DEFAULT_BUTTON_BORDER_SIZE));
+                ui_image.color = BUTTON_IMAGE_TINT_DEFAULT;
 
                 let Ok(mut tooltip_container_visibility) = tooltip_container.get_single_mut()
                 else {
@@ -965,16 +974,16 @@ fn backpack_sectors_button_system(
     inventory: Res<Inventory>,
     mut selected_section_button: ResMut<SelectedSectionButton>,
     mut interaction_query: Query<
-        (Entity, &BackpackSectorId, &Interaction, &mut Style),
+        (Entity, &BackpackSectorId, &Interaction, &mut UiImage),
         Changed<Interaction>,
     >,
     mut tooltip_text: Query<&mut Text, With<SectorsTooltipText>>,
     mut tooltip_container: Query<&mut Visibility, With<SectorsTooltipContainer>>,
 ) {
-    for (entity, sector_id, interaction, mut style) in interaction_query.iter_mut() {
+    for (entity, sector_id, interaction, mut ui_image) in interaction_query.iter_mut() {
         if let Some(e) = selected_section_button.0 {
             if e == entity {
-                style.border = UiRect::all(Val::Percent(10.0));
+                ui_image.color = BUTTON_IMAGE_TINT_PRESSED;
                 continue;
             }
         }
@@ -983,7 +992,7 @@ fn backpack_sectors_button_system(
                 selected_section_button.0 = Some(entity);
             }
             Interaction::Hovered => {
-                style.border = UiRect::all(Val::Percent(5.0));
+                ui_image.color = BUTTON_IMAGE_TINT_HOVER;
 
                 let Ok(mut tooltip_container_visibility) = tooltip_container.get_single_mut()
                 else {
@@ -1003,7 +1012,7 @@ fn backpack_sectors_button_system(
                 tooltip_container_text.sections[0].value = sector_info.description.into();
             }
             Interaction::None => {
-                style.border = UiRect::all(Val::Percent(1.0));
+                ui_image.color = BUTTON_IMAGE_TINT_DEFAULT;
 
                 let Ok(mut tooltip_container_visibility) = tooltip_container.get_single_mut()
                 else {
@@ -1067,7 +1076,7 @@ fn update_inventory(
     items: Res<Items>,
     spells: Res<Spells>,
     mut active_items_text: Query<
-        (&ActiveItemId, &mut Text),
+        (&ActiveItemId, &mut UiImage),
         (
             Without<BackpackItemId>,
             Without<ActiveSpellId>,
@@ -1075,7 +1084,7 @@ fn update_inventory(
         ),
     >,
     mut backpack_items_text: Query<
-        (&BackpackItemId, &mut Text),
+        (&BackpackItemId, &mut UiImage),
         (
             Without<ActiveItemId>,
             Without<ActiveSpellId>,
@@ -1083,7 +1092,7 @@ fn update_inventory(
         ),
     >,
     mut active_spells_text: Query<
-        (&ActiveSpellId, &mut Text),
+        (&ActiveSpellId, &mut UiImage),
         (
             Without<ActiveItemId>,
             Without<BackpackItemId>,
@@ -1091,7 +1100,7 @@ fn update_inventory(
         ),
     >,
     mut backpack_spells_text: Query<
-        (&BackpackSpellId, &mut Text),
+        (&BackpackSpellId, &mut UiImage),
         (
             Without<ActiveItemId>,
             Without<BackpackItemId>,
@@ -1102,42 +1111,38 @@ fn update_inventory(
 ) {
     for _ in event_reader.read() {
         for (i, item) in inventory.active_items.iter().enumerate() {
-            for (id, mut text) in active_items_text.iter_mut() {
+            for (id, mut ui_image) in active_items_text.iter_mut() {
                 if id.0 == i as u8 {
-                    text.sections[0].value = match item {
-                        Some(idx) => items[*idx].name.into(),
-                        None => "NaN".into(),
-                    };
+                    if let Some(idx) = item {
+                        *ui_image = items[*idx].image.clone().into();
+                    }
                 }
             }
         }
         for (i, item) in inventory.backpack_items.iter().enumerate() {
-            for (id, mut text) in backpack_items_text.iter_mut() {
+            for (id, mut ui_image) in backpack_items_text.iter_mut() {
                 if id.0 == i as u8 {
-                    text.sections[0].value = match item {
-                        Some(idx) => items[*idx].name.into(),
-                        None => "NaN".into(),
-                    };
+                    if let Some(idx) = item {
+                        *ui_image = items[*idx].image.clone().into();
+                    }
                 }
             }
         }
         for (i, spell) in inventory.active_spells.iter().enumerate() {
-            for (id, mut text) in active_spells_text.iter_mut() {
+            for (id, mut ui_image) in active_spells_text.iter_mut() {
                 if id.0 == i as u8 {
-                    text.sections[0].value = match spell {
-                        Some(idx) => spells[*idx].name.into(),
-                        None => "NaN".into(),
-                    };
+                    if let Some(idx) = spell {
+                        *ui_image = spells[*idx].image.clone().into();
+                    }
                 }
             }
         }
         for (i, spell) in inventory.backpack_spells.iter().enumerate() {
-            for (id, mut text) in backpack_spells_text.iter_mut() {
+            for (id, mut ui_image) in backpack_spells_text.iter_mut() {
                 if id.0 == i as u8 {
-                    text.sections[0].value = match spell {
-                        Some(idx) => spells[*idx].name.into(),
-                        None => "NaN".into(),
-                    };
+                    if let Some(idx) = spell {
+                        *ui_image = spells[*idx].image.clone().into();
+                    }
                 }
             }
         }
@@ -1147,19 +1152,11 @@ fn update_inventory(
 fn update_sectors(
     sectors: Res<Sectors>,
     inventory: Res<Inventory>,
-    mut sectors_buttons: Query<(&BackpackSectorId, &mut Visibility), With<Button>>,
-    mut sectors_image: Query<(&BackpackSectorId, &mut UiImage)>,
+    mut sectors_buttons: Query<(&BackpackSectorId, &mut Visibility, &mut UiImage)>,
     mut event_reader: EventReader<InventoryUpdateEvent>,
 ) {
     for _ in event_reader.read() {
-        for (button_sector_id, mut button_visibility) in sectors_buttons.iter_mut() {
-            let Some((_, mut ui_image)) = sectors_image
-                .iter_mut()
-                .find(|(text_sector_id, _)| **text_sector_id == *button_sector_id)
-            else {
-                continue;
-            };
-
+        for (button_sector_id, mut button_visibility, mut ui_image) in sectors_buttons.iter_mut() {
             if let Some(sector_idx) = inventory.backpack_sectors[button_sector_id.0 as usize] {
                 let sector_info = &sectors[sector_idx];
 

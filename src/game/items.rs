@@ -50,6 +50,7 @@ impl Item {
 pub struct ItemInfo {
     pub name: &'static str,
     pub description: &'static str,
+    pub image: Handle<Image>,
     pub drop_rate: f32,
     pub item: Item,
 }
@@ -70,24 +71,27 @@ impl IndexMut<ItemIdx> for Items {
     }
 }
 
-fn prepare_items(mut commands: Commands) {
+fn prepare_items(asset_server: Res<AssetServer>, mut commands: Commands) {
     let mut items = Items(vec![]);
 
     items.0.push(ItemInfo {
         name: "Scissors",
         description: "Sharp scissors",
+        image: asset_server.load("items/tmp_item.png"),
         drop_rate: 0.9,
         item: Item::Scissors,
     });
     items.0.push(ItemInfo {
         name: "Bucket",
         description: "Strudy bucket",
+        image: asset_server.load("items/tmp_item.png"),
         drop_rate: 0.9,
         item: Item::Bucket,
     });
     items.0.push(ItemInfo {
         name: "Plant",
         description: "Green plant",
+        image: asset_server.load("items/tmp_item.png"),
         drop_rate: 0.9,
         item: Item::Plant,
     });

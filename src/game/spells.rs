@@ -111,6 +111,7 @@ pub enum Spell {
 pub struct SpellInfo {
     pub name: &'static str,
     pub description: &'static str,
+    pub image: Handle<Image>,
     pub drop_rate: f32,
     pub cooldown: Timer,
     pub spell: Spell,
@@ -132,12 +133,13 @@ impl IndexMut<SpellIdx> for Spells {
     }
 }
 
-fn prepare_spells(mut commands: Commands) {
+fn prepare_spells(asset_server: Res<AssetServer>, mut commands: Commands) {
     let mut spells = Spells(vec![]);
 
     spells.0.push(SpellInfo {
         name: "Lightning",
         description: "Flashy lightning",
+        image: asset_server.load("spells/tmp_spell.png"),
         drop_rate: 0.9,
         cooldown: Timer::from_seconds(2.0, TimerMode::Once),
         spell: Spell::Lightning(Lightning {
@@ -149,6 +151,7 @@ fn prepare_spells(mut commands: Commands) {
     spells.0.push(SpellInfo {
         name: "Heal",
         description: "Healing heal",
+        image: asset_server.load("spells/tmp_spell.png"),
         drop_rate: 0.9,
         cooldown: Timer::from_seconds(5.0, TimerMode::Once),
         spell: Spell::Heal(Heal { heal: 20.0 }),
@@ -156,6 +159,7 @@ fn prepare_spells(mut commands: Commands) {
     spells.0.push(SpellInfo {
         name: "Player attack up",
         description: "+10 damage for 1 second",
+        image: asset_server.load("spells/tmp_spell.png"),
         drop_rate: 0.9,
         cooldown: Timer::from_seconds(5.0, TimerMode::Once),
         spell: Spell::PlayerAttackUp(PlayerAttackUp {
@@ -166,6 +170,7 @@ fn prepare_spells(mut commands: Commands) {
     spells.0.push(SpellInfo {
         name: "Player defence up",
         description: "+10% defence for 1 second",
+        image: asset_server.load("spells/tmp_spell.png"),
         drop_rate: 0.9,
         cooldown: Timer::from_seconds(5.0, TimerMode::Once),
         spell: Spell::PlayerDefenseUp(PlayerDefenseUp {
@@ -176,6 +181,7 @@ fn prepare_spells(mut commands: Commands) {
     spells.0.push(SpellInfo {
         name: "EnemyDefenceDown",
         description: "-10% enemy defence for 1 second",
+        image: asset_server.load("spells/tmp_spell.png"),
         drop_rate: 0.9,
         cooldown: Timer::from_seconds(5.0, TimerMode::Once),
         spell: Spell::EnemyDefenseDown(EnemyDefenseDown {
