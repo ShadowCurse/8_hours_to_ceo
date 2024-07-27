@@ -48,7 +48,7 @@ impl Plugin for SectorsPlugin {
                 (
                     update_minute_arrow,
                     update_hour_arrow,
-                    sector_detect_player,
+                    count_full_cycles,
                     sector_spawn_things,
                 )
                     .run_if(in_state(GameState::Running)),
@@ -161,16 +161,15 @@ struct MinuteArrow;
 struct HourArrow;
 
 pub fn sector_id_to_start_angle(id: u8) -> f32 {
-    id as f32 * SECTOR_ANGLE - SECTOR_ANGLE / 2.0
+    id as f32 * SECTOR_ANGLE
 }
 
 pub fn position_to_sector_position(position: Vec3) -> u8 {
-    let angle = position.angle_between(Vec3::Y);
-    let mut sector_id = ((angle / (SECTOR_ANGLE / 2.0)).floor() as u8).div_ceil(2);
-    if position.x < 0.0 && sector_id != 0 {
-        sector_id = SECTORS_NUM - sector_id;
+    let mut angle = position.angle_between(Vec3::Y);
+    if position.x < 0.0 {
+        angle = 2.0 * PI - angle;
     }
-    sector_id
+    (angle / SECTOR_ANGLE).floor() as u8
 }
 
 pub fn next_section_position(section_id: u8) -> u8 {
@@ -272,7 +271,7 @@ fn spawn_sectors(
     // Sectors
     for i in 0..SECTORS_NUM {
         let mut transform = Transform::from_xyz(0.0, 0.0, Z_SECTOR_GROUND);
-        let rotation = PI / (SECTORS_NUM / 2) as f32 * i as f32;
+        let rotation = PI / (SECTORS_NUM / 2) as f32 * i as f32 + SECTOR_ANGLE / 2.0;
         // Rotation happens ccw, so make it cw.
         transform.rotate_local_z(-rotation);
 
@@ -423,7 +422,7 @@ fn update_hour_arrow(
     *hour_transform = t;
 }
 
-fn sector_detect_player(
+fn count_full_cycles(
     player: Query<&Transform, With<Player>>,
     mut full_cycles: ResMut<FullCycles>,
     mut local: Local<u8>,
