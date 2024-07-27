@@ -21,7 +21,7 @@ use super::{
     hp_bar::HpBarResources,
     inventory::Inventory,
     GameState, Player, Z_CHEST, Z_CLOCK_ARROWS, Z_CLOCK_CENTER, Z_CLOCK_KNOB, Z_CLOCK_NUMBERS,
-    Z_ENEMY, Z_WALL, Z_SECTORS, Z_SECTOR_BACKGROUND,
+    Z_ENEMY, Z_SECTORS, Z_SECTOR_BACKGROUND, Z_WALL,
 };
 
 pub const CIRCLE_RADIUS: f32 = 200.0;
