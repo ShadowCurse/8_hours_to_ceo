@@ -103,26 +103,26 @@ fn spawn_inventory_button<C: Component + Copy>(
                     justify_content: JustifyContent::Center,
                     // vertically center child text
                     align_items: AlignItems::Center,
-                    ..default()
+                    ..Default::default()
                 },
                 visibility,
                 border_color: BorderColor(Color::BLACK),
                 border_radius: BorderRadius::all(Val::Percent(5.0)),
                 background_color: Color::WHITE.into(),
-                ..default()
+                ..Default::default()
             },
             c,
         ))
         .with_children(|builder| {
             builder.spawn((
-                TextBundle::from_section(
-                    "NaN",
-                    TextStyle {
-                        font_size: 40.0,
-                        color: Color::srgb(0.2, 0.2, 0.2),
+                ImageBundle {
+                    style: Style {
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(100.0),
                         ..Default::default()
                     },
-                ),
+                    ..Default::default()
+                },
                 c,
             ));
         });
@@ -241,7 +241,7 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                             // Empty block
                             builder.spawn(NodeBundle {
                                 style: Style {
-                                    width: Val::Percent(5.0),
+                                    width: Val::Percent(10.0),
                                     height: Val::Percent(100.0),
                                     flex_direction: FlexDirection::Row,
                                     ..Default::default()
@@ -462,7 +462,7 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                     builder
                         .spawn(NodeBundle {
                             style: Style {
-                                width: Val::Percent(5.0),
+                                width: Val::Percent(10.0),
                                 height: Val::Percent(80.0),
                                 flex_direction: FlexDirection::Column,
                                 align_items: AlignItems::Center,
@@ -1134,12 +1134,12 @@ fn update_sectors(
     sectors: Res<Sectors>,
     inventory: Res<Inventory>,
     mut sectors_buttons: Query<(&BackpackSectorId, &mut Visibility), With<Button>>,
-    mut sectors_texts: Query<(&BackpackSectorId, &mut Text)>,
+    mut sectors_image: Query<(&BackpackSectorId, &mut UiImage)>,
     mut event_reader: EventReader<InventoryUpdateEvent>,
 ) {
     for _ in event_reader.read() {
         for (button_sector_id, mut button_visibility) in sectors_buttons.iter_mut() {
-            let Some((_, mut text)) = sectors_texts
+            let Some((_, mut ui_image)) = sectors_image
                 .iter_mut()
                 .find(|(text_sector_id, _)| **text_sector_id == *button_sector_id)
             else {
@@ -1150,7 +1150,7 @@ fn update_sectors(
                 let sector_info = &sectors[sector_idx];
 
                 *button_visibility = Visibility::Visible;
-                text.sections[0].value = sector_info.name.into();
+                *ui_image = sector_info.card.clone().into();
             } else {
                 *button_visibility = Visibility::Hidden;
             }

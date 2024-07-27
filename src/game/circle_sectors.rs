@@ -72,6 +72,7 @@ pub struct SectorInfo {
     pub description: &'static str,
     pub material: Handle<ColorMaterial>,
     pub background: Handle<Image>,
+    pub card: Handle<Image>,
     pub drop_rate: f32,
     pub enemies: Vec<EnemyIdx>,
     pub chests: Vec<ChestIdx>,
@@ -166,10 +167,6 @@ fn prepare_sector_resources(
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     let material_default = materials.add(Color::srgb(0.7, 0.7, 0.7));
-    let material_green = materials.add(Color::srgb(0.2, 0.8, 0.2));
-    let material_yellow = materials.add(Color::srgb(0.95, 0.9, 0.2));
-    let material_grey = materials.add(Color::srgb(0.7, 0.7, 0.7));
-    let material_brown = materials.add(Color::srgb(0.6, 0.4, 0.5));
     // CircularSector uses half_angle underneath
     let mesh_default = meshes.add(CircularSector::new(CIRCLE_RADIUS, SECTOR_ANGLE / 2.0));
 
@@ -189,6 +186,7 @@ fn prepare_sector_resources(
         description: "Default sector",
         material: materials.add(Color::srgb_u8(174, 174, 169)),
         background: asset_server.load("sectors/zone_default_bent.png"),
+        card: asset_server.load("sectors_cards/zone_default_card.png"),
         drop_rate: 0.9,
         enemies: vec![EnemyIdx(0)],
         chests: vec![ChestIdx(0)],
@@ -198,6 +196,7 @@ fn prepare_sector_resources(
         description: "Green sector",
         material: materials.add(Color::srgb_u8(180, 195, 190)),
         background: asset_server.load("sectors/zone_green_bent.png"),
+        card: asset_server.load("sectors_cards/zone_green_card.png"),
         drop_rate: 0.9,
         enemies: vec![EnemyIdx(1)],
         chests: vec![ChestIdx(1)],
@@ -207,6 +206,7 @@ fn prepare_sector_resources(
         description: "Yellow sector",
         material: materials.add(Color::srgb_u8(253, 252, 205)),
         background: asset_server.load("sectors/zone_yellow_bent.png"),
+        card: asset_server.load("sectors_cards/zone_yellow_card.png"),
         drop_rate: 0.9,
         enemies: vec![EnemyIdx(2)],
         chests: vec![ChestIdx(2)],
@@ -216,6 +216,7 @@ fn prepare_sector_resources(
         description: "Grey sector",
         material: materials.add(Color::srgb_u8(125, 169, 157)),
         background: asset_server.load("sectors/zone_grey_bent.png"),
+        card: asset_server.load("sectors_cards/zone_grey_card.png"),
         drop_rate: 0.9,
         enemies: vec![EnemyIdx(3)],
         chests: vec![ChestIdx(3)],
@@ -225,6 +226,7 @@ fn prepare_sector_resources(
         description: "Brown sector",
         material: materials.add(Color::srgb_u8(128, 93, 71)),
         background: asset_server.load("sectors/zone_brown_bent.png"),
+        card: asset_server.load("sectors_cards/zone_brown_card.png"),
         drop_rate: 0.9,
         enemies: vec![EnemyIdx(3)],
         chests: vec![ChestIdx(3)],
