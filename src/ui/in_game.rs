@@ -11,7 +11,7 @@ use crate::{
     GlobalState,
 };
 
-use super::{spawn_button, UiState, UiStyle};
+use super::{UiState, UiStyle};
 
 const DEFAULT_BUTTON_BORDER_SIZE: f32 = 1.0;
 const HOVER_BUTTON_BORDER_SIZE: f32 = 3.0;
@@ -84,13 +84,41 @@ pub struct SpellsTooltipText;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum InGameButton {
-    Settings,
     MainMenu,
 }
 
 pub const UI_TOP_SIZE: f32 = 10.0;
 pub const UI_MIDDLE_SIZE: f32 = 70.0;
 pub const UI_BOTTOM_SIZE: f32 = 20.0;
+
+fn spawn_system_button<B>(child_builder: &mut ChildBuilder, style: &UiStyle, button: B)
+where
+    B: Component + std::fmt::Debug,
+{
+    child_builder
+        .spawn(ButtonBundle {
+            style: Style {
+                margin: UiRect::all(Val::Percent(1.0)),
+                padding: UiRect::all(Val::Percent(1.0)),
+                border: UiRect::all(Val::Percent(1.0)),
+                // make text in the middle
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                ..default()
+            },
+            border_color: BorderColor(Color::BLACK),
+            border_radius: BorderRadius::all(Val::Percent(2.0)),
+            background_color: style.btn_color_normal.into(),
+            ..default()
+        })
+        .with_children(|parent| {
+            parent.spawn(TextBundle {
+                text: Text::from_section(format!("{:?}", button), style.text_style.clone()),
+                ..default()
+            });
+        })
+        .insert(button);
+}
 
 fn spawn_inventory_button<C: Component + Copy>(
     builder: &mut ChildBuilder,
@@ -437,16 +465,15 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                             style: Style {
                                 width: Val::Percent(100.0 / 3.0),
                                 flex_direction: FlexDirection::Row,
-                                align_items: AlignItems::Center,
-                                justify_items: JustifyItems::Center,
-                                justify_content: JustifyContent::SpaceAround,
+                                // align_items: AlignItems::Center,
+                                // justify_items: JustifyItems::Start,
+                                // justify_content: JustifyContent::Start,
                                 ..Default::default()
                             },
                             ..default()
                         })
                         .with_children(|builder| {
-                            spawn_button(builder, &ui_style, InGameButton::Settings);
-                            spawn_button(builder, &ui_style, InGameButton::MainMenu);
+                            spawn_system_button(builder, &ui_style, InGameButton::MainMenu);
                         });
                 });
 
@@ -705,7 +732,6 @@ fn button_system(
             Interaction::Pressed => {
                 *color = ui_style.btn_color_pressed.into();
                 match button {
-                    InGameButton::Settings => ui_state.set(UiState::Settings),
                     InGameButton::MainMenu => {
                         ui_state.set(UiState::MainMenu);
                         global_state.set(GlobalState::MainMenu);

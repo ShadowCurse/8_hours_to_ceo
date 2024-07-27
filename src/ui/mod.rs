@@ -29,7 +29,6 @@ pub enum UiState {
 #[derive(Resource, Debug, Clone)]
 pub struct UiStyle {
     pub btn_style: Style,
-    pub btn_color_disabled: Color,
     pub btn_color_normal: Color,
     pub btn_color_hover: Color,
     pub btn_color_pressed: Color,
@@ -46,14 +45,13 @@ fn setup_ui_style(mut commands: Commands, asset_server: Res<AssetServer>) {
             justify_content: JustifyContent::Center,
             ..default()
         },
-        btn_color_disabled: Color::srgb(0.05, 0.05, 0.05),
         btn_color_normal: Color::srgb(0.15, 0.15, 0.15),
         btn_color_hover: Color::srgb(0.25, 0.25, 0.25),
         btn_color_pressed: Color::srgb(0.35, 0.75, 0.35),
         text_style: TextStyle {
             font: asset_server.load("fonts/8bitOperatorPlus8-Regular.ttf"),
             font_size: 20.0,
-            color: Color::srgb_u8(0xfa, 0xa3, 0x07),
+            color: Color::srgb_u8(0xfa, 0xfa, 0xfa),
         },
     });
 }
