@@ -20,7 +20,7 @@ use super::{
     enemy::{spawn_enemy, Enemies, EnemyIdx},
     hp_bar::HpBarResources,
     inventory::Inventory,
-    GameState, Player, Z_CHEST, Z_ENEMY, Z_SECTOR_BACKGROUND, Z_SECTOR_GROUND,
+    GameState, Player, Z_CHEST, Z_CLOCK, Z_ENEMY, Z_SECTOR_BACKGROUND, Z_SECTOR_GROUND,
 };
 
 pub const CIRCLE_RADIUS: f32 = 200.0;
@@ -40,7 +40,13 @@ impl Plugin for SectorsPlugin {
             .add_systems(Startup, spawn_sectors)
             .add_systems(
                 Update,
-                (sector_detect_player, sector_spawn_things).run_if(in_state(GameState::Running)),
+                (
+                    update_minute_arrow,
+                    update_hour_arrow,
+                    sector_detect_player,
+                    sector_spawn_things,
+                )
+                    .run_if(in_state(GameState::Running)),
             )
             .add_systems(
                 Update,
@@ -53,8 +59,12 @@ impl Plugin for SectorsPlugin {
 #[derive(Resource, Debug, Clone, PartialEq, Eq)]
 pub struct SectorResources {
     material_default: Handle<ColorMaterial>,
-    mesh_default: Handle<Mesh>,
+    material_arrow_default: Handle<ColorMaterial>,
+    material_knob_default: Handle<ColorMaterial>,
+    sector_mesh_default: Handle<Mesh>,
     circle_mesh_default: Handle<Mesh>,
+    arrow_mesh_default: Handle<Mesh>,
+    knob_mesh_default: Handle<Mesh>,
 }
 
 #[derive(Resource, Debug, Clone, PartialEq, Eq)]
@@ -139,6 +149,12 @@ impl Component for SectorSlotEntity {
     }
 }
 
+#[derive(Component, Debug, Default, Clone, PartialEq, Eq)]
+struct MinuteArrow;
+
+#[derive(Component, Debug, Default, Clone, PartialEq, Eq)]
+struct HourArrow;
+
 pub fn sector_id_to_start_angle(id: u8) -> f32 {
     id as f32 * SECTOR_ANGLE - SECTOR_ANGLE / 2.0
 }
@@ -167,17 +183,24 @@ fn prepare_sector_resources(
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     let material_default = materials.add(Color::srgb(0.7, 0.7, 0.7));
+    let material_arrow_default = materials.add(Color::srgb(0.1, 0.1, 0.1));
+    let material_knob_default = materials.add(Color::srgb(0.6, 0.1, 0.1));
     // CircularSector uses half_angle underneath
-    let mesh_default = meshes.add(CircularSector::new(CIRCLE_RADIUS, SECTOR_ANGLE / 2.0));
-
+    let sector_mesh_default = meshes.add(CircularSector::new(CIRCLE_RADIUS, SECTOR_ANGLE / 2.0));
     let circle_mesh_default = meshes.add(Circle {
         radius: CIRCLE_INNER_RADIUS,
     });
+    let arrow_mesh_default = meshes.add(Rectangle::new(5.0, 200.0));
+    let knob_mesh_default = meshes.add(Circle { radius: 15.0 });
 
     commands.insert_resource(SectorResources {
         material_default: material_default.clone(),
-        mesh_default,
+        material_arrow_default,
+        material_knob_default,
+        sector_mesh_default,
         circle_mesh_default,
+        arrow_mesh_default,
+        knob_mesh_default,
     });
 
     let mut sectors = Sectors(vec![]);
@@ -254,7 +277,7 @@ fn spawn_sectors(
         commands
             .spawn((
                 MaterialMesh2dBundle {
-                    mesh: sector_resources.mesh_default.clone().into(),
+                    mesh: sector_resources.sector_mesh_default.clone().into(),
                     material,
                     transform,
                     ..default()
@@ -287,12 +310,113 @@ fn spawn_sectors(
         MaterialMesh2dBundle {
             mesh: sector_resources.circle_mesh_default.clone().into(),
             material: sector_resources.material_default.clone(),
-            transform: Transform::from_xyz(0.0, 0.0, 1.0),
+            transform: Transform::from_xyz(0.0, 0.0, Z_CLOCK),
             ..default()
         },
-        Wireframe2d,
         StateScoped(GlobalState::InGame),
     ));
+
+    // Minute arrow
+    commands.spawn((
+        MaterialMesh2dBundle {
+            mesh: sector_resources.arrow_mesh_default.clone().into(),
+            material: sector_resources.material_arrow_default.clone(),
+            transform: Transform::from_xyz(0.0, 70.0, Z_CLOCK + 2.0),
+            ..default()
+        },
+        MinuteArrow,
+        StateScoped(GlobalState::InGame),
+    ));
+
+    // Hour arrow
+    commands.spawn((
+        MaterialMesh2dBundle {
+            mesh: sector_resources.arrow_mesh_default.clone().into(),
+            material: sector_resources.material_arrow_default.clone(),
+            transform: Transform::from_xyz(0.0, 50.0, Z_CLOCK + 2.0)
+                .with_scale(Vec3::new(2.0, 0.8, 1.0)),
+            ..default()
+        },
+        HourArrow,
+        StateScoped(GlobalState::InGame),
+    ));
+
+    // Knob arrow
+    commands.spawn((
+        MaterialMesh2dBundle {
+            mesh: sector_resources.knob_mesh_default.clone().into(),
+            material: sector_resources.material_knob_default.clone(),
+            transform: Transform::from_xyz(0.0, 0.0, Z_CLOCK + 3.0),
+            ..default()
+        },
+        StateScoped(GlobalState::InGame),
+    ));
+
+    // Numbers
+    for i in 1..=12 {
+        let top_position = Vec3::new(0.0, 150.0, Z_CLOCK + 1.0);
+        let angle = PI / 6.0 * i as f32;
+        let rotation = Quat::from_rotation_z(-angle);
+        let rotated = rotation.mul_vec3(top_position);
+        let transform = Transform::from_translation(rotated);
+        commands.spawn((Text2dBundle {
+            text: Text::from_section(
+                format!("{}", i),
+                TextStyle {
+                    font_size: 40.0,
+                    ..Default::default()
+                },
+            ),
+            transform,
+            ..default()
+        },));
+    }
+}
+
+fn update_minute_arrow(
+    player: Query<&Transform, (With<Player>, Without<MinuteArrow>)>,
+    mut minute_arrow: Query<&mut Transform, (With<MinuteArrow>, Without<Player>)>,
+) {
+    let Ok(player_transform) = player.get_single() else {
+        return;
+    };
+
+    let Ok(mut minute_transform) = minute_arrow.get_single_mut() else {
+        return;
+    };
+    let mut t = Transform::from_xyz(0.0, 70.0, Z_CLOCK + 2.0);
+    t.rotate_around(Vec3::ZERO, player_transform.rotation);
+    *minute_transform = t;
+}
+
+fn update_hour_arrow(
+    full_cycles: Res<FullCycles>,
+    player: Query<&Transform, (With<Player>, Without<MinuteArrow>, Without<HourArrow>)>,
+    minute_arrow: Query<&mut Transform, (With<MinuteArrow>, Without<Player>, Without<HourArrow>)>,
+    mut hour_arrow: Query<&mut Transform, (With<HourArrow>, Without<Player>, Without<MinuteArrow>)>,
+) {
+    let Ok(player_transform) = player.get_single() else {
+        return;
+    };
+
+    let Ok(minute_transform) = minute_arrow.get_single() else {
+        return;
+    };
+
+    let Ok(mut hour_transform) = hour_arrow.get_single_mut() else {
+        return;
+    };
+
+    let mut minute_angle = minute_transform.translation.angle_between(Vec3::Y);
+    if player_transform.translation.x < 0.0 {
+        minute_angle = 2.0 * PI - minute_angle;
+    }
+
+    let hour_arrow_angle = PI / 6.0 * full_cycles.0 as f32 + PI / 6.0 * minute_angle / (2.0 * PI);
+
+    let mut t = Transform::from_xyz(0.0, 50.0, Z_CLOCK + 2.0).with_scale(Vec3::new(2.0, 0.8, 1.0));
+    t.rotate_around(Vec3::ZERO, Quat::from_rotation_z(-hour_arrow_angle));
+    *hour_transform = t;
 }
 
 fn sector_detect_player(
