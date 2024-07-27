@@ -157,7 +157,13 @@ fn setup_camera(mut commands: Commands) {
             MainMenuCameraTarget,
         ))
         .id();
-    commands.spawn((Camera2dBundle::default(), GameCamera { target: mm_target }));
+    commands.spawn((
+        Camera2dBundle {
+            transform: Transform::default().with_scale(Vec3::new(2.0, 2.0, 2.0)),
+            ..Default::default()
+        },
+        GameCamera { target: mm_target },
+    ));
 }
 
 fn camera_follow_target(
