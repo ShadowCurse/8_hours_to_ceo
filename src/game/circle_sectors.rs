@@ -21,7 +21,7 @@ use super::{
     hp_bar::HpBarResources,
     inventory::Inventory,
     GameState, Player, Z_CHEST, Z_CLOCK_ARROWS, Z_CLOCK_CENTER, Z_CLOCK_KNOB, Z_CLOCK_NUMBERS,
-    Z_ENEMY, Z_SECTOR_BACKGROUND, Z_SECTOR_GROUND,
+    Z_ENEMY, Z_WALL, Z_SECTORS, Z_SECTOR_BACKGROUND,
 };
 
 pub const CIRCLE_RADIUS: f32 = 200.0;
@@ -278,14 +278,14 @@ fn spawn_clock(
 
     commands.spawn((SpriteBundle {
         sprite: Sprite::default(),
-        transform: Transform::default().with_scale(Vec3::new(10.0, 10.0, 10.0)),
+        transform: Transform::from_xyz(0.0, 0.0, Z_WALL).with_scale(Vec3::new(10.0, 10.0, 10.0)),
         texture: sector_resources.wall_image.clone(),
         ..Default::default()
     },));
 
     // Sectors
     for i in 0..SECTORS_NUM {
-        let mut transform = Transform::from_xyz(0.0, 0.0, Z_SECTOR_GROUND);
+        let mut transform = Transform::from_xyz(0.0, 0.0, Z_SECTORS);
         let rotation = PI / (SECTORS_NUM / 2) as f32 * i as f32 + SECTOR_ANGLE / 2.0;
         // Rotation happens ccw, so make it cw.
         transform.rotate_local_z(-rotation);

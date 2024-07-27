@@ -26,15 +26,16 @@ use spells::SpellsPlugin;
 
 const INTERACTION_DISTANCE: f32 = 30.0;
 
-pub const Z_SECTOR_GROUND: f32 = 0.0;
-pub const Z_CLOCK_CENTER: f32 = 1.0;
-pub const Z_CLOCK_NUMBERS: f32 = 2.0;
-pub const Z_CLOCK_ARROWS: f32 = 3.0;
-pub const Z_CLOCK_KNOB: f32 = 4.0;
-pub const Z_SECTOR_BACKGROUND: f32 = 1.0;
-pub const Z_ENEMY: f32 = 2.0;
-pub const Z_CHEST: f32 = 2.0;
-pub const Z_PLAYER: f32 = 3.0;
+pub const Z_WALL: f32 = 0.0;
+pub const Z_SECTORS: f32 = 1.0;
+pub const Z_CLOCK_CENTER: f32 = 2.0;
+pub const Z_CLOCK_NUMBERS: f32 = 3.0;
+pub const Z_CLOCK_ARROWS: f32 = 4.0;
+pub const Z_CLOCK_KNOB: f32 = 5.0;
+pub const Z_SECTOR_BACKGROUND: f32 = 2.0;
+pub const Z_ENEMY: f32 = 4.0;
+pub const Z_CHEST: f32 = 4.0;
+pub const Z_PLAYER: f32 = 5.0;
 
 const CAMERA_FOLLOW_SPEED: f32 = 8.0;
 
