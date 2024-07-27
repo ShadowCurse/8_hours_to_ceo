@@ -77,13 +77,18 @@ pub struct ItemsTooltipContainer(Option<UiItemId>);
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ItemsTooltipText;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum UiSpellId {
+    ActiveSpellId(ActiveSpellId),
+    BackpackSpellId(BackpackSpellId),
+}
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct SpellsTooltipContainer;
+pub struct SpellsTooltipContainer(Option<UiSpellId>);
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SpellsTooltipText;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct SectorsTooltipContainer;
+pub struct SectorsTooltipContainer(Option<BackpackSectorId>);
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SectorsTooltipText;
 
@@ -238,7 +243,7 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                                             visibility: Visibility::Hidden,
                                             ..Default::default()
                                         },
-                                                SectorsTooltipContainer,
+                                                SectorsTooltipContainer(None),
                                         ))
                                         .with_children(|builder| {
                                             builder.spawn((
@@ -339,7 +344,7 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                                         border_radius: BorderRadius::all(Val::Percent(5.0)),
                                             visibility: Visibility::Hidden,
                                         ..default()
-                                    }, SpellsTooltipContainer))
+                                    }, SpellsTooltipContainer(None)))
                                     .with_children(|builder| {
                                         builder.spawn((
                                             TextBundle {
@@ -879,7 +884,7 @@ fn active_spells_button_system(
         Changed<Interaction>,
     >,
     mut tooltip_text: Query<&mut Text, With<SpellsTooltipText>>,
-    mut tooltip_container: Query<&mut Visibility, With<SpellsTooltipContainer>>,
+    mut tooltip_container: Query<(&mut Visibility, &mut SpellsTooltipContainer)>,
     mut event_writer: EventWriter<CastSpellEvent>,
 ) {
     for (spell_id, interaction, mut ui_image) in interaction_query.iter_mut() {
@@ -905,7 +910,8 @@ fn active_spells_button_system(
                 Interaction::Hovered => {
                     ui_image.color = BUTTON_IMAGE_TINT_HOVER;
 
-                    let Ok(mut tooltip_container_visibility) = tooltip_container.get_single_mut()
+                    let Ok((mut tooltip_container_visibility, mut tooltip_container_spell_id)) =
+                        tooltip_container.get_single_mut()
                     else {
                         return;
                     };
@@ -920,16 +926,24 @@ fn active_spells_button_system(
                     let spell_info = &spells[spell_idx];
 
                     *tooltip_container_visibility = Visibility::Visible;
+                    tooltip_container_spell_id.0 = Some(UiSpellId::ActiveSpellId(*spell_id));
                     tooltip_container_text.sections[0].value = spell_info.description.into();
                 }
                 Interaction::None => {
                     ui_image.color = BUTTON_IMAGE_TINT_DEFAULT;
 
-                    let Ok(mut tooltip_container_visibility) = tooltip_container.get_single_mut()
+                    let Ok((mut tooltip_container_visibility, mut tooltip_container_spell_id)) =
+                        tooltip_container.get_single_mut()
                     else {
                         return;
                     };
-                    *tooltip_container_visibility = Visibility::Hidden;
+                    let Some(tooltip_spell_id) = tooltip_container_spell_id.0 else {
+                        return;
+                    };
+                    if tooltip_spell_id == UiSpellId::ActiveSpellId(*spell_id) {
+                        tooltip_container_spell_id.0 = None;
+                        *tooltip_container_visibility = Visibility::Hidden;
+                    }
                 }
             }
         }
@@ -944,7 +958,7 @@ fn backpack_spells_button_system(
         Changed<Interaction>,
     >,
     mut tooltip_text: Query<&mut Text, With<SpellsTooltipText>>,
-    mut tooltip_container: Query<&mut Visibility, With<SpellsTooltipContainer>>,
+    mut tooltip_container: Query<(&mut Visibility, &mut SpellsTooltipContainer)>,
     mut event_writer: EventWriter<InventoryUpdateEvent>,
 ) {
     for (spell_id, interaction, mut ui_image) in interaction_query.iter_mut() {
@@ -958,7 +972,8 @@ fn backpack_spells_button_system(
             Interaction::Hovered => {
                 ui_image.color = BUTTON_IMAGE_TINT_HOVER;
 
-                let Ok(mut tooltip_container_visibility) = tooltip_container.get_single_mut()
+                let Ok((mut tooltip_container_visibility, mut tooltip_container_spell_id)) =
+                    tooltip_container.get_single_mut()
                 else {
                     return;
                 };
@@ -973,16 +988,24 @@ fn backpack_spells_button_system(
                 let spell_info = &spells[spell_idx];
 
                 *tooltip_container_visibility = Visibility::Visible;
+                tooltip_container_spell_id.0 = Some(UiSpellId::BackpackSpellId(*spell_id));
                 tooltip_container_text.sections[0].value = spell_info.description.into();
             }
             Interaction::None => {
                 ui_image.color = BUTTON_IMAGE_TINT_DEFAULT;
 
-                let Ok(mut tooltip_container_visibility) = tooltip_container.get_single_mut()
+                let Ok((mut tooltip_container_visibility, mut tooltip_container_spell_id)) =
+                    tooltip_container.get_single_mut()
                 else {
                     return;
                 };
-                *tooltip_container_visibility = Visibility::Hidden;
+                let Some(tooltip_spell_id) = tooltip_container_spell_id.0 else {
+                    return;
+                };
+                if tooltip_spell_id == UiSpellId::BackpackSpellId(*spell_id) {
+                    tooltip_container_spell_id.0 = None;
+                    *tooltip_container_visibility = Visibility::Hidden;
+                }
             }
         }
     }
@@ -997,7 +1020,7 @@ fn backpack_sectors_button_system(
         Changed<Interaction>,
     >,
     mut tooltip_text: Query<&mut Text, With<SectorsTooltipText>>,
-    mut tooltip_container: Query<&mut Visibility, With<SectorsTooltipContainer>>,
+    mut tooltip_container: Query<(&mut Visibility, &mut SectorsTooltipContainer)>,
 ) {
     for (entity, sector_id, interaction, mut ui_image) in interaction_query.iter_mut() {
         if let Some(e) = selected_section_button.0 {
@@ -1013,7 +1036,8 @@ fn backpack_sectors_button_system(
             Interaction::Hovered => {
                 ui_image.color = BUTTON_IMAGE_TINT_HOVER;
 
-                let Ok(mut tooltip_container_visibility) = tooltip_container.get_single_mut()
+                let Ok((mut tooltip_container_visibility, mut tooltip_container_sector_id)) =
+                    tooltip_container.get_single_mut()
                 else {
                     return;
                 };
@@ -1028,16 +1052,24 @@ fn backpack_sectors_button_system(
                 let sector_info = &sectors[sector_idx];
 
                 *tooltip_container_visibility = Visibility::Visible;
+                tooltip_container_sector_id.0 = Some(*sector_id);
                 tooltip_container_text.sections[0].value = sector_info.description.into();
             }
             Interaction::None => {
                 ui_image.color = BUTTON_IMAGE_TINT_DEFAULT;
 
-                let Ok(mut tooltip_container_visibility) = tooltip_container.get_single_mut()
+                let Ok((mut tooltip_container_visibility, mut tooltip_container_sector_id)) =
+                    tooltip_container.get_single_mut()
                 else {
                     return;
                 };
-                *tooltip_container_visibility = Visibility::Hidden;
+                let Some(tooltip_sector_id) = tooltip_container_sector_id.0 else {
+                    return;
+                };
+                if tooltip_sector_id == *sector_id {
+                    tooltip_container_sector_id.0 = None;
+                    *tooltip_container_visibility = Visibility::Hidden;
+                }
             }
         }
     }
