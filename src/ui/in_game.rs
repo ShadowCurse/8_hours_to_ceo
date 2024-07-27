@@ -13,6 +13,11 @@ use crate::{
 
 use super::{spawn_button, UiState, UiStyle};
 
+const DEFAULT_BUTTON_BORDER_SIZE: f32 = 1.0;
+const HOVER_BUTTON_BORDER_SIZE: f32 = 3.0;
+const SELECT_BUTTON_BORDER_SIZE: f32 = 5.0;
+const DISABLED_BUTTON_BORDER_SIZE: f32 = 10.0;
+
 pub struct InGamePlugin;
 
 impl Plugin for InGamePlugin {
@@ -98,7 +103,7 @@ fn spawn_inventory_button<C: Component + Copy>(
                 style: Style {
                     width: Val::Percent(100.0),
                     height: Val::Percent(100.0),
-                    border: UiRect::all(Val::Percent(1.0)),
+                    border: UiRect::all(Val::Percent(DEFAULT_BUTTON_BORDER_SIZE)),
                     // horizontally center child text
                     justify_content: JustifyContent::Center,
                     // vertically center child text
@@ -718,25 +723,21 @@ fn button_system(
 }
 
 fn active_items_button_system(
-    ui_style: Res<UiStyle>,
     items: Res<Items>,
     inventory: Res<Inventory>,
-    mut interaction_query: Query<
-        (&ActiveItemId, &Interaction, &mut BackgroundColor),
-        Changed<Interaction>,
-    >,
+    mut interaction_query: Query<(&ActiveItemId, &Interaction, &mut Style), Changed<Interaction>>,
     mut tooltip_text: Query<&mut Text, With<ItemsTooltipText>>,
     mut tooltip_container: Query<&mut Visibility, With<ItemsTooltipContainer>>,
     mut event_writer: EventWriter<InventoryUpdateEvent>,
 ) {
-    for (item_id, interaction, mut color) in interaction_query.iter_mut() {
+    for (item_id, interaction, mut style) in interaction_query.iter_mut() {
         match *interaction {
             Interaction::Pressed => {
-                *color = ui_style.btn_color_pressed.into();
+                style.border = UiRect::all(Val::Percent(SELECT_BUTTON_BORDER_SIZE));
                 event_writer.send(InventoryUpdateEvent);
             }
             Interaction::Hovered => {
-                *color = ui_style.btn_color_hover.into();
+                style.border = UiRect::all(Val::Percent(HOVER_BUTTON_BORDER_SIZE));
 
                 let Ok(mut tooltip_container_visibility) = tooltip_container.get_single_mut()
                 else {
@@ -756,7 +757,7 @@ fn active_items_button_system(
                 tooltip_container_text.sections[0].value = item_info.description.into();
             }
             Interaction::None => {
-                *color = ui_style.btn_color_normal.into();
+                style.border = UiRect::all(Val::Percent(DEFAULT_BUTTON_BORDER_SIZE));
 
                 let Ok(mut tooltip_container_visibility) = tooltip_container.get_single_mut()
                 else {
@@ -769,26 +770,23 @@ fn active_items_button_system(
 }
 
 fn backpack_items_button_system(
-    ui_style: Res<UiStyle>,
     items: Res<Items>,
     mut inventory: ResMut<Inventory>,
-    mut interaction_query: Query<
-        (&BackpackItemId, &Interaction, &mut BackgroundColor),
-        Changed<Interaction>,
-    >,
+    mut interaction_query: Query<(&BackpackItemId, &Interaction, &mut Style), Changed<Interaction>>,
     mut tooltip_text: Query<&mut Text, With<ItemsTooltipText>>,
     mut tooltip_container: Query<&mut Visibility, With<ItemsTooltipContainer>>,
     mut event_writer: EventWriter<InventoryUpdateEvent>,
 ) {
-    for (item_id, interaction, mut color) in interaction_query.iter_mut() {
+    for (item_id, interaction, mut style) in interaction_query.iter_mut() {
         match *interaction {
             Interaction::Pressed => {
-                *color = ui_style.btn_color_pressed.into();
+                style.border = UiRect::all(Val::Percent(SELECT_BUTTON_BORDER_SIZE));
+
                 inventory.equip_item(item_id.0 as usize);
                 event_writer.send(InventoryUpdateEvent);
             }
             Interaction::Hovered => {
-                *color = ui_style.btn_color_hover.into();
+                style.border = UiRect::all(Val::Percent(HOVER_BUTTON_BORDER_SIZE));
 
                 let Ok(mut tooltip_container_visibility) = tooltip_container.get_single_mut()
                 else {
@@ -808,7 +806,7 @@ fn backpack_items_button_system(
                 tooltip_container_text.sections[0].value = item_info.description.into();
             }
             Interaction::None => {
-                *color = ui_style.btn_color_normal.into();
+                style.border = UiRect::all(Val::Percent(DEFAULT_BUTTON_BORDER_SIZE));
 
                 let Ok(mut tooltip_container_visibility) = tooltip_container.get_single_mut()
                 else {
@@ -822,18 +820,14 @@ fn backpack_items_button_system(
 
 fn active_spells_button_system(
     spells: Res<Spells>,
-    ui_style: Res<UiStyle>,
     inventory: Res<Inventory>,
     game_state: Res<State<GameState>>,
-    mut interaction_query: Query<
-        (&ActiveSpellId, &Interaction, &mut BackgroundColor),
-        Changed<Interaction>,
-    >,
+    mut interaction_query: Query<(&ActiveSpellId, &Interaction, &mut Style), Changed<Interaction>>,
     mut tooltip_text: Query<&mut Text, With<SpellsTooltipText>>,
     mut tooltip_container: Query<&mut Visibility, With<SpellsTooltipContainer>>,
     mut event_writer: EventWriter<CastSpellEvent>,
 ) {
-    for (spell_id, interaction, mut color) in interaction_query.iter_mut() {
+    for (spell_id, interaction, mut style) in interaction_query.iter_mut() {
         let on_cooldown = || {
             if let Some(spell_idx) = inventory.get_spell_idx(spell_id.0 as usize) {
                 let spell = &spells[spell_idx];
@@ -843,17 +837,19 @@ fn active_spells_button_system(
         };
 
         if on_cooldown() || game_state.get() != &GameState::Battle {
-            *color = ui_style.btn_color_disabled.into();
+            // TODO how to show that spell is on cooldown
+            style.border = UiRect::all(Val::Percent(DISABLED_BUTTON_BORDER_SIZE));
         } else {
             match *interaction {
                 Interaction::Pressed => {
-                    *color = ui_style.btn_color_pressed.into();
+                    style.border = UiRect::all(Val::Percent(SELECT_BUTTON_BORDER_SIZE));
+
                     if let Some(spell_idx) = inventory.get_spell_idx(spell_id.0 as usize) {
                         event_writer.send(CastSpellEvent(spell_idx));
                     }
                 }
                 Interaction::Hovered => {
-                    *color = ui_style.btn_color_hover.into();
+                    style.border = UiRect::all(Val::Percent(HOVER_BUTTON_BORDER_SIZE));
 
                     let Ok(mut tooltip_container_visibility) = tooltip_container.get_single_mut()
                     else {
@@ -873,7 +869,7 @@ fn active_spells_button_system(
                     tooltip_container_text.sections[0].value = spell_info.description.into();
                 }
                 Interaction::None => {
-                    *color = ui_style.btn_color_normal.into();
+                    style.border = UiRect::all(Val::Percent(DEFAULT_BUTTON_BORDER_SIZE));
 
                     let Ok(mut tooltip_container_visibility) = tooltip_container.get_single_mut()
                     else {
@@ -891,22 +887,23 @@ fn backpack_spells_button_system(
     ui_style: Res<UiStyle>,
     mut inventory: ResMut<Inventory>,
     mut interaction_query: Query<
-        (&BackpackSpellId, &Interaction, &mut BackgroundColor),
+        (&BackpackSpellId, &Interaction, &mut Style),
         Changed<Interaction>,
     >,
     mut tooltip_text: Query<&mut Text, With<SpellsTooltipText>>,
     mut tooltip_container: Query<&mut Visibility, With<SpellsTooltipContainer>>,
     mut event_writer: EventWriter<InventoryUpdateEvent>,
 ) {
-    for (spell_id, interaction, mut color) in interaction_query.iter_mut() {
+    for (spell_id, interaction, mut style) in interaction_query.iter_mut() {
         match *interaction {
             Interaction::Pressed => {
-                *color = ui_style.btn_color_pressed.into();
+                style.border = UiRect::all(Val::Percent(SELECT_BUTTON_BORDER_SIZE));
+
                 inventory.equip_spell(spell_id.0 as usize);
                 event_writer.send(InventoryUpdateEvent);
             }
             Interaction::Hovered => {
-                *color = ui_style.btn_color_hover.into();
+                style.border = UiRect::all(Val::Percent(HOVER_BUTTON_BORDER_SIZE));
 
                 let Ok(mut tooltip_container_visibility) = tooltip_container.get_single_mut()
                 else {
@@ -926,7 +923,7 @@ fn backpack_spells_button_system(
                 tooltip_container_text.sections[0].value = spell_info.description.into();
             }
             Interaction::None => {
-                *color = ui_style.btn_color_normal.into();
+                style.border = UiRect::all(Val::Percent(DEFAULT_BUTTON_BORDER_SIZE));
 
                 let Ok(mut tooltip_container_visibility) = tooltip_container.get_single_mut()
                 else {
@@ -940,35 +937,28 @@ fn backpack_spells_button_system(
 
 fn backpack_sectors_button_system(
     sectors: Res<Sectors>,
-    ui_style: Res<UiStyle>,
     inventory: Res<Inventory>,
     mut selected_section_button: ResMut<SelectedSectionButton>,
     mut interaction_query: Query<
-        (
-            Entity,
-            &BackpackSectorId,
-            &Interaction,
-            &mut BackgroundColor,
-        ),
+        (Entity, &BackpackSectorId, &Interaction, &mut Style),
         Changed<Interaction>,
     >,
     mut tooltip_text: Query<&mut Text, With<SectorsTooltipText>>,
     mut tooltip_container: Query<&mut Visibility, With<SectorsTooltipContainer>>,
 ) {
-    for (entity, sector_id, interaction, mut color) in interaction_query.iter_mut() {
+    for (entity, sector_id, interaction, mut style) in interaction_query.iter_mut() {
         if let Some(e) = selected_section_button.0 {
             if e == entity {
-                *color = ui_style.btn_color_disabled.into();
+                style.border = UiRect::all(Val::Percent(10.0));
                 continue;
             }
         }
         match *interaction {
             Interaction::Pressed => {
-                *color = ui_style.btn_color_pressed.into();
                 selected_section_button.0 = Some(entity);
             }
             Interaction::Hovered => {
-                *color = ui_style.btn_color_hover.into();
+                style.border = UiRect::all(Val::Percent(5.0));
 
                 let Ok(mut tooltip_container_visibility) = tooltip_container.get_single_mut()
                 else {
@@ -988,7 +978,7 @@ fn backpack_sectors_button_system(
                 tooltip_container_text.sections[0].value = sector_info.description.into();
             }
             Interaction::None => {
-                *color = ui_style.btn_color_normal.into();
+                style.border = UiRect::all(Val::Percent(1.0));
 
                 let Ok(mut tooltip_container_visibility) = tooltip_container.get_single_mut()
                 else {
@@ -1001,18 +991,17 @@ fn backpack_sectors_button_system(
 }
 
 fn backpack_sectors_deselect(
-    ui_style: Res<UiStyle>,
     mouse_input: Res<ButtonInput<MouseButton>>,
     mut selected_section_button: ResMut<SelectedSectionButton>,
-    mut section_button: Query<&mut BackgroundColor, With<BackpackSectorId>>,
+    mut section_button: Query<&mut Style, With<BackpackSectorId>>,
 ) {
     if mouse_input.just_pressed(MouseButton::Right) {
         if let Some(e) = selected_section_button.0 {
-            let Ok(mut color) = section_button.get_mut(e) else {
+            let Ok(mut style) = section_button.get_mut(e) else {
                 return;
             };
 
-            *color = ui_style.btn_color_normal.into();
+            style.border = UiRect::all(Val::Percent(1.0));
         }
         selected_section_button.0 = None;
     }
