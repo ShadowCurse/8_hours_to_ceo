@@ -18,6 +18,9 @@ const BUTTON_IMAGE_TINT_HOVER: Color = Color::srgb(0.7, 0.7, 0.7);
 const BUTTON_IMAGE_TINT_PRESSED: Color = Color::srgb(0.6, 0.6, 0.6);
 const BUTTON_IMAGE_TINT_DISABLED: Color = Color::srgb(0.2, 0.2, 0.2);
 
+const TOOLTIP_TEXT_COLOR: Color = Color::srgb(0.8, 0.8, 0.8);
+const TOOLTIP_BACKGROUND_COLOR: Color = Color::srgb(0.2, 0.2, 0.2);
+
 pub struct InGamePlugin;
 
 impl Plugin for InGamePlugin {
@@ -242,6 +245,7 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                                             },
                                             border_color: BorderColor(Color::BLACK),
                                             border_radius: BorderRadius::all(Val::Percent(5.0)),
+                                            background_color: TOOLTIP_BACKGROUND_COLOR.into(),
                                             visibility: Visibility::Hidden,
                                             ..Default::default()
                                         },
@@ -254,7 +258,7 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                                                         "Some very long and interesting explanation for the sectors",
                                                         TextStyle {
                                                             font_size: 25.0,
-                                                            color: Color::srgb(0.2, 0.2, 0.2),
+                                                            color: TOOLTIP_TEXT_COLOR,
                                                             ..Default::default()
                                                         },
                                                 ),
@@ -310,7 +314,8 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                                         },
                                         border_color: BorderColor(Color::BLACK),
                                         border_radius: BorderRadius::all(Val::Percent(5.0)),
-                                            visibility: Visibility::Hidden,
+                                        background_color: TOOLTIP_BACKGROUND_COLOR.into(),
+                                        visibility: Visibility::Hidden,
                                         ..default()
                                     },
                                             ItemsTooltipContainer(None))
@@ -322,7 +327,7 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                                                     "Some very long and interesting explanation for the items",
                                                     TextStyle {
                                                         font_size: 25.0,
-                                                        color: Color::srgb(0.2, 0.2, 0.2),
+                                                        color: TOOLTIP_TEXT_COLOR,
                                                         ..Default::default()
                                                     },
                                             ),
@@ -344,7 +349,8 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                                         },
                                         border_color: BorderColor(Color::BLACK),
                                         border_radius: BorderRadius::all(Val::Percent(5.0)),
-                                            visibility: Visibility::Hidden,
+                                        background_color: TOOLTIP_BACKGROUND_COLOR.into(),
+                                        visibility: Visibility::Hidden,
                                         ..default()
                                     }, SpellsTooltipContainer(None)))
                                     .with_children(|builder| {
@@ -354,7 +360,7 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                                                     "Some very long and interesting explanation for the spells",
                                                     TextStyle {
                                                         font_size: 25.0,
-                                                        color: Color::srgb(0.2, 0.2, 0.2),
+                                                        color: TOOLTIP_TEXT_COLOR,
                                                         ..Default::default()
                                                     },
                                             ),
