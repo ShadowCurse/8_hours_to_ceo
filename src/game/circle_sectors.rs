@@ -20,7 +20,7 @@ use super::{
     enemy::{spawn_enemy, Enemies, EnemyIdx},
     hp_bar::HpBarResources,
     inventory::Inventory,
-    GameState, Player,
+    GameState, Player, Z_CHEST, Z_ENEMY, Z_SECTOR_BACKGROUND, Z_SECTOR_GROUND,
 };
 
 pub const CIRCLE_RADIUS: f32 = 200.0;
@@ -243,7 +243,7 @@ fn spawn_sectors(
 ) {
     // Sectors
     for i in 0..SECTORS_NUM {
-        let mut transform = Transform::from_xyz(0.0, 0.0, 0.0);
+        let mut transform = Transform::from_xyz(0.0, 0.0, Z_SECTOR_GROUND);
         let rotation = PI / (SECTORS_NUM / 2) as f32 * i as f32;
         // Rotation happens ccw, so make it cw.
         transform.rotate_local_z(-rotation);
@@ -268,8 +268,12 @@ fn spawn_sectors(
                 builder.spawn((
                     SpriteBundle {
                         sprite: Sprite::default(),
-                        transform: Transform::from_xyz(0.0, CIRCLE_RADIUS + 15.0, 0.0)
-                            .with_scale(Vec3::ONE * 0.35),
+                        transform: Transform::from_xyz(
+                            0.0,
+                            CIRCLE_RADIUS + 15.0,
+                            Z_SECTOR_BACKGROUND,
+                        )
+                        .with_scale(Vec3::ONE * 0.35),
                         texture: sector_info.background.clone(),
                         ..Default::default()
                     },
@@ -436,7 +440,7 @@ fn sector_spawn_things(
                     if thread_rng.gen_bool(enemy_info.spawn_rate as f64) {
                         slots.0[empty_slot_position] = Some(SlotType::Enemy);
 
-                        let mut t = Transform::from_xyz(0.0, CIRCLE_RADIUS + 30.0, 1.0)
+                        let mut t = Transform::from_xyz(0.0, CIRCLE_RADIUS + 30.0, Z_ENEMY)
                             .with_scale(Vec3::new(2.0, 2.0, 2.0));
                         t.rotate_around(Vec3::ZERO, Quat::from_rotation_z(-angle));
 
@@ -467,7 +471,7 @@ fn sector_spawn_things(
                     if thread_rng.gen_bool(chest_info.spawn_rate as f64) {
                         slots.0[empty_slot_position] = Some(SlotType::Item);
 
-                        let mut t = Transform::from_xyz(0.0, CIRCLE_RADIUS + 5.0, 0.0);
+                        let mut t = Transform::from_xyz(0.0, CIRCLE_RADIUS + 5.0, Z_CHEST);
                         t.rotate_around(Vec3::ZERO, Quat::from_rotation_z(-angle));
 
                         spawn_chest(

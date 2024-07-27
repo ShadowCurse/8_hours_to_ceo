@@ -26,6 +26,13 @@ use spells::SpellsPlugin;
 
 const INTERACTION_DISTANCE: f32 = 30.0;
 
+pub const Z_SECTOR_GROUND: f32 = 0.0;
+pub const Z_CLOCK: f32 = 1.0;
+pub const Z_SECTOR_BACKGROUND: f32 = 1.0;
+pub const Z_ENEMY: f32 = 2.0;
+pub const Z_CHEST: f32 = 2.0;
+pub const Z_PLAYER: f32 = 3.0;
+
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
@@ -128,7 +135,7 @@ fn spawn_base_game(
         &mut commands,
         player_resources.as_ref(),
         hp_bar_resources.as_ref(),
-        Transform::from_xyz(0.0, 230.0, 2.0).with_scale(Vec3::new(2.0, 2.0, 2.0)),
+        Transform::from_xyz(0.0, 230.0, Z_PLAYER).with_scale(Vec3::new(2.0, 2.0, 2.0)),
     );
 
     game_state.set(GameState::Running);
