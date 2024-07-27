@@ -36,6 +36,8 @@ pub const Z_ENEMY: f32 = 2.0;
 pub const Z_CHEST: f32 = 2.0;
 pub const Z_PLAYER: f32 = 3.0;
 
+const CAMERA_FOLLOW_SPEED: f32 = 8.0;
+
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
@@ -53,16 +55,20 @@ impl Plugin for GamePlugin {
             SpellsPlugin,
         ))
         .add_sub_state::<GameState>()
-        .add_systems(Startup, setup_game)
+        .add_systems(Startup, setup_camera)
         .add_systems(OnEnter(GameState::Preparing), spawn_base_game)
+        .add_systems(OnEnter(GlobalState::MainMenu), camera_target_main_menu)
+        .add_systems(OnEnter(GameState::Running), camera_target_player)
+        .add_systems(OnEnter(GameState::Battle), camera_target_player)
+        .add_systems(OnEnter(GameState::Paused), camera_target_pause)
         .add_systems(
             Update,
             (initiate_battle, initiate_pickup).run_if(in_state(GameState::Running)),
         )
         .add_systems(Update, battle_end_check.run_if(in_state(GameState::Battle)))
         .add_systems(Update, pickup_end_check.run_if(in_state(GameState::Pickup)))
-        .add_systems(OnEnter(GameState::Paused), move_camera_default)
-        .add_systems(Update, game_pause.run_if(state_exists::<GameState>));
+        .add_systems(Update, game_pause.run_if(state_exists::<GameState>))
+        .add_systems(Update, camera_follow_target);
     }
 }
 
@@ -78,7 +84,20 @@ pub enum GameState {
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct GameCamera;
+pub struct GameCamera {
+    target: Entity,
+}
+
+#[derive(Component, Debug, Clone, Copy, PartialEq)]
+pub struct GameCameraPossibleTarget {
+    scale: Vec3,
+}
+
+#[derive(Component, Debug, Clone, Copy, PartialEq)]
+pub struct MainMenuCameraTarget;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq)]
+pub struct PauseCameraTarget;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq)]
 pub struct Health {
@@ -123,8 +142,96 @@ impl AttackSpeed {
     }
 }
 
-fn setup_game(mut commands: Commands) {
-    commands.spawn((Camera2dBundle::default(), GameCamera));
+fn setup_camera(mut commands: Commands) {
+    commands.spawn((
+        Transform::default(),
+        GameCameraPossibleTarget { scale: Vec3::ONE },
+        PauseCameraTarget,
+    ));
+    let mm_target = commands
+        .spawn((
+            Transform::default(),
+            GameCameraPossibleTarget {
+                scale: Vec3::new(2.0, 2.0, 2.0),
+            },
+            MainMenuCameraTarget,
+        ))
+        .id();
+    commands.spawn((Camera2dBundle::default(), GameCamera { target: mm_target }));
+}
+
+fn camera_follow_target(
+    time: Res<Time>,
+    ui_scale: Res<UiScale>,
+    camera_possible_targets: Query<(&Transform, &GameCameraPossibleTarget), Without<GameCamera>>,
+    mut camera: Query<(&GameCamera, &mut Transform), Without<GameCameraPossibleTarget>>,
+) {
+    let Ok((camera, mut camera_transform)) = camera.get_single_mut() else {
+        return;
+    };
+
+    let Ok((target_transform, target)) = camera_possible_targets.get(camera.target) else {
+        return;
+    };
+
+    let exp_decay = |a: Vec3, b: Vec3, dt: f32| b + (a - b) * (-CAMERA_FOLLOW_SPEED * dt).exp();
+    camera_transform.translation = exp_decay(
+        camera_transform.translation,
+        target_transform.translation,
+        time.delta_seconds(),
+    );
+    camera_transform.scale = exp_decay(
+        camera_transform.scale,
+        target.scale / ui_scale.0,
+        time.delta_seconds(),
+    );
+
+    let exp_decay = |a: Vec4, b: Vec4, dt: f32| b + (a - b) * (-CAMERA_FOLLOW_SPEED * dt).exp();
+    camera_transform.rotation = Quat::from_vec4(exp_decay(
+        camera_transform.rotation.to_array().into(),
+        target_transform.rotation.to_array().into(),
+        time.delta_seconds(),
+    ));
+}
+
+fn camera_target_main_menu(
+    main_menu_target: Query<Entity, With<MainMenuCameraTarget>>,
+    mut camera: Query<&mut GameCamera>,
+) {
+    let Ok(mut camera) = camera.get_single_mut() else {
+        return;
+    };
+
+    let Ok(mm_target) = main_menu_target.get_single() else {
+        return;
+    };
+
+    camera.target = mm_target;
+}
+
+fn camera_target_player(player: Query<Entity, With<Player>>, mut camera: Query<&mut GameCamera>) {
+    let Ok(mut camera) = camera.get_single_mut() else {
+        return;
+    };
+    let Ok(player) = player.get_single() else {
+        return;
+    };
+
+    camera.target = player;
+}
+
+fn camera_target_pause(
+    pause_target: Query<Entity, With<PauseCameraTarget>>,
+    mut camera: Query<&mut GameCamera>,
+) {
+    let Ok(mut camera) = camera.get_single_mut() else {
+        return;
+    };
+    let Ok(pause_target) = pause_target.get_single() else {
+        return;
+    };
+
+    camera.target = pause_target;
 }
 
 fn spawn_base_game(
@@ -159,13 +266,6 @@ fn game_pause(
             game_state_next.set(GameState::Paused);
         }
     }
-}
-
-fn move_camera_default(mut camera: Query<&mut Transform, With<GameCamera>>) {
-    let Ok(mut camera_transform) = camera.get_single_mut() else {
-        return;
-    };
-    *camera_transform = Transform::default();
 }
 
 fn initiate_battle(

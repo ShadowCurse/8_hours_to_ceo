@@ -9,7 +9,7 @@ use super::{
     hp_bar::{hp_bar_bundle, HpBarResources},
     inventory::Inventory,
     items::Items,
-    AttackSpeed, Damage, Defense, GameCamera, GameState, Health,
+    AttackSpeed, Damage, Defense, GameCamera, GameCameraPossibleTarget, GameState, Health,
 };
 
 pub struct PlayerPlugin;
@@ -24,13 +24,6 @@ impl Plugin for PlayerPlugin {
             .add_systems(OnEnter(PlayerState::Attack), player_start_attack)
             .add_systems(OnEnter(PlayerState::Dead), player_start_dead)
             .add_systems(Update, player_run.run_if(in_state(GameState::Running)))
-            .add_systems(
-                Update,
-                camera_follow_player.run_if(
-                    in_state(GameState::Running)
-                        .or_else(in_state(GameState::Battle).or_else(in_state(GameState::Pickup))),
-                ),
-            )
             .add_systems(
                 Update,
                 (
@@ -154,6 +147,9 @@ pub fn spawn_player<'a>(
         Damage(5.0),
         AttackSpeed::new(0.5),
         Defense(0.0),
+        GameCameraPossibleTarget {
+            scale: Vec3::new(0.5, 0.5, 0.5),
+        },
         StateScoped(GlobalState::InGame),
     ));
     let parent_entity = c.id();
@@ -364,22 +360,4 @@ fn pickup_end_check(
     for _ in event_reader.read() {
         player_state.set(PlayerState::Run);
     }
-}
-
-fn camera_follow_player(
-    ui_scale: Res<UiScale>,
-    player: Query<&Transform, (With<Player>, Without<GameCamera>)>,
-    mut camera: Query<&mut Transform, (Without<Player>, With<GameCamera>)>,
-) {
-    let Ok(player_transform) = player.get_single() else {
-        return;
-    };
-
-    let Ok(mut camera_transform) = camera.get_single_mut() else {
-        return;
-    };
-
-    let mut t = *player_transform;
-    t.scale = Vec3::new(0.5 / ui_scale.0, 0.5 / ui_scale.0, 0.5 / ui_scale.0);
-    *camera_transform = t;
 }

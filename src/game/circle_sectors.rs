@@ -15,7 +15,13 @@ use crate::{
 };
 
 use super::{
-    chest::{spawn_chest, ChestIdx, ChestResources, Chests}, cursor::CursorSector, enemy::{spawn_enemy, Enemies, EnemyIdx}, hp_bar::HpBarResources, inventory::Inventory, GameCamera, GameState, Player, Z_CHEST, Z_CLOCK_ARROWS, Z_CLOCK_CENTER, Z_CLOCK_KNOB, Z_CLOCK_NUMBERS, Z_ENEMY, Z_SECTOR_BACKGROUND, Z_SECTOR_GROUND
+    chest::{spawn_chest, ChestIdx, ChestResources, Chests},
+    cursor::CursorSector,
+    enemy::{spawn_enemy, Enemies, EnemyIdx},
+    hp_bar::HpBarResources,
+    inventory::Inventory,
+    GameState, Player, Z_CHEST, Z_CLOCK_ARROWS, Z_CLOCK_CENTER, Z_CLOCK_KNOB, Z_CLOCK_NUMBERS,
+    Z_ENEMY, Z_SECTOR_BACKGROUND, Z_SECTOR_GROUND,
 };
 
 pub const CIRCLE_RADIUS: f32 = 200.0;
@@ -36,7 +42,7 @@ impl Plugin for SectorsPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<SectorPlacedEvent>()
             .add_systems(PreStartup, prepare_sector_resources)
-            .add_systems(OnEnter(GlobalState::MainMenu), (move_camera_main_menu, spawn_clock))
+            .add_systems(OnEnter(GlobalState::MainMenu), spawn_clock)
             .add_systems(
                 Update,
                 (
@@ -372,15 +378,6 @@ fn spawn_clock(
             StateScoped(GlobalState::InGame),
         ));
     }
-}
-
-fn move_camera_main_menu(
-    mut camera: Query<&mut Transform, With<GameCamera>>,
-) {
-    let Ok(mut transform) = camera.get_single_mut() else {
-        return;
-    };
-    *transform = Transform::default();
 }
 
 fn update_minute_arrow(
