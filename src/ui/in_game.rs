@@ -407,7 +407,7 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                             // Empty block
                             builder.spawn(NodeBundle {
                                 style: Style {
-                                    width: Val::Percent(10.0),
+                                    width: Val::Percent(12.0),
                                     height: Val::Percent(100.0),
                                     flex_direction: FlexDirection::Row,
                                     ..Default::default()
@@ -632,7 +632,7 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                                 width: Val::Percent(10.0),
                                 height: Val::Percent(80.0),
                                 margin: UiRect::all(Val::Percent(1.0)),
-                                padding: UiRect::all(Val::Percent(1.0)),
+                                padding: UiRect::all(Val::Percent(1.5)),
                                 flex_direction: FlexDirection::Column,
                                 align_items: AlignItems::Center,
                                 justify_content: JustifyContent::Center,
