@@ -21,6 +21,10 @@ const BUTTON_IMAGE_TINT_DISABLED: Color = Color::srgb(0.2, 0.2, 0.2);
 const TOOLTIP_TEXT_COLOR: Color = Color::srgb(0.8, 0.8, 0.8);
 const TOOLTIP_BACKGROUND_COLOR: Color = Color::srgb(0.2, 0.2, 0.2);
 
+const ZONES_BACKGROUND: Color = Color::srgb(194.0 / 255.0, 201.0 / 255.0, 177.0 / 255.0);
+const ITEMS_BACKGROUND: Color = Color::srgb(201.0 / 255.0, 199.0 / 255.0, 177.0 / 255.0);
+const SPELLS_BACKGROUND: Color = Color::srgb(177.0 / 255.0, 193.0 / 255.0, 201.0 / 255.0);
+
 pub struct InGamePlugin;
 
 impl Plugin for InGamePlugin {
@@ -618,7 +622,7 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                         justify_content: JustifyContent::End,
                         ..Default::default()
                     },
-                    ..default()
+                    ..Default::default()
                 })
                 .with_children(|builder| {
                     // Inner container for zone buttons
@@ -627,12 +631,18 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                             style: Style {
                                 width: Val::Percent(10.0),
                                 height: Val::Percent(80.0),
+                                margin: UiRect::all(Val::Percent(1.0)),
+                                padding: UiRect::all(Val::Percent(1.0)),
                                 flex_direction: FlexDirection::Column,
                                 align_items: AlignItems::Center,
                                 justify_content: JustifyContent::Center,
+                                border: UiRect::all(Val::Px(4.0)),
                                 ..Default::default()
                             },
-                            ..default()
+                            border_color: BorderColor(Color::BLACK),
+                            border_radius: BorderRadius::all(Val::Percent(10.0)),
+                            background_color: ZONES_BACKGROUND.into(),
+                            ..Default::default()
                         })
                         .with_children(|builder| {
                             spawn_sectors_button(builder, Visibility::Hidden, BackpackSectorId(0));
@@ -694,7 +704,7 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                                             },
                                             border_color: BorderColor(Color::BLACK),
                                             border_radius: BorderRadius::all(Val::Percent(10.0)),
-                                            background_color: Color::srgb(0.85, 0.6, 0.15).into(),
+                                            background_color: ITEMS_BACKGROUND.into(),
                                             ..Default::default()
                                         })
                                         .with_children(|builder| {
@@ -796,7 +806,7 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                                             },
                                             border_color: BorderColor(Color::BLACK),
                                             border_radius: BorderRadius::all(Val::Percent(10.0)),
-                                            background_color: Color::srgb(0.3, 0.6, 1.0).into(),
+                                            background_color: SPELLS_BACKGROUND.into(),
                                             ..Default::default()
                                         })
                                         .with_children(|builder| {
