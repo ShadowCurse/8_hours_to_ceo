@@ -537,6 +537,7 @@ fn on_last_cycle_event(
             SectorPosition(SECTORS_NUM - 1),
             hp_bar_resources.as_ref(),
             t,
+            true,
         )
         .insert(LastBossTag);
     }
@@ -678,6 +679,7 @@ fn sector_spawn_things(
                             *id,
                             hp_bar_resources.as_ref(),
                             t,
+                            false,
                         )
                         .insert(SectorSlotEntity {
                             entity,

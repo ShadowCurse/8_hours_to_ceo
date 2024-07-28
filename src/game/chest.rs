@@ -1,6 +1,6 @@
 use std::ops::{Index, IndexMut};
 
-use bevy::{ecs::system::EntityCommands, prelude::*};
+use bevy::{audio::PlaybackMode, ecs::system::EntityCommands, prelude::*};
 use rand::Rng;
 
 use crate::GlobalState;
@@ -10,6 +10,7 @@ use super::{
     circle_sectors::{SectorIdx, SectorPosition, Sectors},
     inventory::{Inventory, InventoryUpdateEvent},
     items::{ItemIdx, Items},
+    sound::SoundResources,
     spells::{SpellIdx, Spells},
     GameState,
 };
@@ -189,6 +190,7 @@ fn on_chest_open_finish(
     chests: Res<Chests>,
     spells: Res<Spells>,
     sectors: Res<Sectors>,
+    sounds: Res<SoundResources>,
     chest: Query<(Entity, &ChestIdx), With<InteractedChest>>,
     mut commands: Commands,
     mut inventory: ResMut<Inventory>,
@@ -198,6 +200,15 @@ fn on_chest_open_finish(
 ) {
     for e in event_reader.read() {
         if e.0 == AllAnimations::ChestOpen {
+            // Chest open sound
+            commands.spawn(AudioBundle {
+                source: sounds.chest_open.clone(),
+                settings: PlaybackSettings {
+                    mode: PlaybackMode::Despawn,
+                    ..Default::default()
+                },
+            });
+
             let Ok((chest_entity, chest_idx)) = chest.get_single() else {
                 return;
             };

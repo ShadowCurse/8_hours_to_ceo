@@ -1,6 +1,6 @@
 use std::ops::{Index, IndexMut};
 
-use bevy::{ecs::system::EntityCommands, prelude::*};
+use bevy::{audio::PlaybackMode, ecs::system::EntityCommands, prelude::*};
 use rand::Rng;
 
 use crate::{ui::UiStyle, GlobalState};
@@ -12,6 +12,7 @@ use super::{
     inventory::{Inventory, InventoryUpdateEvent},
     items::{ItemIdx, Items},
     player::DamagePlayerEvent,
+    sound::SoundResources,
     spells::{SpellIdx, Spells},
     AttackSpeed, Damage, Defense, GameState, Health,
 };
@@ -50,7 +51,9 @@ pub struct EnemyDeadEvent;
 pub struct EnemyIdx(pub usize);
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Enemy;
+pub struct Enemy {
+    pub is_boss: bool,
+}
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct BattleEnemy;
@@ -239,6 +242,7 @@ pub fn spawn_enemy<'a>(
     sector_id: SectorPosition,
     hp_bar_resources: &HpBarResources,
     transform: Transform,
+    is_boss: bool,
 ) -> EntityCommands<'a> {
     let enemy_info = &enemies[enemy_idx];
     let mut c = commands.spawn((
@@ -249,7 +253,7 @@ pub fn spawn_enemy<'a>(
         },
         enemy_info.texture_atlas.clone(),
         enemy_info.idle_animation_config.clone(),
-        Enemy,
+        Enemy { is_boss },
         Health {
             max: 30.0,
             current: 30.0,
@@ -299,16 +303,31 @@ fn enemy_attack(
 }
 
 fn on_attack_finish(
-    enemy: Query<&Damage, With<BattleEnemy>>,
+    enemy: Query<(&Enemy, &Damage), With<BattleEnemy>>,
+    sounds: Res<SoundResources>,
+    mut commands: Commands,
     mut event_reader: EventReader<AnimationFinishedEvent>,
     mut event_writer: EventWriter<DamagePlayerEvent>,
 ) {
-    let Ok(damage) = enemy.get_single() else {
+    let Ok((enemy, damage)) = enemy.get_single() else {
         return;
     };
 
     for e in event_reader.read() {
         if e.0 == AllAnimations::BossAttack {
+            // Attack sound
+            commands.spawn(AudioBundle {
+                source: if enemy.is_boss {
+                    sounds.boss_attack.clone()
+                } else {
+                    sounds.enemy_attack.clone()
+                },
+                settings: PlaybackSettings {
+                    mode: PlaybackMode::Despawn,
+                    ..Default::default()
+                },
+            });
+
             event_writer.send(DamagePlayerEvent(damage.0));
         }
     }

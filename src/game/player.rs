@@ -1,4 +1,4 @@
-use bevy::{ecs::system::EntityCommands, prelude::*};
+use bevy::{audio::PlaybackMode, ecs::system::EntityCommands, prelude::*};
 
 use crate::{ui::UiStyle, GlobalState};
 
@@ -11,6 +11,7 @@ use super::{
     hp_bar::{hp_bar_bundle, HpBarResources},
     inventory::Inventory,
     items::Items,
+    sound::SoundResources,
     AttackSpeed, Damage, Defense, GameCameraPossibleTarget, GameState, Health,
 };
 
@@ -244,6 +245,8 @@ fn on_attack_finish(
     items: Res<Items>,
     inventory: Res<Inventory>,
     player: Query<&Damage, With<Player>>,
+    sounds: Res<SoundResources>,
+    mut commands: Commands,
     mut event_reader: EventReader<AnimationFinishedEvent>,
     mut event_writer: EventWriter<DamageEnemyEvent>,
     mut player_state: ResMut<NextState<PlayerState>>,
@@ -254,6 +257,15 @@ fn on_attack_finish(
 
     for e in event_reader.read() {
         if e.0 == AllAnimations::PlayerAttack {
+            // Attack sound
+            commands.spawn(AudioBundle {
+                source: sounds.player_attack.clone(),
+                settings: PlaybackSettings {
+                    mode: PlaybackMode::Despawn,
+                    ..Default::default()
+                },
+            });
+
             let damage = player_damage.0
                 + inventory
                     .active_items

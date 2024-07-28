@@ -11,6 +11,7 @@ pub mod hp_bar;
 pub mod inventory;
 pub mod items;
 pub mod player;
+pub mod sound;
 pub mod spells;
 
 use animation::AnimationPlugin;
@@ -22,6 +23,7 @@ use hp_bar::{HpBarPlugin, HpBarResources};
 use inventory::{Inventory, InventoryPlugin};
 use items::{Items, ItemsPlugin};
 use player::{spawn_player, Player, PlayerPlugin, PlayerResources, PlayerState};
+use sound::SoundPlugin;
 use spells::SpellsPlugin;
 
 const INTERACTION_DISTANCE: f32 = 30.0;
@@ -53,6 +55,7 @@ impl Plugin for GamePlugin {
             InventoryPlugin,
             ItemsPlugin,
             PlayerPlugin,
+            SoundPlugin,
             SpellsPlugin,
         ))
         .add_sub_state::<GameState>()
