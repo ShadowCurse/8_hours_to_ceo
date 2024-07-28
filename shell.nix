@@ -8,6 +8,7 @@ pkgs.mkShell {
     pkgs.alsaLib
   ]}"'';
   buildInputs = with pkgs; [
+    zip
     wayland
     mold
     pkg-config
