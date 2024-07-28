@@ -411,6 +411,7 @@ fn enemy_take_damage(
             damage,
             *enemy_transform,
             enemy_transform.translation.normalize(),
+            e.color,
         );
     }
 }

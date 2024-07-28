@@ -6,6 +6,11 @@ use crate::{ui::UiStyle, GlobalState};
 
 use super::GameState;
 
+pub const DAMAGE_COLOR_DEFAULT: Color = Color::srgb(1.0, 0.0, 0.0);
+pub const DAMAGE_COLOR_KEYBOARD: Color = Color::srgb(0.5, 0.5, 0.5);
+pub const DAMAGE_COLOR_MARKER: Color = Color::srgb(52.0 / 255.0, 52.0 / 255.0, 209.0 / 255.0);
+pub const DAMAGE_COLOR_FIRE_PUNCH: Color = Color::srgb(209.0 / 255.0, 115.0 / 255.0, 46.0 / 255.0);
+
 pub struct AnimationPlugin;
 
 impl Plugin for AnimationPlugin {
@@ -80,6 +85,7 @@ pub fn spawn_damage_text(
     damage: f32,
     transform: Transform,
     direction: Vec3,
+    color: Color,
 ) {
     commands.spawn((
         Text2dBundle {
@@ -88,7 +94,7 @@ pub fn spawn_damage_text(
                 TextStyle {
                     font: ui_style.text_style.font.clone(),
                     font_size: 30.0,
-                    color: Color::srgb(1.0, 0.0, 0.0),
+                    color,
                 },
             ),
             transform,

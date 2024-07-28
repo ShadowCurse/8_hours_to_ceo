@@ -3,6 +3,7 @@ use std::ops::{Index, IndexMut};
 use bevy::prelude::*;
 
 use super::{
+    animation::DAMAGE_COLOR_MARKER,
     enemy::{BattleEnemy, DamageEnemyEvent},
     Damage, Defense, GameState, Health, Player,
 };
@@ -18,7 +19,7 @@ impl Plugin for SpellsPlugin {
                 Update,
                 (
                     cast_spell,
-                    process_lightninig,
+                    process_marker_throw,
                     process_heal,
                     process_player_attack_up,
                     process_player_defence_up,
@@ -36,14 +37,14 @@ pub struct SpellIdx(pub usize);
 pub struct CastSpellEvent(pub SpellIdx);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Lightning {
+pub struct MarkerThrow {
     strikes: u32,
     delta_time: f32,
     damage: f32,
 }
 
 #[derive(Component, Debug, Clone)]
-pub struct LightningSpell {
+pub struct MarkerThrowSpell {
     timer: Timer,
     remaining_strikes: u32,
     damage: f32,
@@ -100,7 +101,7 @@ pub struct EnemyDefenseDownSpell {
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Spell {
-    Lightning(Lightning),
+    MarkerThrow(MarkerThrow),
     Heal(Heal),
     PlayerAttackUp(PlayerAttackUp),
     PlayerDefenseUp(PlayerDefenseUp),
@@ -137,15 +138,15 @@ fn prepare_spells(asset_server: Res<AssetServer>, mut commands: Commands) {
     let mut spells = Spells(vec![]);
 
     spells.0.push(SpellInfo {
-        name: "Lightning",
-        description: "Flashy lightning",
+        name: "Marker Throw",
+        description: "Throw 2 markers at the enemy. Each deals 5 damage.",
         image: asset_server.load("spells/tmp_spell.png"),
         drop_rate: 0.9,
         cooldown: Timer::from_seconds(2.0, TimerMode::Once),
-        spell: Spell::Lightning(Lightning {
+        spell: Spell::MarkerThrow(MarkerThrow {
             strikes: 2,
             delta_time: 0.1,
-            damage: 1.0,
+            damage: 5.0,
         }),
     });
     spells.0.push(SpellInfo {
@@ -212,11 +213,11 @@ fn cast_spell(
             spell_info.cooldown.reset();
         }
         match spell_info.spell {
-            Spell::Lightning(lightning) => {
-                commands.spawn(LightningSpell {
-                    timer: Timer::from_seconds(lightning.delta_time, TimerMode::Repeating),
-                    remaining_strikes: lightning.strikes,
-                    damage: lightning.damage,
+            Spell::MarkerThrow(marker_throw) => {
+                commands.spawn(MarkerThrowSpell {
+                    timer: Timer::from_seconds(marker_throw.delta_time, TimerMode::Repeating),
+                    remaining_strikes: marker_throw.strikes,
+                    damage: marker_throw.damage,
                 });
             }
             Spell::Heal(heal) => {
@@ -247,26 +248,23 @@ fn cast_spell(
     }
 }
 
-fn process_lightninig(
+fn process_marker_throw(
     time: Res<Time>,
     mut commands: Commands,
-    mut lightnings: Query<(Entity, &mut LightningSpell)>,
+    mut marker_throw_spells: Query<(Entity, &mut MarkerThrowSpell)>,
     mut event_writer: EventWriter<DamageEnemyEvent>,
 ) {
-    for (lightning_entity, mut lightning) in lightnings.iter_mut() {
-        lightning.timer.tick(time.delta());
-        if lightning.timer.finished() {
+    for (entity, mut marker_throw) in marker_throw_spells.iter_mut() {
+        marker_throw.timer.tick(time.delta());
+        if marker_throw.timer.finished() {
             event_writer.send(DamageEnemyEvent {
-                damage: lightning.damage,
-                color: Color::srgb(0.0, 0.0, 1.0),
+                damage: marker_throw.damage,
+                color: DAMAGE_COLOR_MARKER,
             });
-            lightning.remaining_strikes -= 1;
+            marker_throw.remaining_strikes -= 1;
 
-            if lightning.remaining_strikes == 0 {
-                commands
-                    .get_entity(lightning_entity)
-                    .unwrap()
-                    .despawn_recursive()
+            if marker_throw.remaining_strikes == 0 {
+                commands.get_entity(entity).unwrap().despawn_recursive()
             }
         }
     }

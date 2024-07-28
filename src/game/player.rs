@@ -3,7 +3,7 @@ use bevy::{ecs::system::EntityCommands, prelude::*};
 use crate::{game::animation::DamageText, ui::UiStyle, GlobalState};
 
 use super::{
-    animation::{spawn_damage_text, AllAnimations, AnimationConfig, AnimationFinishedEvent},
+    animation::{spawn_damage_text, AllAnimations, AnimationConfig, AnimationFinishedEvent, DAMAGE_COLOR_DEFAULT},
     chest::ChestOppenedEvent,
     enemy::{DamageEnemyEvent, EnemyDeadEvent},
     hp_bar::{hp_bar_bundle, HpBarResources},
@@ -312,6 +312,7 @@ fn player_take_damage(
             damage,
             *player_transform,
             player_transform.translation.normalize(),
+            DAMAGE_COLOR_DEFAULT,
         );
 
         if player_health.current() == 0.0 {
