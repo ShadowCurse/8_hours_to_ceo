@@ -10,7 +10,10 @@ use std::{
 };
 
 use crate::{
-    ui::in_game::{BackpackSectorId, SelectedSectionButton},
+    ui::{
+        in_game::{BackpackSectorId, SelectedSectionButton},
+        UiStyle,
+    },
     GlobalState,
 };
 
@@ -294,6 +297,7 @@ fn prepare_sector_resources(
 
 fn spawn_clock(
     sectors: Res<Sectors>,
+    ui_style: Res<UiStyle>,
     sector_resources: Res<SectorResources>,
     mut commands: Commands,
 ) {
@@ -406,6 +410,7 @@ fn spawn_clock(
                 text: Text::from_section(
                     format!("{}", i),
                     TextStyle {
+                        font: ui_style.text_style.font.clone(),
                         font_size: 40.0,
                         ..Default::default()
                     },
