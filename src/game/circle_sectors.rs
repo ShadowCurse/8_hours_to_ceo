@@ -248,7 +248,7 @@ fn prepare_sector_resources(
         background: asset_server.load("sectors/zone_default_bent.png"),
         card: asset_server.load("sectors_cards/zone_default_card.png"),
         drop_rate: 0.9,
-        enemies: vec![EnemyIdx(0)],
+        enemies: vec![EnemyIdx(1), EnemyIdx(2)],
         chests: vec![ChestIdx(0)],
     });
     sectors.0.push(SectorInfo {
@@ -257,7 +257,7 @@ fn prepare_sector_resources(
         background: asset_server.load("sectors/zone_green_bent.png"),
         card: asset_server.load("sectors_cards/zone_green_card.png"),
         drop_rate: 0.9,
-        enemies: vec![EnemyIdx(1)],
+        enemies: vec![EnemyIdx(1), EnemyIdx(2)],
         chests: vec![ChestIdx(1)],
     });
     sectors.0.push(SectorInfo {
@@ -266,7 +266,7 @@ fn prepare_sector_resources(
         background: asset_server.load("sectors/zone_yellow_bent.png"),
         card: asset_server.load("sectors_cards/zone_yellow_card.png"),
         drop_rate: 0.9,
-        enemies: vec![EnemyIdx(2)],
+        enemies: vec![EnemyIdx(1), EnemyIdx(2)],
         chests: vec![ChestIdx(2)],
     });
     sectors.0.push(SectorInfo {
@@ -275,7 +275,7 @@ fn prepare_sector_resources(
         background: asset_server.load("sectors/zone_grey_bent.png"),
         card: asset_server.load("sectors_cards/zone_grey_card.png"),
         drop_rate: 0.9,
-        enemies: vec![EnemyIdx(3)],
+        enemies: vec![EnemyIdx(1), EnemyIdx(2)],
         chests: vec![ChestIdx(3)],
     });
     sectors.0.push(SectorInfo {
@@ -284,7 +284,7 @@ fn prepare_sector_resources(
         background: asset_server.load("sectors/zone_brown_bent.png"),
         card: asset_server.load("sectors_cards/zone_brown_card.png"),
         drop_rate: 0.9,
-        enemies: vec![EnemyIdx(3)],
+        enemies: vec![EnemyIdx(1), EnemyIdx(2)],
         chests: vec![ChestIdx(3)],
     });
     commands.insert_resource(sectors);
@@ -521,7 +521,7 @@ fn on_last_cycle_event(
             }
         }
 
-        // Spawn last boss
+        // Spawn big boss
         let angle = sector_id_to_start_angle(SECTORS_NUM - 1) + SECTOR_ANGLE / 2.0
             - SECTOR_THING_GAP / 2.0 * (SECTOR_THINGS - 1) as f32
             + SECTOR_THING_GAP * 3.0;

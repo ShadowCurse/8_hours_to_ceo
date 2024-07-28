@@ -63,9 +63,6 @@ pub struct EnemyInfo {
     pub idle_texture: Handle<Image>,
     pub idle_animation_config: AnimationConfig,
 
-    pub run_texture: Handle<Image>,
-    pub run_animation_config: AnimationConfig,
-
     pub attack_texture: Handle<Image>,
     pub attack_animation_config: AnimationConfig,
 
@@ -73,7 +70,6 @@ pub struct EnemyInfo {
     pub dead_animation_config: AnimationConfig,
 
     pub texture_atlas: TextureAtlas,
-    pub tint: Color,
 
     pub spawn_rate: f32,
     pub items: Vec<ItemIdx>,
@@ -104,13 +100,10 @@ fn prepare_enemy_resources(
 ) {
     let mut enemies = Enemies(vec![]);
 
-    // Default
+    // Big boss
     let idle_texture = asset_server.load("enemy/boss_idle_sheet.png");
     let idle_animation_config =
         AnimationConfig::new(0, 5, 10, AllAnimations::BossIdle, false, true);
-
-    let run_texture = asset_server.load("enemy/boss_run_sheet.png");
-    let run_animation_config = AnimationConfig::new(0, 5, 10, AllAnimations::BossRun, false, true);
 
     let attack_texture = asset_server.load("enemy/boss_attack_sheet.png");
     let attack_animation_config =
@@ -130,9 +123,6 @@ fn prepare_enemy_resources(
         idle_texture,
         idle_animation_config,
 
-        run_texture,
-        run_animation_config,
-
         attack_texture,
         attack_animation_config,
 
@@ -140,7 +130,6 @@ fn prepare_enemy_resources(
         dead_animation_config,
 
         texture_atlas,
-        tint: Color::WHITE,
 
         spawn_rate: 0.3,
         items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
@@ -153,19 +142,17 @@ fn prepare_enemy_resources(
         ],
         sectors: vec![SectorIdx(0)],
     });
+
     // Green
-    let idle_texture = asset_server.load("enemy/boss_idle_sheet.png");
+    let idle_texture = asset_server.load("enemy/greenmob_idle_sheet.png");
     let idle_animation_config =
         AnimationConfig::new(0, 5, 10, AllAnimations::BossIdle, false, true);
 
-    let run_texture = asset_server.load("enemy/boss_run_sheet.png");
-    let run_animation_config = AnimationConfig::new(0, 5, 10, AllAnimations::BossRun, false, true);
-
-    let attack_texture = asset_server.load("enemy/boss_attack_sheet.png");
+    let attack_texture = asset_server.load("enemy/greenmob_attack_sheet.png");
     let attack_animation_config =
         AnimationConfig::new(0, 5, 10, AllAnimations::BossAttack, true, false);
 
-    let dead_texture = asset_server.load("enemy/boss_dead_sheet.png");
+    let dead_texture = asset_server.load("enemy/greenmob_dead_sheet.png");
     let dead_animation_config =
         AnimationConfig::new(0, 5, 10, AllAnimations::BossDead, true, false);
 
@@ -179,9 +166,6 @@ fn prepare_enemy_resources(
         idle_texture,
         idle_animation_config,
 
-        run_texture,
-        run_animation_config,
-
         attack_texture,
         attack_animation_config,
 
@@ -189,7 +173,6 @@ fn prepare_enemy_resources(
         dead_animation_config,
 
         texture_atlas,
-        tint: Color::srgb(0.2, 0.8, 0.2),
 
         spawn_rate: 0.3,
         items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
@@ -202,68 +185,17 @@ fn prepare_enemy_resources(
         ],
         sectors: vec![SectorIdx(0)],
     });
-    // Red
-    let idle_texture = asset_server.load("enemy/boss_idle_sheet.png");
-    let idle_animation_config =
-        AnimationConfig::new(0, 5, 10, AllAnimations::BossIdle, false, true);
 
-    let run_texture = asset_server.load("enemy/boss_run_sheet.png");
-    let run_animation_config = AnimationConfig::new(0, 5, 10, AllAnimations::BossRun, false, true);
-
-    let attack_texture = asset_server.load("enemy/boss_attack_sheet.png");
-    let attack_animation_config =
-        AnimationConfig::new(0, 5, 10, AllAnimations::BossAttack, true, false);
-
-    let dead_texture = asset_server.load("enemy/boss_dead_sheet.png");
-    let dead_animation_config =
-        AnimationConfig::new(0, 5, 10, AllAnimations::BossDead, true, false);
-
-    let texture_layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 6, 1, None, None);
-    let atlas_handle = texture_atlas_layouts.add(texture_layout);
-    let texture_atlas = TextureAtlas {
-        layout: atlas_handle,
-        index: 1,
-    };
-    enemies.0.push(EnemyInfo {
-        idle_texture,
-        idle_animation_config,
-
-        run_texture,
-        run_animation_config,
-
-        attack_texture,
-        attack_animation_config,
-
-        dead_texture,
-        dead_animation_config,
-
-        texture_atlas,
-        tint: Color::srgb(0.8, 0.2, 0.2),
-
-        spawn_rate: 0.3,
-        items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
-        spells: vec![
-            SpellIdx(0),
-            SpellIdx(1),
-            SpellIdx(2),
-            SpellIdx(3),
-            SpellIdx(4),
-        ],
-        sectors: vec![SectorIdx(0)],
-    });
     // Orange
-    let idle_texture = asset_server.load("enemy/boss_idle_sheet.png");
+    let idle_texture = asset_server.load("enemy/orangemob_idle_sheet.png");
     let idle_animation_config =
         AnimationConfig::new(0, 5, 10, AllAnimations::BossIdle, false, true);
 
-    let run_texture = asset_server.load("enemy/boss_run_sheet.png");
-    let run_animation_config = AnimationConfig::new(0, 5, 10, AllAnimations::BossRun, false, true);
-
-    let attack_texture = asset_server.load("enemy/boss_attack_sheet.png");
+    let attack_texture = asset_server.load("enemy/orangemob_attack_sheet.png");
     let attack_animation_config =
         AnimationConfig::new(0, 5, 10, AllAnimations::BossAttack, true, false);
 
-    let dead_texture = asset_server.load("enemy/boss_dead_sheet.png");
+    let dead_texture = asset_server.load("enemy/orangemob_dead_sheet.png");
     let dead_animation_config =
         AnimationConfig::new(0, 5, 10, AllAnimations::BossDead, true, false);
 
@@ -277,9 +209,6 @@ fn prepare_enemy_resources(
         idle_texture,
         idle_animation_config,
 
-        run_texture,
-        run_animation_config,
-
         attack_texture,
         attack_animation_config,
 
@@ -287,7 +216,6 @@ fn prepare_enemy_resources(
         dead_animation_config,
 
         texture_atlas,
-        tint: Color::srgb(0.8, 0.4, 0.2),
 
         spawn_rate: 0.3,
         items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
@@ -315,13 +243,9 @@ pub fn spawn_enemy<'a>(
     let enemy_info = &enemies[enemy_idx];
     let mut c = commands.spawn((
         SpriteBundle {
-            sprite: Sprite {
-                color: enemy_info.tint,
-                ..Default::default()
-            },
             transform,
             texture: enemy_info.idle_texture.clone(),
-            ..default()
+            ..Default::default()
         },
         enemy_info.texture_atlas.clone(),
         enemy_info.idle_animation_config.clone(),
