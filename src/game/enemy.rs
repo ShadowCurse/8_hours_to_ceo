@@ -402,7 +402,6 @@ fn enemy_take_damage(
 
     for e in event_reader.read() {
         let damage = e.damage * (1.0 - enemy_defense.0);
-        println!("enemy takes: {damage} damage");
         enemy_health.take_damage(damage);
 
         commands.spawn((

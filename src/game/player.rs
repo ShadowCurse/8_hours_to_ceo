@@ -9,7 +9,7 @@ use super::{
     hp_bar::{hp_bar_bundle, HpBarResources},
     inventory::Inventory,
     items::Items,
-    AttackSpeed, Damage, Defense, GameCamera, GameCameraPossibleTarget, GameState, Health,
+    AttackSpeed, Damage, Defense, GameCameraPossibleTarget, GameState, Health,
 };
 
 pub struct PlayerPlugin;
@@ -302,7 +302,6 @@ fn player_take_damage(
                 .sum::<f32>();
 
         let damage = e.0 * (1.0 - player_defense);
-        println!("player takes: {damage} damage");
         player_health.take_damage(damage);
 
         commands.spawn((
