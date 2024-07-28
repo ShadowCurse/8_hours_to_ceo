@@ -1,9 +1,10 @@
 use std::ops::{Index, IndexMut};
 
 use bevy::prelude::*;
+use rand::Rng;
 
 use super::{
-    animation::DAMAGE_COLOR_MARKER,
+    animation::{DAMAGE_COLOR_FIRE_PUNCH, DAMAGE_COLOR_MARKER},
     enemy::{BattleEnemy, DamageEnemyEvent},
     Damage, Defense, GameState, Health, Player,
 };
@@ -19,11 +20,11 @@ impl Plugin for SpellsPlugin {
                 Update,
                 (
                     cast_spell,
-                    process_marker_throw,
-                    process_heal,
-                    process_player_attack_up,
-                    process_player_defence_up,
-                    process_enemy_denfense_down,
+                    process_damage_spell,
+                    process_heal_spell,
+                    process_player_attack_up_spell,
+                    process_player_defence_up_spell,
+                    process_enemy_denfense_down_spell,
                 )
                     .run_if(in_state(GameState::Battle)),
             );
@@ -37,21 +38,25 @@ pub struct SpellIdx(pub usize);
 pub struct CastSpellEvent(pub SpellIdx);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct MarkerThrow {
+pub struct DamageSpellInfo {
     strikes: u32,
     delta_time: f32,
     damage: f32,
+    color: Color,
+    chance: f32,
 }
 
 #[derive(Component, Debug, Clone)]
-pub struct MarkerThrowSpell {
+pub struct DamageSpell {
     timer: Timer,
     remaining_strikes: u32,
     damage: f32,
+    color: Color,
+    chance: f32,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Heal {
+pub struct HealSpellInfo {
     heal: f32,
 }
 
@@ -61,7 +66,7 @@ pub struct HealSpell {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct PlayerAttackUp {
+pub struct PlayerAttackUpSpellInfo {
     duration: f32,
     attack: f32,
 }
@@ -74,7 +79,7 @@ pub struct PlayerAttackUpSpell {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct PlayerDefenseUp {
+pub struct PlayerDefenseUpSpellInfo {
     duration: f32,
     defense: f32,
 }
@@ -87,7 +92,7 @@ pub struct PlayerDefenseUpSpell {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct EnemyDefenseDown {
+pub struct EnemyDefenseDownSpellInfo {
     duration: f32,
     defense: f32,
 }
@@ -101,16 +106,15 @@ pub struct EnemyDefenseDownSpell {
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Spell {
-    MarkerThrow(MarkerThrow),
-    Heal(Heal),
-    PlayerAttackUp(PlayerAttackUp),
-    PlayerDefenseUp(PlayerDefenseUp),
-    EnemyDefenseDown(EnemyDefenseDown),
+    Damage(DamageSpellInfo),
+    Heal(HealSpellInfo),
+    PlayerAttackUp(PlayerAttackUpSpellInfo),
+    PlayerDefenseUp(PlayerDefenseUpSpellInfo),
+    EnemyDefenseDown(EnemyDefenseDownSpellInfo),
 }
 
 #[derive(Debug)]
 pub struct SpellInfo {
-    pub name: &'static str,
     pub description: &'static str,
     pub image: Handle<Image>,
     pub drop_rate: f32,
@@ -138,55 +142,79 @@ fn prepare_spells(asset_server: Res<AssetServer>, mut commands: Commands) {
     let mut spells = Spells(vec![]);
 
     spells.0.push(SpellInfo {
-        name: "Marker Throw",
-        description: "Throw 2 markers at the enemy. Each deals 5 damage.",
-        image: asset_server.load("spells/tmp_spell.png"),
-        drop_rate: 0.9,
+        description: "Throw 2 markers at the coworker. Each deals 5 damage.",
+        image: asset_server.load("spells/spell_marker.png"),
+        drop_rate: 0.8,
         cooldown: Timer::from_seconds(2.0, TimerMode::Once),
-        spell: Spell::MarkerThrow(MarkerThrow {
+        spell: Spell::Damage(DamageSpellInfo {
             strikes: 2,
             delta_time: 0.1,
             damage: 5.0,
+            color: DAMAGE_COLOR_MARKER,
+            chance: 1.0,
         }),
     });
     spells.0.push(SpellInfo {
-        name: "Heal",
-        description: "Healing heal",
-        image: asset_server.load("spells/tmp_spell.png"),
-        drop_rate: 0.9,
+        description: "Slams keyboard into coworker face. Deals 10 damage.",
+        image: asset_server.load("spells/spell_keyboard.png"),
+        drop_rate: 0.7,
         cooldown: Timer::from_seconds(5.0, TimerMode::Once),
-        spell: Spell::Heal(Heal { heal: 20.0 }),
+        spell: Spell::Damage(DamageSpellInfo {
+            strikes: 1,
+            delta_time: 0.0,
+            damage: 10.0,
+            color: DAMAGE_COLOR_MARKER,
+            chance: 1.0,
+        }),
     });
     spells.0.push(SpellInfo {
-        name: "Player attack up",
-        description: "+10 damage for 1 second",
-        image: asset_server.load("spells/tmp_spell.png"),
-        drop_rate: 0.9,
-        cooldown: Timer::from_seconds(5.0, TimerMode::Once),
-        spell: Spell::PlayerAttackUp(PlayerAttackUp {
-            duration: 1.0,
+        description: "50% chance to layoff coworker and deal 100 damage",
+        image: asset_server.load("spells/spell_punch.png"),
+        drop_rate: 0.1,
+        cooldown: Timer::from_seconds(15.0, TimerMode::Once),
+        spell: Spell::Damage(DamageSpellInfo {
+            strikes: 1,
+            delta_time: 0.0,
+            damage: 100.0,
+            color: DAMAGE_COLOR_FIRE_PUNCH,
+            chance: 0.5,
+        }),
+    });
+    spells.0.push(SpellInfo {
+        description: "Delicious lunch. Restores 10 hp.",
+        image: asset_server.load("spells/spell_lunchbox.png"),
+        drop_rate: 0.2,
+        cooldown: Timer::from_seconds(10.0, TimerMode::Once),
+        spell: Spell::Heal(HealSpellInfo { heal: 10.0 }),
+    });
+    spells.0.push(SpellInfo {
+        description: "Excels player damage by 10 for 2 seconds.",
+        image: asset_server.load("spells/spell_excel.png"),
+        drop_rate: 0.3,
+        cooldown: Timer::from_seconds(8.0, TimerMode::Once),
+        spell: Spell::PlayerAttackUp(PlayerAttackUpSpellInfo {
+            duration: 2.0,
             attack: 10.0,
         }),
     });
     spells.0.push(SpellInfo {
-        name: "Player defence up",
-        description: "+10% defence for 1 second",
-        image: asset_server.load("spells/tmp_spell.png"),
-        drop_rate: 0.9,
-        cooldown: Timer::from_seconds(5.0, TimerMode::Once),
-        spell: Spell::PlayerDefenseUp(PlayerDefenseUp {
-            duration: 1.0,
+        description: "Attending standup raises defence by 10% for 2 seconds.",
+        image: asset_server.load("spells/spell_standup.png"),
+        drop_rate: 0.3,
+        cooldown: Timer::from_seconds(8.0, TimerMode::Once),
+        spell: Spell::PlayerDefenseUp(PlayerDefenseUpSpellInfo {
+            duration: 2.0,
             defense: 0.1,
         }),
     });
     spells.0.push(SpellInfo {
-        name: "EnemyDefenceDown",
-        description: "-10% enemy defence for 1 second",
+        description:
+            "Present future plans to coworker. Lowers coworker defence by 10% for 2 seconds.",
         image: asset_server.load("spells/tmp_spell.png"),
-        drop_rate: 0.9,
+        drop_rate: 0.3,
         cooldown: Timer::from_seconds(5.0, TimerMode::Once),
-        spell: Spell::EnemyDefenseDown(EnemyDefenseDown {
-            duration: 1.0,
+        spell: Spell::EnemyDefenseDown(EnemyDefenseDownSpellInfo {
+            duration: 2.0,
             defense: 0.1,
         }),
     });
@@ -213,64 +241,70 @@ fn cast_spell(
             spell_info.cooldown.reset();
         }
         match spell_info.spell {
-            Spell::MarkerThrow(marker_throw) => {
-                commands.spawn(MarkerThrowSpell {
-                    timer: Timer::from_seconds(marker_throw.delta_time, TimerMode::Repeating),
-                    remaining_strikes: marker_throw.strikes,
-                    damage: marker_throw.damage,
+            Spell::Damage(damage_spell_info) => {
+                commands.spawn(DamageSpell {
+                    timer: Timer::from_seconds(damage_spell_info.delta_time, TimerMode::Repeating),
+                    remaining_strikes: damage_spell_info.strikes,
+                    damage: damage_spell_info.damage,
+                    color: damage_spell_info.color,
+                    chance: damage_spell_info.chance,
                 });
             }
-            Spell::Heal(heal) => {
-                commands.spawn(HealSpell { heal: heal.heal });
+            Spell::Heal(heal_spell_info) => {
+                commands.spawn(HealSpell {
+                    heal: heal_spell_info.heal,
+                });
             }
-            Spell::PlayerAttackUp(attack_up) => {
+            Spell::PlayerAttackUp(attack_up_spell_info) => {
                 commands.spawn(PlayerAttackUpSpell {
-                    timer: Timer::from_seconds(attack_up.duration, TimerMode::Once),
+                    timer: Timer::from_seconds(attack_up_spell_info.duration, TimerMode::Once),
                     active: false,
-                    attack: attack_up.attack,
+                    attack: attack_up_spell_info.attack,
                 });
             }
-            Spell::PlayerDefenseUp(defense_up) => {
+            Spell::PlayerDefenseUp(defense_up_spell_info) => {
                 commands.spawn(PlayerDefenseUpSpell {
-                    timer: Timer::from_seconds(defense_up.duration, TimerMode::Once),
+                    timer: Timer::from_seconds(defense_up_spell_info.duration, TimerMode::Once),
                     active: false,
-                    defense: defense_up.defense,
+                    defense: defense_up_spell_info.defense,
                 });
             }
-            Spell::EnemyDefenseDown(defense_down) => {
+            Spell::EnemyDefenseDown(defense_down_spell_info) => {
                 commands.spawn(EnemyDefenseDownSpell {
-                    timer: Timer::from_seconds(defense_down.duration, TimerMode::Once),
+                    timer: Timer::from_seconds(defense_down_spell_info.duration, TimerMode::Once),
                     active: false,
-                    defense: defense_down.defense,
+                    defense: defense_down_spell_info.defense,
                 });
             }
         }
     }
 }
 
-fn process_marker_throw(
+fn process_damage_spell(
     time: Res<Time>,
     mut commands: Commands,
-    mut marker_throw_spells: Query<(Entity, &mut MarkerThrowSpell)>,
+    mut damage_spelll: Query<(Entity, &mut DamageSpell)>,
     mut event_writer: EventWriter<DamageEnemyEvent>,
 ) {
-    for (entity, mut marker_throw) in marker_throw_spells.iter_mut() {
-        marker_throw.timer.tick(time.delta());
-        if marker_throw.timer.finished() {
-            event_writer.send(DamageEnemyEvent {
-                damage: marker_throw.damage,
-                color: DAMAGE_COLOR_MARKER,
-            });
-            marker_throw.remaining_strikes -= 1;
+    for (entity, mut damage_spell) in damage_spelll.iter_mut() {
+        damage_spell.timer.tick(time.delta());
+        if damage_spell.timer.finished() {
+            if rand::thread_rng().gen_bool(damage_spell.chance as f64) {
+                event_writer.send(DamageEnemyEvent {
+                    damage: damage_spell.damage,
+                    color: damage_spell.color,
+                });
+            }
+            damage_spell.remaining_strikes -= 1;
 
-            if marker_throw.remaining_strikes == 0 {
+            if damage_spell.remaining_strikes == 0 {
                 commands.get_entity(entity).unwrap().despawn_recursive()
             }
         }
     }
 }
 
-fn process_heal(
+fn process_heal_spell(
     heals: Query<(Entity, &HealSpell)>,
     mut commands: Commands,
     mut player: Query<&mut Health, With<Player>>,
@@ -288,7 +322,7 @@ fn process_heal(
     }
 }
 
-fn process_player_attack_up(
+fn process_player_attack_up_spell(
     time: Res<Time>,
     mut commands: Commands,
     mut player: Query<&mut Damage, With<Player>>,
@@ -312,7 +346,7 @@ fn process_player_attack_up(
     }
 }
 
-fn process_player_defence_up(
+fn process_player_defence_up_spell(
     time: Res<Time>,
     mut commands: Commands,
     mut player: Query<&mut Defense, With<Player>>,
@@ -336,7 +370,7 @@ fn process_player_defence_up(
     }
 }
 
-fn process_enemy_denfense_down(
+fn process_enemy_denfense_down_spell(
     time: Res<Time>,
     mut commands: Commands,
     mut enemy: Query<&mut Defense, With<BattleEnemy>>,

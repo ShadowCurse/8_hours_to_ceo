@@ -150,6 +150,28 @@ fn spawn_inventory_button<C: Component + Copy>(
     builder.spawn((
         ImageBundle {
             style: Style {
+                width: Val::Px(52.0),
+                height: Val::Px(52.0),
+                margin: UiRect::all(Val::Percent(1.0)),
+                ..Default::default()
+            },
+            visibility,
+            background_color: BUTTON_IMAGE_TINT_DEFAULT.into(),
+            ..Default::default()
+        },
+        Interaction::default(),
+        c,
+    ));
+}
+
+fn spawn_sectors_button<C: Component + Copy>(
+    builder: &mut ChildBuilder,
+    visibility: Visibility,
+    c: C,
+) {
+    builder.spawn((
+        ImageBundle {
+            style: Style {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
                 margin: UiRect::all(Val::Percent(1.0)),
@@ -613,26 +635,10 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                             ..default()
                         })
                         .with_children(|builder| {
-                            spawn_inventory_button(
-                                builder,
-                                Visibility::Hidden,
-                                BackpackSectorId(0),
-                            );
-                            spawn_inventory_button(
-                                builder,
-                                Visibility::Hidden,
-                                BackpackSectorId(1),
-                            );
-                            spawn_inventory_button(
-                                builder,
-                                Visibility::Hidden,
-                                BackpackSectorId(2),
-                            );
-                            spawn_inventory_button(
-                                builder,
-                                Visibility::Hidden,
-                                BackpackSectorId(3),
-                            );
+                            spawn_sectors_button(builder, Visibility::Hidden, BackpackSectorId(0));
+                            spawn_sectors_button(builder, Visibility::Hidden, BackpackSectorId(1));
+                            spawn_sectors_button(builder, Visibility::Hidden, BackpackSectorId(2));
+                            spawn_sectors_button(builder, Visibility::Hidden, BackpackSectorId(3));
                         });
                 });
 
