@@ -24,19 +24,66 @@ fn main_menu_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
     commands
         .spawn(NodeBundle {
             style: Style {
-                width: Val::Percent(20.0),
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
                 flex_direction: FlexDirection::Column,
-                // center verticaly
-                align_self: AlignSelf::Center,
                 ..Default::default()
             },
             ..default()
         })
         .insert(StateScoped(UiState::MainMenu))
         .with_children(|builder| {
-            spawn_button(builder, &ui_style, MainMenuButton::Start);
-            spawn_button(builder, &ui_style, MainMenuButton::Settings);
-            spawn_button(builder, &ui_style, MainMenuButton::Exit);
+            // Title
+            builder
+                .spawn(NodeBundle {
+                    style: Style {
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(20.0),
+                        border: UiRect::all(Val::Percent(1.0)),
+                        align_self: AlignSelf::Center,
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Center,
+                        ..Default::default()
+                    },
+                    border_color: BorderColor(Color::BLACK),
+                    border_radius: BorderRadius::all(Val::Percent(5.0)),
+                    background_color: ui_style.btn_color_normal.into(),
+                    ..default()
+                })
+                .with_children(|builder| {
+                    builder.spawn(TextBundle {
+                        text: Text::from_section(
+                            "8 hours to CEO",
+                            TextStyle {
+                                font: ui_style.text_style.font.clone(),
+                                font_size: 50.0,
+                                color: ui_style.text_style.color,
+                            },
+                        ),
+                        ..default()
+                    });
+                });
+
+            // Buttons
+            builder
+                .spawn(NodeBundle {
+                    style: Style {
+                        width: Val::Percent(20.0),
+                        height: Val::Percent(80.0),
+                        flex_direction: FlexDirection::Column,
+                        align_self: AlignSelf::Start,
+                        justify_items: JustifyItems::Center,
+                        justify_content: JustifyContent::Center,
+                        ..Default::default()
+                    },
+                    ..default()
+                })
+                .insert(StateScoped(UiState::MainMenu))
+                .with_children(|builder| {
+                    spawn_button(builder, &ui_style, MainMenuButton::Start);
+                    spawn_button(builder, &ui_style, MainMenuButton::Settings);
+                    spawn_button(builder, &ui_style, MainMenuButton::Exit);
+                });
         });
 }
 
