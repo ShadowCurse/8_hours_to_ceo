@@ -262,6 +262,7 @@ fn on_attack_finish(
                 source: sounds.player_attack.clone(),
                 settings: PlaybackSettings {
                     mode: PlaybackMode::Despawn,
+                    volume: sounds.volume,
                     ..Default::default()
                 },
             });

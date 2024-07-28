@@ -324,6 +324,7 @@ fn on_attack_finish(
                 },
                 settings: PlaybackSettings {
                     mode: PlaybackMode::Despawn,
+                    volume: sounds.volume,
                     ..Default::default()
                 },
             });

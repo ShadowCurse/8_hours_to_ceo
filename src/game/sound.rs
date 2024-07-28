@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{audio::Volume, prelude::*};
 
 pub struct SoundPlugin;
 
@@ -14,6 +14,7 @@ pub struct SoundResources {
     pub enemy_attack: Handle<AudioSource>,
     pub boss_attack: Handle<AudioSource>,
     pub chest_open: Handle<AudioSource>,
+    pub volume: Volume,
 }
 
 fn prepare_sounds(asset_server: Res<AssetServer>, mut commands: Commands) {
@@ -26,6 +27,7 @@ fn prepare_sounds(asset_server: Res<AssetServer>, mut commands: Commands) {
         player_attack,
         enemy_attack,
         boss_attack,
-        chest_open
+        chest_open,
+        volume: Volume::new(1.0),
     });
 }

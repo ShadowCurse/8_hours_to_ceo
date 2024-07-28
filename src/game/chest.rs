@@ -205,6 +205,7 @@ fn on_chest_open_finish(
                 source: sounds.chest_open.clone(),
                 settings: PlaybackSettings {
                     mode: PlaybackMode::Despawn,
+                    volume: sounds.volume,
                     ..Default::default()
                 },
             });
