@@ -1,4 +1,7 @@
-use bevy::{audio::Volume, prelude::*};
+use bevy::{
+    audio::{PlaybackMode, Volume},
+    prelude::*,
+};
 
 pub struct SoundPlugin;
 
@@ -17,11 +20,15 @@ pub struct SoundResources {
     pub volume: Volume,
 }
 
+#[derive(Component)]
+pub struct BackgroundMusic;
+
 fn prepare_sounds(asset_server: Res<AssetServer>, mut commands: Commands) {
     let player_attack = asset_server.load("sounds/alex_attack.ogg");
     let enemy_attack = asset_server.load("sounds/enemy_attack.ogg");
     let boss_attack = asset_server.load("sounds/boss_attack.ogg");
     let chest_open = asset_server.load("sounds/chest_open.ogg");
+    let background = asset_server.load("sounds/background.ogg");
 
     commands.insert_resource(SoundResources {
         player_attack,
@@ -30,4 +37,17 @@ fn prepare_sounds(asset_server: Res<AssetServer>, mut commands: Commands) {
         chest_open,
         volume: Volume::new(1.0),
     });
+
+    // Background music
+    commands.spawn((
+        AudioBundle {
+            source: background,
+            settings: PlaybackSettings {
+                mode: PlaybackMode::Loop,
+                volume: Volume::new(0.5),
+                ..Default::default()
+            },
+        },
+        BackgroundMusic,
+    ));
 }
