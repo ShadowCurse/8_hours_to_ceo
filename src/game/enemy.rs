@@ -351,10 +351,7 @@ fn enemy_take_damage(
 }
 
 fn enemy_check_dead(
-    items: Res<Items>,
-    spells: Res<Spells>,
     enemies: Res<Enemies>,
-    sectors: Res<Sectors>,
     mut commands: Commands,
     mut enemy: Query<
         (
@@ -367,8 +364,6 @@ fn enemy_check_dead(
         ),
         With<BattleEnemy>,
     >,
-    mut inventory: ResMut<Inventory>,
-    mut event_writer: EventWriter<InventoryUpdateEvent>,
 ) {
     let Ok((enemy_entity, enemy_health, enemy_idx, mut config, mut texture, mut atlas)) =
         enemy.get_single_mut()
@@ -376,7 +371,7 @@ fn enemy_check_dead(
         return;
     };
 
-    if enemy_health.current() <= 0.0 {
+    if enemy_health.current() == 0.0 {
         commands
             .get_entity(enemy_entity)
             .unwrap()
@@ -385,56 +380,67 @@ fn enemy_check_dead(
 
         let enemy_info = &enemies[*enemy_idx];
 
+        // Start dead animation
         *texture = enemy_info.dead_texture.clone();
         atlas.index = enemy_info.dead_animation_config.first_sprite_index;
         *config = enemy_info.dead_animation_config.clone();
-
-        let mut thread_rng = rand::thread_rng();
-
-        if !enemy_info.items.is_empty() {
-            let random_item_idx = enemy_info.items[thread_rng.gen_range(0..enemy_info.items.len())];
-            let item = &items[random_item_idx];
-            if thread_rng.gen_bool(item.drop_rate as f64) {
-                inventory.backpack_items.push(random_item_idx);
-            }
-        }
-
-        if !enemy_info.spells.is_empty() {
-            let random_spell_idx =
-                enemy_info.spells[thread_rng.gen_range(0..enemy_info.spells.len())];
-            let spell = &spells[random_spell_idx];
-            if thread_rng.gen_bool(spell.drop_rate as f64) {
-                inventory.backpack_spells.push(random_spell_idx);
-            }
-        }
-
-        if !enemy_info.sectors.is_empty() {
-            let random_sector_idx =
-                enemy_info.sectors[thread_rng.gen_range(0..enemy_info.sectors.len())];
-            let sector = &sectors[random_sector_idx];
-            if thread_rng.gen_bool(sector.drop_rate as f64) {
-                inventory.backpack_sectors.push(random_sector_idx);
-            }
-        }
-
-        event_writer.send(InventoryUpdateEvent);
     }
 }
 
 fn on_dead_finish(
-    enemy: Query<Entity, With<BattleEnemyDead>>,
+    items: Res<Items>,
+    spells: Res<Spells>,
+    enemies: Res<Enemies>,
+    sectors: Res<Sectors>,
+    enemy: Query<(Entity, &EnemyIdx), With<BattleEnemyDead>>,
     mut commands: Commands,
+    mut inventory: ResMut<Inventory>,
     mut event_reader: EventReader<AnimationFinishedEvent>,
-    mut event_writer: EventWriter<EnemyDeadEvent>,
+    mut inventory_update_event: EventWriter<InventoryUpdateEvent>,
+    mut enemy_dead_event: EventWriter<EnemyDeadEvent>,
 ) {
-    let Ok(entity) = enemy.get_single() else {
+    let Ok((entity, enemy_idx)) = enemy.get_single() else {
         return;
     };
 
     for e in event_reader.read() {
         if e.0 == AllAnimations::BossDead {
             commands.get_entity(entity).unwrap().despawn_recursive();
-            event_writer.send(EnemyDeadEvent);
+
+            let enemy_info = &enemies[*enemy_idx];
+
+            let mut thread_rng = rand::thread_rng();
+
+            if !enemy_info.items.is_empty() {
+                let random_item_idx =
+                    enemy_info.items[thread_rng.gen_range(0..enemy_info.items.len())];
+                let item = &items[random_item_idx];
+                if thread_rng.gen_bool(item.drop_rate as f64) {
+                    inventory.backpack_items.push(random_item_idx);
+                }
+            }
+
+            if !enemy_info.spells.is_empty() {
+                let random_spell_idx =
+                    enemy_info.spells[thread_rng.gen_range(0..enemy_info.spells.len())];
+                let spell = &spells[random_spell_idx];
+                if thread_rng.gen_bool(spell.drop_rate as f64) {
+                    inventory.backpack_spells.push(random_spell_idx);
+                }
+            }
+
+            if !enemy_info.sectors.is_empty() {
+                let random_sector_idx =
+                    enemy_info.sectors[thread_rng.gen_range(0..enemy_info.sectors.len())];
+                let sector = &sectors[random_sector_idx];
+                if thread_rng.gen_bool(sector.drop_rate as f64) {
+                    inventory.backpack_sectors.push(random_sector_idx);
+                }
+            }
+
+            info!("enemy dead event");
+            inventory_update_event.send(InventoryUpdateEvent);
+            enemy_dead_event.send(EnemyDeadEvent);
         }
     }
 }
