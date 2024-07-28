@@ -2,9 +2,11 @@ use bevy::prelude::*;
 
 pub mod in_game;
 pub mod main_menu;
+pub mod settings;
 
 use in_game::InGamePlugin;
 use main_menu::MainMenuPlugin;
+use settings::SettingsPlugin;
 
 pub struct UiPlugin;
 
@@ -14,7 +16,7 @@ impl Plugin for UiPlugin {
             .enable_state_scoped_entities::<UiState>()
             .add_systems(PreStartup, setup_ui_style);
 
-        app.add_plugins((MainMenuPlugin, InGamePlugin));
+        app.add_plugins((MainMenuPlugin, SettingsPlugin, InGamePlugin));
     }
 }
 
