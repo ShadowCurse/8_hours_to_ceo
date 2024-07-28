@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     game::{
-        circle_sectors::{FullCycles, SectorPlacedEvent, Sectors, MAX_CYCLES},
+        circle_sectors::{PlayerProgress, SectorPlacedEvent, Sectors, MAX_CYCLES},
         inventory::{Inventory, InventoryUpdateEvent},
         items::Items,
         spells::{CastSpellEvent, Spells},
@@ -1225,13 +1225,17 @@ fn backpack_sectors_on_sector_placed(
     }
 }
 
-fn update_cycles(full_cycles: Res<FullCycles>, mut pause_text: Query<&mut Text, With<CyclesText>>) {
+fn update_cycles(
+    player_progress: Res<PlayerProgress>,
+    mut pause_text: Query<&mut Text, With<CyclesText>>,
+) {
     let Ok(mut pause_text) = pause_text.get_single_mut() else {
         return;
     };
 
-    if full_cycles.0 != MAX_CYCLES {
-        pause_text.sections[0].value = format!("Hours left: {}", MAX_CYCLES - full_cycles.0);
+    if player_progress.cycles != MAX_CYCLES {
+        pause_text.sections[0].value =
+            format!("Hours left: {}", MAX_CYCLES - player_progress.cycles);
     } else {
         pause_text.sections[0].value = "Last hour!!!".into();
     }

@@ -54,7 +54,7 @@ impl Plugin for SectorsPlugin {
                 (
                     update_minute_arrow,
                     update_hour_arrow,
-                    count_full_cycles,
+                    update_player_progress,
                     on_last_cycle_event,
                     sector_spawn_things,
                 )
@@ -82,7 +82,10 @@ pub struct SectorResources {
 }
 
 #[derive(Resource, Debug, Clone, PartialEq, Eq)]
-pub struct FullCycles(pub u8);
+pub struct PlayerProgress {
+    pub cycles: u8,
+    pub player_last_sector: u8,
+}
 
 #[derive(Event, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SectorPlacedEvent;
@@ -291,8 +294,6 @@ fn prepare_sector_resources(
         chests: vec![ChestIdx(3)],
     });
     commands.insert_resource(sectors);
-
-    commands.insert_resource(FullCycles(0));
 }
 
 fn spawn_clock(
@@ -301,14 +302,22 @@ fn spawn_clock(
     sector_resources: Res<SectorResources>,
     mut commands: Commands,
 ) {
-    // Wall
+    commands.insert_resource(PlayerProgress {
+        cycles: 0,
+        player_last_sector: 0,
+    });
 
-    commands.spawn((SpriteBundle {
-        sprite: Sprite::default(),
-        transform: Transform::from_xyz(0.0, 0.0, Z_WALL).with_scale(Vec3::new(10.0, 10.0, 10.0)),
-        texture: sector_resources.wall_image.clone(),
-        ..Default::default()
-    },));
+    // Wall
+    commands.spawn((
+        SpriteBundle {
+            sprite: Sprite::default(),
+            transform: Transform::from_xyz(0.0, 0.0, Z_WALL)
+                .with_scale(Vec3::new(10.0, 10.0, 10.0)),
+            texture: sector_resources.wall_image.clone(),
+            ..Default::default()
+        },
+        StateScoped(GlobalState::InGame),
+    ));
 
     // Sectors
     for i in 0..SECTORS_NUM {
@@ -440,7 +449,7 @@ fn update_minute_arrow(
 }
 
 fn update_hour_arrow(
-    full_cycles: Res<FullCycles>,
+    player_progess: Res<PlayerProgress>,
     player: Query<&Transform, (With<Player>, Without<MinuteArrow>, Without<HourArrow>)>,
     minute_arrow: Query<&mut Transform, (With<MinuteArrow>, Without<Player>, Without<HourArrow>)>,
     mut hour_arrow: Query<&mut Transform, (With<HourArrow>, Without<Player>, Without<MinuteArrow>)>,
@@ -462,18 +471,18 @@ fn update_hour_arrow(
         minute_angle = 2.0 * PI - minute_angle;
     }
 
-    let hour_arrow_angle = PI / 6.0 * full_cycles.0 as f32 + PI / 6.0 * minute_angle / (2.0 * PI);
+    let hour_arrow_angle =
+        PI / 6.0 * player_progess.cycles as f32 + PI / 6.0 * minute_angle / (2.0 * PI);
 
     let mut t = CLOCK_HOUR_ARROW_TRANSFORM;
     t.rotate_around(Vec3::ZERO, Quat::from_rotation_z(-hour_arrow_angle));
     *hour_transform = t;
 }
 
-fn count_full_cycles(
+fn update_player_progress(
     player: Query<&Transform, With<Player>>,
-    mut full_cycles: ResMut<FullCycles>,
+    mut player_progress: ResMut<PlayerProgress>,
     mut event_writer: EventWriter<LastCycleEvent>,
-    mut local: Local<u8>,
 ) {
     let Ok(player_transform) = player.get_single() else {
         return;
@@ -481,15 +490,15 @@ fn count_full_cycles(
 
     let sector_id = position_to_sector_position(player_transform.translation);
 
-    if sector_id != *local {
+    if sector_id != player_progress.player_last_sector {
         if sector_id == 0 {
-            full_cycles.0 += 1;
-            if full_cycles.0 == MAX_CYCLES {
+            player_progress.cycles += 1;
+            if player_progress.cycles == MAX_CYCLES {
                 event_writer.send(LastCycleEvent);
             }
         }
         println!("player is in the sector: {sector_id}");
-        *local = sector_id;
+        player_progress.player_last_sector = sector_id;
     }
 }
 
