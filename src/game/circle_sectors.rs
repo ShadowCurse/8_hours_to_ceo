@@ -532,6 +532,7 @@ fn on_last_cycle_event(
 
         spawn_enemy(
             &mut commands,
+            1.0,
             enemies.as_ref(),
             EnemyIdx(0),
             SectorPosition(SECTORS_NUM - 1),
@@ -628,6 +629,7 @@ fn sector_spawn_things(
     sectors: Res<Sectors>,
     chest_resources: Res<ChestResources>,
     hp_bar_resources: Res<HpBarResources>,
+    player_progess: Res<PlayerProgress>,
     player: Query<&Transform, With<Player>>,
     mut commands: Commands,
     mut s: Query<(
@@ -661,21 +663,31 @@ fn sector_spawn_things(
                 let sector_info = &sectors.0[sector_idx.0];
                 let mut thread_rng = rand::thread_rng();
 
-                let enemy_spawned = if !sector_info.enemies.is_empty() {
-                    let random_enemy_idx =
-                        sector_info.enemies[thread_rng.gen_range(0..sector_info.enemies.len())];
-                    let enemy_info = &enemies[random_enemy_idx];
-                    if thread_rng.gen_bool(enemy_info.spawn_rate as f64) {
+                macro_rules! spawn_enemy {
+                    ( $x:expr ) => {
                         slots.0[empty_slot_position] = Some(SlotType::Enemy);
 
                         let mut t = Transform::from_xyz(0.0, CIRCLE_RADIUS + 30.0, Z_ENEMY)
                             .with_scale(Vec3::new(2.0, 2.0, 2.0));
                         t.rotate_around(Vec3::ZERO, Quat::from_rotation_z(-angle));
 
+                        let hardness = match player_progess.cycles {
+                            0 => 1.0,
+                            1 => 1.2,
+                            2 => 1.3,
+                            3 => 1.7,
+                            4 => 2.0,
+                            5 => 2.2,
+                            6 => 2.3,
+                            7 => 2.7,
+                            _ => 1.0,
+                        };
+
                         spawn_enemy(
                             &mut commands,
+                            hardness,
                             enemies.as_ref(),
-                            random_enemy_idx,
+                            $x,
                             *id,
                             hp_bar_resources.as_ref(),
                             t,
@@ -685,36 +697,61 @@ fn sector_spawn_things(
                             entity,
                             slot_position: empty_slot_position,
                         });
-                        true
-                    } else {
-                        false
-                    }
-                } else {
-                    false
-                };
-                if !enemy_spawned && !sector_info.chests.is_empty() {
-                    let random_chest_idx =
-                        sector_info.chests[thread_rng.gen_range(0..sector_info.chests.len())];
-                    let chest_info = &chests[random_chest_idx];
+                    };
+                }
 
-                    if thread_rng.gen_bool(chest_info.spawn_rate as f64) {
+                macro_rules! spawn_chest {
+                    ( $x:expr ) => {
                         slots.0[empty_slot_position] = Some(SlotType::Item);
 
                         let mut t = Transform::from_xyz(0.0, CIRCLE_RADIUS + 15.0, Z_CHEST);
                         t.rotate_around(Vec3::ZERO, Quat::from_rotation_z(-angle));
 
-                        spawn_chest(
-                            &mut commands,
-                            chest_resources.as_ref(),
-                            random_chest_idx,
-                            *id,
-                            t,
-                        )
-                        .insert(SectorSlotEntity {
-                            entity,
-                            slot_position: empty_slot_position,
-                        });
+                        spawn_chest(&mut commands, chest_resources.as_ref(), $x, *id, t).insert(
+                            SectorSlotEntity {
+                                entity,
+                                slot_position: empty_slot_position,
+                            },
+                        );
+                    };
+                }
+
+                let random_enemy = if !sector_info.enemies.is_empty() {
+                    let random_enemy_idx =
+                        sector_info.enemies[thread_rng.gen_range(0..sector_info.enemies.len())];
+                    let enemy_info = &enemies[random_enemy_idx];
+                    if thread_rng.gen_bool(enemy_info.spawn_rate as f64) {
+                        Some(random_enemy_idx)
+                    } else {
+                        None
                     }
+                } else {
+                    None
+                };
+                let random_chest = if !sector_info.chests.is_empty() {
+                    let random_chest_idx =
+                        sector_info.chests[thread_rng.gen_range(0..sector_info.chests.len())];
+                    let chest_info = &chests[random_chest_idx];
+
+                    if thread_rng.gen_bool(chest_info.spawn_rate as f64) {
+                        Some(random_chest_idx)
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                };
+
+                if random_enemy.is_some() && random_chest.is_some() {
+                    if thread_rng.gen_bool(0.5) {
+                        spawn_enemy!(random_enemy.unwrap());
+                    } else {
+                        spawn_chest!(random_chest.unwrap());
+                    }
+                } else if let Some(random_enemy_idx) = random_enemy {
+                    spawn_enemy!(random_enemy_idx);
+                } else if let Some(random_chest_idx) = random_chest {
+                    spawn_chest!(random_chest_idx);
                 }
             }
         }

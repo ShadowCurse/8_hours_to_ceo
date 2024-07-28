@@ -114,8 +114,8 @@ fn prepare_chest_resources(
     // 2 Yellow
     chests.0.push(ChestInfo {
         spawn_rate: 0.25,
-        // Stickynotes
-        items: vec![ItemIdx(5)],
+        // Coffee, Stickynotes
+        items: vec![ItemIdx(0), ItemIdx(5)],
         // Lunchbox
         spells: vec![SpellIdx(3)],
         sectors: vec![SectorIdx(3), SectorIdx(4)],

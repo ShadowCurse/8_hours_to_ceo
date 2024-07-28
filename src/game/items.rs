@@ -29,8 +29,8 @@ impl Item {
             Self::Coffecup => 0.0,
             Self::Paperclip => 0.0,
             Self::Plant => 0.0,
-            Self::Scissiors => 10.0,
-            Self::Stapler => 5.0,
+            Self::Scissiors => 11.0,
+            Self::Stapler => 22.0,
             Self::Stickynotes => 0.0,
         }
     }
@@ -38,19 +38,19 @@ impl Item {
     pub fn add_defense(&self) -> f32 {
         match self {
             Self::Coffecup => 0.0,
-            Self::Paperclip => 0.05,
+            Self::Paperclip => 0.2,
             Self::Plant => 0.0,
             Self::Scissiors => 0.0,
             Self::Stapler => 0.0,
-            Self::Stickynotes => 0.01,
+            Self::Stickynotes => 0.1,
         }
     }
 
     pub fn heal(&self) -> f32 {
         match self {
-            Self::Coffecup => 5.0,
+            Self::Coffecup => 20.0,
             Self::Paperclip => 0.0,
-            Self::Plant => 1.0,
+            Self::Plant => 10.0,
             Self::Scissiors => 0.0,
             Self::Stapler => 0.0,
             Self::Stickynotes => 0.0,
@@ -87,42 +87,42 @@ fn prepare_items(asset_server: Res<AssetServer>, mut commands: Commands) {
 
     // 0 coffee
     items.0.push(ItemInfo {
-        description: "Smoking hot coffe for burnout nerves. Heals 5 hp.",
+        description: "Smoking hot coffe for burnout nerves. Heals 20 hp after each battle.",
         image: asset_server.load("items/item_coffecup.png"),
         drop_rate: 0.2,
         item: Item::Coffecup,
     });
     // 1 paperclip
     items.0.push(ItemInfo {
-        description: "As paperclip holds papers, you hold your ground. Adds 5% defence.",
+        description: "As paperclip holds papers, you hold your ground. Adds 20% defence.",
         image: asset_server.load("items/item_paperclip.png"),
         drop_rate: 0.9,
         item: Item::Paperclip,
     });
     // 2 plant
     items.0.push(ItemInfo {
-        description: "Decorative plant. Eat a leaf after each battle to restore 1 hp.",
+        description: "Decorative plant. Eat a leaf after each battle to restore 10 hp.",
         image: asset_server.load("items/item_pot.png"),
         drop_rate: 0.9,
         item: Item::Plant,
     });
     // 3 scissors
     items.0.push(ItemInfo {
-        description: "Scissors to cut through your opponent's arguments. Add 10 damage.",
+        description: "Scissors to cut through your opponent's arguments. Add 11 damage.",
         image: asset_server.load("items/item_scissors.png"),
         drop_rate: 0.9,
         item: Item::Scissiors,
     });
     // 4 stapler
     items.0.push(ItemInfo {
-        description: "Stapler for closing your oppenent arguments. Adds 5 damage.",
+        description: "Stapler for closing your oppenent arguments. Adds 22 damage.",
         image: asset_server.load("items/item_stapler.png"),
         drop_rate: 0.9,
         item: Item::Stapler,
     });
     // 5 stickynotes
     items.0.push(ItemInfo {
-        description: "With stickynotes you never forget about deadlines. +2% defence.",
+        description: "With stickynotes you never forget about deadlines. +10% defence.",
         image: asset_server.load("items/item_stickynotes.png"),
         drop_rate: 0.9,
         item: Item::Stickynotes,

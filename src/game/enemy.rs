@@ -7,7 +7,7 @@ use crate::{ui::UiStyle, GlobalState};
 
 use super::{
     animation::{spawn_damage_text, AllAnimations, AnimationConfig, AnimationFinishedEvent},
-    circle_sectors::{SectorIdx, SectorPosition, Sectors},
+    circle_sectors::{PlayerProgress, SectorIdx, SectorPosition, Sectors},
     hp_bar::{hp_bar_bundle, HpBarResources},
     inventory::{Inventory, InventoryUpdateEvent},
     items::{ItemIdx, Items},
@@ -148,8 +148,8 @@ fn prepare_enemy_resources(
         ],
         sectors: vec![SectorIdx(0)],
 
-        hp: 500.0,
-        damage: 15.0,
+        hp: 700.0,
+        damage: 20.0,
     });
 
     // Green
@@ -240,6 +240,7 @@ fn prepare_enemy_resources(
 
 pub fn spawn_enemy<'a>(
     commands: &'a mut Commands,
+    hardness: f32,
     enemies: &Enemies,
     enemy_idx: EnemyIdx,
     sector_id: SectorPosition,
@@ -257,8 +258,8 @@ pub fn spawn_enemy<'a>(
         enemy_info.texture_atlas.clone(),
         enemy_info.idle_animation_config.clone(),
         Enemy { is_boss },
-        Health::new(enemy_info.hp),
-        Damage(enemy_info.damage),
+        Health::new(enemy_info.hp * hardness),
+        Damage(enemy_info.damage * hardness),
         AttackSpeed::new(1.0),
         Defense(0.0),
         sector_id,

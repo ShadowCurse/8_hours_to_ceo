@@ -157,14 +157,14 @@ fn prepare_spells(asset_server: Res<AssetServer>, mut commands: Commands) {
     });
     // 1 keyboard
     spells.0.push(SpellInfo {
-        description: "Slams keyboard into coworker face. Deals 10 damage.",
+        description: "Slams keyboard into coworker face. Deals 50 damage.",
         image: asset_server.load("spells/spell_keyboard.png"),
         drop_rate: 0.7,
         cooldown: Timer::from_seconds(5.0, TimerMode::Once),
         spell: Spell::Damage(DamageSpellInfo {
             strikes: 1,
             delta_time: 0.0,
-            damage: 10.0,
+            damage: 50.0,
             color: DAMAGE_COLOR_KEYBOARD,
             chance: 1.0,
         }),
@@ -185,43 +185,43 @@ fn prepare_spells(asset_server: Res<AssetServer>, mut commands: Commands) {
     });
     // 3 lunchbox
     spells.0.push(SpellInfo {
-        description: "Delicious lunch. Restores 10 hp.",
+        description: "Delicious lunch. Restores 30 hp.",
         image: asset_server.load("spells/spell_lunchbox.png"),
         drop_rate: 0.2,
         cooldown: Timer::from_seconds(10.0, TimerMode::Once),
-        spell: Spell::Heal(HealSpellInfo { heal: 10.0 }),
+        spell: Spell::Heal(HealSpellInfo { heal: 30.0 }),
     });
     // 4 excel
     spells.0.push(SpellInfo {
-        description: "Excels player damage by 10 for 2 seconds.",
+        description: "Excels player damage by 10 for 10 seconds.",
         image: asset_server.load("spells/spell_excel.png"),
         drop_rate: 0.3,
-        cooldown: Timer::from_seconds(8.0, TimerMode::Once),
+        cooldown: Timer::from_seconds(12.0, TimerMode::Once),
         spell: Spell::PlayerAttackUp(PlayerAttackUpSpellInfo {
-            duration: 2.0,
+            duration: 10.0,
             attack: 10.0,
         }),
     });
     // 5 stand up
     spells.0.push(SpellInfo {
-        description: "Attending standup raises defence by 10% for 2 seconds.",
+        description: "Attending standup raises defence by 10% for 10 seconds.",
         image: asset_server.load("spells/spell_standup.png"),
         drop_rate: 0.3,
-        cooldown: Timer::from_seconds(8.0, TimerMode::Once),
+        cooldown: Timer::from_seconds(12.0, TimerMode::Once),
         spell: Spell::PlayerDefenseUp(PlayerDefenseUpSpellInfo {
-            duration: 2.0,
+            duration: 10.0,
             defense: 0.1,
         }),
     });
     // 6 powerpoint
     spells.0.push(SpellInfo {
         description:
-            "Present future plans to coworker. Lowers coworker defence by 10% for 2 seconds.",
+            "Present future plans to coworker. Lowers coworker defence by 10% for 10 seconds.",
         image: asset_server.load("spells/spell_powerpoint.png"),
         drop_rate: 0.3,
-        cooldown: Timer::from_seconds(5.0, TimerMode::Once),
+        cooldown: Timer::from_seconds(12.0, TimerMode::Once),
         spell: Spell::EnemyDefenseDown(EnemyDefenseDownSpellInfo {
-            duration: 2.0,
+            duration: 10.0,
             defense: 0.1,
         }),
     });
