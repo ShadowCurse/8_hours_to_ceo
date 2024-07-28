@@ -491,7 +491,7 @@ fn update_player_progress(
                 event_writer.send(LastCycleEvent);
             }
         }
-        println!("player is in the sector: {sector_id}");
+        info!("player is in the sector: {sector_id}");
         player_progress.player_last_sector = sector_id;
     }
 }

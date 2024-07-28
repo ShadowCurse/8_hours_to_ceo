@@ -1,14 +1,13 @@
 use bevy::{ecs::system::EntityCommands, prelude::*};
 
-use crate::{game::animation::DamageText, ui::UiStyle, GlobalState};
+use crate::{ui::UiStyle, GlobalState};
 
 use super::{
     animation::{
         spawn_damage_text, AllAnimations, AnimationConfig, AnimationFinishedEvent,
         DAMAGE_COLOR_DEFAULT,
     },
-    chest::ChestOppenedEvent,
-    enemy::{DamageEnemyEvent, EnemyDeadEvent},
+    enemy::DamageEnemyEvent,
     hp_bar::{hp_bar_bundle, HpBarResources},
     inventory::Inventory,
     items::Items,
@@ -29,15 +28,9 @@ impl Plugin for PlayerPlugin {
             .add_systems(Update, player_run.run_if(in_state(GameState::Running)))
             .add_systems(
                 Update,
-                (
-                    player_attack,
-                    on_attack_finish,
-                    player_take_damage,
-                    battle_end_check,
-                )
+                (player_attack, on_attack_finish, player_take_damage)
                     .run_if(in_state(GameState::Battle)),
-            )
-            .add_systems(Update, pickup_end_check.run_if(in_state(GameState::Pickup)));
+            );
     }
 }
 
@@ -229,17 +222,21 @@ fn player_run(time: Res<Time>, mut player: Query<(&PlayerSpeed, &mut Transform)>
 
 fn player_attack(
     time: Res<Time>,
+    player_state: Res<State<PlayerState>>,
     mut player: Query<&mut AttackSpeed, With<Player>>,
-    mut player_state: ResMut<NextState<PlayerState>>,
+    mut player_next_state: ResMut<NextState<PlayerState>>,
 ) {
     let Ok(mut player_attack_speed) = player.get_single_mut() else {
         return;
     };
 
-    player_attack_speed.0.tick(time.delta());
+    if player_state.get() != &PlayerState::Idle {
+        return;
+    }
 
+    player_attack_speed.0.tick(time.delta());
     if player_attack_speed.0.finished() {
-        player_state.set(PlayerState::Attack);
+        player_next_state.set(PlayerState::Attack);
     }
 }
 
@@ -321,42 +318,5 @@ fn player_take_damage(
         if player_health.current() == 0.0 {
             game_state.set(GameState::GameOver);
         }
-    }
-}
-
-fn battle_end_check(
-    items: Res<Items>,
-    inventory: Res<Inventory>,
-    mut player: Query<(&mut Health, &mut AttackSpeed), With<Player>>,
-    mut player_state: ResMut<NextState<PlayerState>>,
-    mut event_reader: EventReader<EnemyDeadEvent>,
-) {
-    let Ok((mut player_health, mut player_attack_speed)) = player.get_single_mut() else {
-        return;
-    };
-    for _ in event_reader.read() {
-        player_attack_speed.0.reset();
-        let heal = inventory
-            .active_items
-            .iter()
-            .map(|item_idx| {
-                if let Some(i) = item_idx {
-                    items[*i].item.heal()
-                } else {
-                    0.0
-                }
-            })
-            .sum::<f32>();
-        player_health.heal(heal);
-        player_state.set(PlayerState::Run);
-    }
-}
-
-fn pickup_end_check(
-    mut event_reader: EventReader<ChestOppenedEvent>,
-    mut player_state: ResMut<NextState<PlayerState>>,
-) {
-    for _ in event_reader.read() {
-        player_state.set(PlayerState::Run);
     }
 }

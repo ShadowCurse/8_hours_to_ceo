@@ -17,8 +17,10 @@ impl Plugin for AnimationPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<AnimationFinishedEvent>().add_systems(
             Update,
-            (run_sprite_animations, run_damage_text_animations)
-                .run_if(in_state(GameState::Running).or_else(in_state(GameState::Battle))),
+            (run_sprite_animations, run_damage_text_animations).run_if(
+                in_state(GameState::Running)
+                    .or_else(in_state(GameState::Battle).or_else(in_state(GameState::Pickup))),
+            ),
         );
     }
 }

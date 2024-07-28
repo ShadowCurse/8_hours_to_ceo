@@ -210,6 +210,7 @@ fn chest_open_check(
         }
     }
 
+    info!("chest open event");
     inventory_update_event.send(InventoryUpdateEvent);
     chest_openned_event.send(ChestOppenedEvent);
 }

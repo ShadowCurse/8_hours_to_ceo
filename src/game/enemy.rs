@@ -3,7 +3,7 @@ use std::ops::{Index, IndexMut};
 use bevy::{ecs::system::EntityCommands, prelude::*};
 use rand::Rng;
 
-use crate::{game::animation::DamageText, ui::UiStyle, GlobalState};
+use crate::{ui::UiStyle, GlobalState};
 
 use super::{
     animation::{spawn_damage_text, AllAnimations, AnimationConfig, AnimationFinishedEvent},
@@ -365,7 +365,6 @@ fn enemy_attack(
     };
 
     attack_speed.0.tick(time.delta());
-
     if attack_speed.0.finished() {
         let enemy_info = &enemies[*enemy_idx];
 

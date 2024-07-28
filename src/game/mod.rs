@@ -19,8 +19,8 @@ use circle_sectors::{position_to_sector_position, SectorPosition, SectorsPlugin}
 use cursor::CursorPlugin;
 use enemy::{BattleEnemy, Enemy, EnemyDeadEvent, EnemyPlugin};
 use hp_bar::{HpBarPlugin, HpBarResources};
-use inventory::InventoryPlugin;
-use items::ItemsPlugin;
+use inventory::{Inventory, InventoryPlugin};
+use items::{Items, ItemsPlugin};
 use player::{spawn_player, Player, PlayerPlugin, PlayerResources, PlayerState};
 use spells::SpellsPlugin;
 
@@ -309,11 +309,34 @@ fn initiate_battle(
 }
 
 fn battle_end_check(
+    items: Res<Items>,
+    inventory: Res<Inventory>,
+    mut player: Query<(&mut Health, &mut AttackSpeed), With<Player>>,
+    mut player_state: ResMut<NextState<PlayerState>>,
     mut game_state: ResMut<NextState<GameState>>,
     mut event_reader: EventReader<EnemyDeadEvent>,
 ) {
+    let Ok((mut player_health, mut player_attack_speed)) = player.get_single_mut() else {
+        return;
+    };
     for _ in event_reader.read() {
+        info!("game battle end");
+        player_attack_speed.0.reset();
+        let heal = inventory
+            .active_items
+            .iter()
+            .map(|item_idx| {
+                if let Some(i) = item_idx {
+                    items[*i].item.heal()
+                } else {
+                    0.0
+                }
+            })
+            .sum::<f32>();
+        player_health.heal(heal);
+
         game_state.set(GameState::Running);
+        player_state.set(PlayerState::Run);
     }
 }
 
@@ -349,10 +372,13 @@ fn initiate_pickup(
 }
 
 fn pickup_end_check(
-    mut event_reader: EventReader<ChestOppenedEvent>,
     mut game_state: ResMut<NextState<GameState>>,
+    mut player_state: ResMut<NextState<PlayerState>>,
+    mut event_reader: EventReader<ChestOppenedEvent>,
 ) {
     for _ in event_reader.read() {
+        info!("game pickup end");
         game_state.set(GameState::Running);
+        player_state.set(PlayerState::Run);
     }
 }
