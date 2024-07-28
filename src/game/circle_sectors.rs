@@ -247,8 +247,8 @@ fn prepare_sector_resources(
         material: materials.add(Color::srgb_u8(174, 174, 169)),
         background: asset_server.load("sectors/zone_default_bent.png"),
         card: asset_server.load("sectors_cards/zone_default_card.png"),
-        drop_rate: 0.9,
-        enemies: vec![EnemyIdx(1), EnemyIdx(2)],
+        drop_rate: 0.2,
+        enemies: vec![EnemyIdx(1)],
         chests: vec![ChestIdx(0)],
     });
     sectors.0.push(SectorInfo {
@@ -256,7 +256,7 @@ fn prepare_sector_resources(
         material: materials.add(Color::srgb_u8(180, 195, 190)),
         background: asset_server.load("sectors/zone_green_bent.png"),
         card: asset_server.load("sectors_cards/zone_green_card.png"),
-        drop_rate: 0.9,
+        drop_rate: 0.4,
         enemies: vec![EnemyIdx(1), EnemyIdx(2)],
         chests: vec![ChestIdx(1)],
     });
@@ -265,7 +265,7 @@ fn prepare_sector_resources(
         material: materials.add(Color::srgb_u8(253, 252, 205)),
         background: asset_server.load("sectors/zone_yellow_bent.png"),
         card: asset_server.load("sectors_cards/zone_yellow_card.png"),
-        drop_rate: 0.9,
+        drop_rate: 0.3,
         enemies: vec![EnemyIdx(1), EnemyIdx(2)],
         chests: vec![ChestIdx(2)],
     });
@@ -274,8 +274,8 @@ fn prepare_sector_resources(
         material: materials.add(Color::srgb_u8(125, 169, 157)),
         background: asset_server.load("sectors/zone_grey_bent.png"),
         card: asset_server.load("sectors_cards/zone_grey_card.png"),
-        drop_rate: 0.9,
-        enemies: vec![EnemyIdx(1), EnemyIdx(2)],
+        drop_rate: 0.2,
+        enemies: vec![EnemyIdx(2)],
         chests: vec![ChestIdx(3)],
     });
     sectors.0.push(SectorInfo {
@@ -283,9 +283,9 @@ fn prepare_sector_resources(
         material: materials.add(Color::srgb_u8(128, 93, 71)),
         background: asset_server.load("sectors/zone_brown_bent.png"),
         card: asset_server.load("sectors_cards/zone_brown_card.png"),
-        drop_rate: 0.9,
-        enemies: vec![EnemyIdx(1), EnemyIdx(2)],
-        chests: vec![ChestIdx(3)],
+        drop_rate: 0.2,
+        enemies: vec![EnemyIdx(2)],
+        chests: vec![ChestIdx(4)],
     });
     commands.insert_resource(sectors);
 }
@@ -320,7 +320,7 @@ fn spawn_clock(
         // Rotation happens ccw, so make it cw.
         transform.rotate_local_z(-rotation);
 
-        let sector_idx = SectorIdx(rand::thread_rng().gen_range(0..5));
+        let sector_idx = SectorIdx(0);
         let sector_info = &sectors.0[sector_idx.0];
         let material = sector_info.material.clone();
         commands

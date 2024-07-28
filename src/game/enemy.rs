@@ -178,15 +178,12 @@ fn prepare_enemy_resources(
         texture_atlas,
 
         spawn_rate: 0.3,
-        items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
-        spells: vec![
-            SpellIdx(0),
-            SpellIdx(1),
-            SpellIdx(2),
-            SpellIdx(3),
-            SpellIdx(4),
-        ],
-        sectors: vec![SectorIdx(0)],
+
+        // Plant, Stickynotes
+        items: vec![ItemIdx(2), ItemIdx(5)],
+        // Marker
+        spells: vec![SpellIdx(0)],
+        sectors: vec![SectorIdx(1), SectorIdx(2)],
     });
 
     // Orange
@@ -221,15 +218,9 @@ fn prepare_enemy_resources(
         texture_atlas,
 
         spawn_rate: 0.3,
-        items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
-        spells: vec![
-            SpellIdx(0),
-            SpellIdx(1),
-            SpellIdx(2),
-            SpellIdx(3),
-            SpellIdx(4),
-        ],
-        sectors: vec![SectorIdx(0)],
+        items: vec![ItemIdx(1), ItemIdx(3), ItemIdx(5)],
+        spells: vec![],
+        sectors: vec![SectorIdx(2), SectorIdx(3)],
     });
 
     commands.insert_resource(enemies);

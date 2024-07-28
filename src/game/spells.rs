@@ -141,6 +141,7 @@ impl IndexMut<SpellIdx> for Spells {
 fn prepare_spells(asset_server: Res<AssetServer>, mut commands: Commands) {
     let mut spells = Spells(vec![]);
 
+    // 0 marker
     spells.0.push(SpellInfo {
         description: "Throw 2 markers at the coworker. Each deals 5 damage.",
         image: asset_server.load("spells/spell_marker.png"),
@@ -154,6 +155,7 @@ fn prepare_spells(asset_server: Res<AssetServer>, mut commands: Commands) {
             chance: 1.0,
         }),
     });
+    // 1 keyboard
     spells.0.push(SpellInfo {
         description: "Slams keyboard into coworker face. Deals 10 damage.",
         image: asset_server.load("spells/spell_keyboard.png"),
@@ -167,6 +169,7 @@ fn prepare_spells(asset_server: Res<AssetServer>, mut commands: Commands) {
             chance: 1.0,
         }),
     });
+    // 2 punch
     spells.0.push(SpellInfo {
         description: "50% chance to layoff coworker and deal 100 damage",
         image: asset_server.load("spells/spell_punch.png"),
@@ -180,6 +183,7 @@ fn prepare_spells(asset_server: Res<AssetServer>, mut commands: Commands) {
             chance: 0.5,
         }),
     });
+    // 3 lunchbox
     spells.0.push(SpellInfo {
         description: "Delicious lunch. Restores 10 hp.",
         image: asset_server.load("spells/spell_lunchbox.png"),
@@ -187,6 +191,7 @@ fn prepare_spells(asset_server: Res<AssetServer>, mut commands: Commands) {
         cooldown: Timer::from_seconds(10.0, TimerMode::Once),
         spell: Spell::Heal(HealSpellInfo { heal: 10.0 }),
     });
+    // 4 excel
     spells.0.push(SpellInfo {
         description: "Excels player damage by 10 for 2 seconds.",
         image: asset_server.load("spells/spell_excel.png"),
@@ -197,6 +202,7 @@ fn prepare_spells(asset_server: Res<AssetServer>, mut commands: Commands) {
             attack: 10.0,
         }),
     });
+    // 5 stand up
     spells.0.push(SpellInfo {
         description: "Attending standup raises defence by 10% for 2 seconds.",
         image: asset_server.load("spells/spell_standup.png"),
@@ -207,6 +213,7 @@ fn prepare_spells(asset_server: Res<AssetServer>, mut commands: Commands) {
             defense: 0.1,
         }),
     });
+    // 6 powerpoint
     spells.0.push(SpellInfo {
         description:
             "Present future plans to coworker. Lowers coworker defence by 10% for 2 seconds.",
