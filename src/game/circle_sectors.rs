@@ -17,12 +17,14 @@ use crate::{
 use super::{
     chest::{spawn_chest, ChestIdx, ChestResources, Chests},
     cursor::CursorSector,
-    enemy::{spawn_enemy, Enemies, EnemyIdx},
+    enemy::{spawn_enemy, Enemies, Enemy, EnemyIdx},
     hp_bar::HpBarResources,
     inventory::Inventory,
     GameState, Player, Z_CHEST, Z_CLOCK_ARROWS, Z_CLOCK_CENTER, Z_CLOCK_KNOB, Z_CLOCK_NUMBERS,
     Z_ENEMY, Z_SECTORS, Z_SECTOR_BACKGROUND, Z_WALL,
 };
+
+pub const MAX_CYCLES: u8 = 1;
 
 pub const CIRCLE_RADIUS: f32 = 200.0;
 pub const CIRCLE_INNER_RADIUS: f32 = 180.0;
@@ -41,6 +43,7 @@ pub struct SectorsPlugin;
 impl Plugin for SectorsPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<SectorPlacedEvent>()
+            .add_event::<LastCycleEvent>()
             .add_systems(PreStartup, prepare_sector_resources)
             .add_systems(OnEnter(GlobalState::MainMenu), spawn_clock)
             .add_systems(
@@ -49,6 +52,7 @@ impl Plugin for SectorsPlugin {
                     update_minute_arrow,
                     update_hour_arrow,
                     count_full_cycles,
+                    on_last_cycle_event,
                     sector_spawn_things,
                 )
                     .run_if(in_state(GameState::Running)),
@@ -79,6 +83,25 @@ pub struct FullCycles(pub u8);
 
 #[derive(Event, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SectorPlacedEvent;
+
+#[derive(Event, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct LastCycleEvent;
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct LastBossTag;
+
+impl Component for LastBossTag {
+    const STORAGE_TYPE: StorageType = StorageType::Table;
+
+    fn register_component_hooks(hooks: &mut ComponentHooks) {
+        hooks.on_remove(|mut world, _, _| {
+            let Some(mut game_state) = world.get_resource_mut::<NextState<GameState>>() else {
+                return;
+            };
+            game_state.set(GameState::Win);
+        });
+    }
+}
 
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SectorIdx(pub usize);
@@ -119,8 +142,8 @@ pub struct SectorTimer(Timer);
 
 impl Default for SectorTimer {
     fn default() -> Self {
-        // 5..10 seconds
-        let duration = 1.0; //1.0 + rand::random::<f32>() * 1.0;
+        // 1..2 seconds
+        let duration = 1.0 + rand::random::<f32>() * 1.0;
         Self(Timer::from_seconds(duration, TimerMode::Repeating))
     }
 }
@@ -444,6 +467,7 @@ fn update_hour_arrow(
 fn count_full_cycles(
     player: Query<&Transform, With<Player>>,
     mut full_cycles: ResMut<FullCycles>,
+    mut event_writer: EventWriter<LastCycleEvent>,
     mut local: Local<u8>,
 ) {
     let Ok(player_transform) = player.get_single() else {
@@ -455,9 +479,58 @@ fn count_full_cycles(
     if sector_id != *local {
         if sector_id == 0 {
             full_cycles.0 += 1;
+            if full_cycles.0 == MAX_CYCLES {
+                event_writer.send(LastCycleEvent);
+            }
         }
         println!("player is in the sector: {sector_id}");
         *local = sector_id;
+    }
+}
+
+fn on_last_cycle_event(
+    enemies: Res<Enemies>,
+    hp_bar_resources: Res<HpBarResources>,
+    sector_enemies: Query<(Entity, &SectorPosition), With<Enemy>>,
+    mut commands: Commands,
+    mut sectors: Query<(&SectorPosition, &mut SectorTimer)>,
+    mut event_reader: EventReader<LastCycleEvent>,
+) {
+    for _ in event_reader.read() {
+        for (entity, sector_position) in sector_enemies.iter() {
+            if sector_position.0 == SECTORS_NUM - 1 {
+                let Some(e) = commands.get_entity(entity) else {
+                    continue;
+                };
+
+                e.despawn_recursive();
+            }
+        }
+        for (sector_position, mut timer) in sectors.iter_mut() {
+            if sector_position.0 == SECTORS_NUM - 1 {
+                timer.0.reset();
+                timer.0.pause();
+            }
+        }
+
+        // Spawn last boss
+        let angle = sector_id_to_start_angle(SECTORS_NUM - 1) + SECTOR_ANGLE / 2.0
+            - SECTOR_THING_GAP / 2.0 * (SECTOR_THINGS - 1) as f32
+            + SECTOR_THING_GAP * 3.0;
+
+        let mut t = Transform::from_xyz(0.0, CIRCLE_RADIUS + 35.0, Z_ENEMY)
+            .with_scale(Vec3::new(2.5, 2.5, 2.5));
+        t.rotate_around(Vec3::ZERO, Quat::from_rotation_z(-angle));
+
+        spawn_enemy(
+            &mut commands,
+            enemies.as_ref(),
+            EnemyIdx(0),
+            SectorPosition(SECTORS_NUM - 1),
+            hp_bar_resources.as_ref(),
+            t,
+        )
+        .insert(LastBossTag);
     }
 }
 

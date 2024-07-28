@@ -62,6 +62,7 @@ impl Plugin for GamePlugin {
         .add_systems(OnEnter(GameState::Running), camera_target_player)
         .add_systems(OnEnter(GameState::Battle), camera_target_player)
         .add_systems(OnEnter(GameState::Paused), camera_target_pause)
+        .add_systems(OnEnter(GameState::Win), || println!("win"))
         .add_systems(
             Update,
             (initiate_battle, initiate_pickup).run_if(in_state(GameState::Running)),
@@ -82,6 +83,7 @@ pub enum GameState {
     Pickup,
     Battle,
     Paused,
+    Win,
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
