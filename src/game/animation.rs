@@ -40,7 +40,6 @@ pub enum AllAnimations {
     PlayerAttack,
     PlayerDead,
     BossIdle,
-    BossRun,
     BossAttack,
     BossDead,
     ChestOpen,
@@ -93,7 +92,7 @@ pub fn spawn_damage_text(
     commands.spawn((
         Text2dBundle {
             text: Text::from_section(
-                format!("{}", damage),
+                format!("{:.1}", damage),
                 TextStyle {
                     font: ui_style.text_style.font.clone(),
                     font_size: 30.0,

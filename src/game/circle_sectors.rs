@@ -27,7 +27,7 @@ use super::{
     Z_ENEMY, Z_SECTORS, Z_SECTOR_BACKGROUND, Z_WALL,
 };
 
-pub const MAX_CYCLES: u8 = 1;
+pub const MAX_CYCLES: u8 = 8;
 
 pub const CIRCLE_RADIUS: f32 = 200.0;
 pub const CIRCLE_INNER_RADIUS: f32 = 180.0;

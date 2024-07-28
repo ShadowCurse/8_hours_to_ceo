@@ -137,11 +137,8 @@ pub fn spawn_player<'a>(
         player_resources.idle_animation_config.clone(),
         Player,
         PlayerSpeed(0.5),
-        Health {
-            max: 100.0,
-            current: 100.0,
-        },
-        Damage(5.0),
+        Health::new(200.0),
+        Damage(10.0),
         AttackSpeed::new(0.5),
         Defense(0.0),
         GameCameraPossibleTarget {

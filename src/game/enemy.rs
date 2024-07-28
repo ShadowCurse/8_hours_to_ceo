@@ -78,6 +78,9 @@ pub struct EnemyInfo {
     pub items: Vec<ItemIdx>,
     pub spells: Vec<SpellIdx>,
     pub sectors: Vec<SectorIdx>,
+
+    pub hp: f32,
+    pub damage: f32,
 }
 
 #[derive(Resource, Debug, Clone)]
@@ -144,6 +147,9 @@ fn prepare_enemy_resources(
             SpellIdx(4),
         ],
         sectors: vec![SectorIdx(0)],
+
+        hp: 500.0,
+        damage: 15.0,
     });
 
     // Green
@@ -182,8 +188,11 @@ fn prepare_enemy_resources(
         // Plant, Stickynotes
         items: vec![ItemIdx(2), ItemIdx(5)],
         // Marker
-        spells: vec![SpellIdx(0)],
+        spells: vec![SpellIdx(0), SpellIdx(3)],
         sectors: vec![SectorIdx(1), SectorIdx(2)],
+
+        hp: 50.0,
+        damage: 3.0,
     });
 
     // Orange
@@ -221,6 +230,9 @@ fn prepare_enemy_resources(
         items: vec![ItemIdx(1), ItemIdx(3), ItemIdx(5)],
         spells: vec![],
         sectors: vec![SectorIdx(2), SectorIdx(3)],
+
+        hp: 120.0,
+        damage: 8.0,
     });
 
     commands.insert_resource(enemies);
@@ -245,11 +257,8 @@ pub fn spawn_enemy<'a>(
         enemy_info.texture_atlas.clone(),
         enemy_info.idle_animation_config.clone(),
         Enemy { is_boss },
-        Health {
-            max: 30.0,
-            current: 30.0,
-        },
-        Damage(1.0),
+        Health::new(enemy_info.hp),
+        Damage(enemy_info.damage),
         AttackSpeed::new(1.0),
         Defense(0.0),
         sector_id,
