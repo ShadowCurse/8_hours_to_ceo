@@ -114,7 +114,6 @@ pub struct SectorIdx(pub usize);
 
 #[derive(Debug)]
 pub struct SectorInfo {
-    pub name: &'static str,
     pub description: &'static str,
     pub material: Handle<ColorMaterial>,
     pub background: Handle<Image>,
@@ -244,8 +243,7 @@ fn prepare_sector_resources(
 
     let mut sectors = Sectors(vec![]);
     sectors.0.push(SectorInfo {
-        name: "Default",
-        description: "Default sector",
+        description: "Grey walls look at you.",
         material: materials.add(Color::srgb_u8(174, 174, 169)),
         background: asset_server.load("sectors/zone_default_bent.png"),
         card: asset_server.load("sectors_cards/zone_default_card.png"),
@@ -254,8 +252,7 @@ fn prepare_sector_resources(
         chests: vec![ChestIdx(0)],
     });
     sectors.0.push(SectorInfo {
-        name: "Green",
-        description: "Green sector",
+        description: "Green zeebras on walls",
         material: materials.add(Color::srgb_u8(180, 195, 190)),
         background: asset_server.load("sectors/zone_green_bent.png"),
         card: asset_server.load("sectors_cards/zone_green_card.png"),
@@ -264,8 +261,7 @@ fn prepare_sector_resources(
         chests: vec![ChestIdx(1)],
     });
     sectors.0.push(SectorInfo {
-        name: "Yellow",
-        description: "Yellow sector",
+        description: "Bright and blinding.",
         material: materials.add(Color::srgb_u8(253, 252, 205)),
         background: asset_server.load("sectors/zone_yellow_bent.png"),
         card: asset_server.load("sectors_cards/zone_yellow_card.png"),
@@ -274,8 +270,7 @@ fn prepare_sector_resources(
         chests: vec![ChestIdx(2)],
     });
     sectors.0.push(SectorInfo {
-        name: "Grey",
-        description: "Grey sector",
+        description: "Beer bottle glass.",
         material: materials.add(Color::srgb_u8(125, 169, 157)),
         background: asset_server.load("sectors/zone_grey_bent.png"),
         card: asset_server.load("sectors_cards/zone_grey_card.png"),
@@ -284,8 +279,7 @@ fn prepare_sector_resources(
         chests: vec![ChestIdx(3)],
     });
     sectors.0.push(SectorInfo {
-        name: "Brown",
-        description: "Brown sector",
+        description: "Inside the shroom.",
         material: materials.add(Color::srgb_u8(128, 93, 71)),
         background: asset_server.load("sectors/zone_brown_bent.png"),
         card: asset_server.load("sectors_cards/zone_brown_card.png"),
