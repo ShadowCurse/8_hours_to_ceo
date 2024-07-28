@@ -44,9 +44,13 @@ impl Plugin for InGamePlugin {
                     update_sectors,
                 )
                     .run_if(in_state(UiState::InGame)),
-            );
+            )
+            .add_systems(OnEnter(GameState::Win), on_game_win_ui);
     }
 }
+
+#[derive(Resource, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct OverlayRootNode(pub Entity);
 
 #[derive(Resource, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SelectedSectionButton(pub Option<Entity>);
@@ -100,6 +104,7 @@ pub struct SectorsTooltipText;
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum InGameButton {
     MainMenu,
+    HELL_YEAH,
 }
 
 pub const UI_TOP_SIZE: f32 = 10.0;
@@ -157,8 +162,68 @@ fn spawn_inventory_button<C: Component + Copy>(
     ));
 }
 
+fn on_game_win_ui(
+    ui_style: Res<UiStyle>,
+    overlay_root_node: Res<OverlayRootNode>,
+    mut commands: Commands,
+) {
+    let Some(mut e) = commands.get_entity(overlay_root_node.0) else {
+        return;
+    };
+
+    e.with_children(|builder| {
+        builder
+            .spawn(NodeBundle {
+                style: Style {
+                    width: Val::Percent(40.0),
+                    height: Val::Percent(40.0),
+                    border: UiRect::all(Val::Percent(1.0)),
+                    flex_direction: FlexDirection::Column,
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::Center,
+                    ..Default::default()
+                },
+                background_color: TOOLTIP_BACKGROUND_COLOR.into(),
+                border_color: BorderColor(Color::BLACK),
+                border_radius: BorderRadius::all(Val::Percent(5.0)),
+                ..Default::default()
+            })
+            .with_children(|builder| {
+                builder.spawn((TextBundle {
+                    text: Text::from_section(
+                        "You became CEO",
+                        TextStyle {
+                            font_size: 60.0,
+                            color: TOOLTIP_TEXT_COLOR,
+                            ..Default::default()
+                        },
+                    ),
+                    ..Default::default()
+                },));
+                spawn_system_button(builder, &ui_style, InGameButton::HELL_YEAH);
+            });
+    });
+}
+
 fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
     commands.insert_resource(SelectedSectionButton(None));
+
+    // Overlay root node
+    let overlay_root_node = commands
+        .spawn(NodeBundle {
+            style: Style {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Column,
+                align_content: AlignContent::Center,
+                justify_content: JustifyContent::Center,
+                ..Default::default()
+            },
+            ..default()
+        })
+        .insert(StateScoped(UiState::InGame))
+        .id();
+    commands.insert_resource(OverlayRootNode(overlay_root_node));
 
     // Tooltip root node
     commands
@@ -307,7 +372,7 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                                     .spawn((NodeBundle {
                                         style: Style {
                                             width: Val::Percent(50.0),
-                                                border: UiRect::all(Val::Percent(1.0)),
+                                            border: UiRect::all(Val::Percent(1.0)),
                                             flex_direction: FlexDirection::Column,
                                             justify_content: JustifyContent::Center,
                                             ..Default::default()
@@ -751,20 +816,16 @@ fn button_system(
     mut ui_state: ResMut<NextState<UiState>>,
     mut global_state: ResMut<NextState<GlobalState>>,
     mut interaction_query: Query<
-        (&InGameButton, &Interaction, &mut BackgroundColor),
-        (Changed<Interaction>, With<Button>),
+        (&Interaction, &mut BackgroundColor),
+        (Changed<Interaction>, With<Button>, With<InGameButton>),
     >,
 ) {
-    for (button, interaction, mut color) in interaction_query.iter_mut() {
+    for (interaction, mut color) in interaction_query.iter_mut() {
         match *interaction {
             Interaction::Pressed => {
                 *color = ui_style.btn_color_pressed.into();
-                match button {
-                    InGameButton::MainMenu => {
-                        ui_state.set(UiState::MainMenu);
-                        global_state.set(GlobalState::MainMenu);
-                    }
-                }
+                ui_state.set(UiState::MainMenu);
+                global_state.set(GlobalState::MainMenu);
             }
             Interaction::Hovered => {
                 *color = ui_style.btn_color_hover.into();
