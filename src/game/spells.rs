@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use rand::Rng;
 
 use super::{
-    animation::{DAMAGE_COLOR_FIRE_PUNCH, DAMAGE_COLOR_MARKER},
+    animation::{DAMAGE_COLOR_FIRE_PUNCH, DAMAGE_COLOR_KEYBOARD, DAMAGE_COLOR_MARKER},
     enemy::{BattleEnemy, DamageEnemyEvent},
     Damage, Defense, GameState, Health, Player,
 };
@@ -163,7 +163,7 @@ fn prepare_spells(asset_server: Res<AssetServer>, mut commands: Commands) {
             strikes: 1,
             delta_time: 0.0,
             damage: 10.0,
-            color: DAMAGE_COLOR_MARKER,
+            color: DAMAGE_COLOR_KEYBOARD,
             chance: 1.0,
         }),
     });
