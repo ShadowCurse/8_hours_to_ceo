@@ -210,7 +210,7 @@ fn prepare_spells(asset_server: Res<AssetServer>, mut commands: Commands) {
     spells.0.push(SpellInfo {
         description:
             "Present future plans to coworker. Lowers coworker defence by 10% for 2 seconds.",
-        image: asset_server.load("spells/tmp_spell.png"),
+        image: asset_server.load("spells/spell_powerpoint.png"),
         drop_rate: 0.3,
         cooldown: Timer::from_seconds(5.0, TimerMode::Once),
         spell: Spell::EnemyDefenseDown(EnemyDefenseDownSpellInfo {
