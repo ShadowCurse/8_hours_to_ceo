@@ -78,7 +78,6 @@ fn main_menu_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                     },
                     ..default()
                 })
-                .insert(StateScoped(UiState::MainMenu))
                 .with_children(|builder| {
                     spawn_button(builder, &ui_style, MainMenuButton::Start);
                     spawn_button(builder, &ui_style, MainMenuButton::Settings);
