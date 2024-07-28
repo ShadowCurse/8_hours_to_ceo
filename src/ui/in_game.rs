@@ -45,7 +45,8 @@ impl Plugin for InGamePlugin {
                 )
                     .run_if(in_state(UiState::InGame)),
             )
-            .add_systems(OnEnter(GameState::Win), on_game_win_ui);
+            .add_systems(OnEnter(GameState::Win), on_game_win_ui)
+            .add_systems(OnEnter(GameState::GameOver), on_game_end_ui);
     }
 }
 
@@ -105,6 +106,7 @@ pub struct SectorsTooltipText;
 enum InGameButton {
     MainMenu,
     HELL_YEAH,
+    OH_NO,
 }
 
 pub const UI_TOP_SIZE: f32 = 10.0;
@@ -191,7 +193,7 @@ fn on_game_win_ui(
             .with_children(|builder| {
                 builder.spawn((TextBundle {
                     text: Text::from_section(
-                        "You became CEO",
+                        "YOU BECAME CEO",
                         TextStyle {
                             font_size: 60.0,
                             color: TOOLTIP_TEXT_COLOR,
@@ -201,6 +203,49 @@ fn on_game_win_ui(
                     ..Default::default()
                 },));
                 spawn_system_button(builder, &ui_style, InGameButton::HELL_YEAH);
+            });
+    });
+}
+
+fn on_game_end_ui(
+    ui_style: Res<UiStyle>,
+    overlay_root_node: Res<OverlayRootNode>,
+    mut commands: Commands,
+) {
+    let Some(mut e) = commands.get_entity(overlay_root_node.0) else {
+        return;
+    };
+
+    e.with_children(|builder| {
+        builder
+            .spawn(NodeBundle {
+                style: Style {
+                    width: Val::Percent(40.0),
+                    height: Val::Percent(40.0),
+                    border: UiRect::all(Val::Percent(1.0)),
+                    flex_direction: FlexDirection::Column,
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::Center,
+                    ..Default::default()
+                },
+                background_color: TOOLTIP_BACKGROUND_COLOR.into(),
+                border_color: BorderColor(Color::BLACK),
+                border_radius: BorderRadius::all(Val::Percent(5.0)),
+                ..Default::default()
+            })
+            .with_children(|builder| {
+                builder.spawn((TextBundle {
+                    text: Text::from_section(
+                        "YOU FAILED",
+                        TextStyle {
+                            font_size: 60.0,
+                            color: TOOLTIP_TEXT_COLOR,
+                            ..Default::default()
+                        },
+                    ),
+                    ..Default::default()
+                },));
+                spawn_system_button(builder, &ui_style, InGameButton::OH_NO);
             });
     });
 }

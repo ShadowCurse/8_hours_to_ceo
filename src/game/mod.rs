@@ -83,6 +83,7 @@ pub enum GameState {
     Battle,
     Paused,
     Win,
+    GameOver,
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]

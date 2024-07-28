@@ -280,6 +280,7 @@ fn player_take_damage(
     items: Res<Items>,
     inventory: Res<Inventory>,
     mut commands: Commands,
+    mut game_state: ResMut<NextState<GameState>>,
     mut player: Query<(&Transform, &Defense, &mut Health), With<Player>>,
     mut event_read: EventReader<DamagePlayerEvent>,
 ) {
@@ -321,6 +322,10 @@ fn player_take_damage(
                 direction: player_transform.translation.normalize(),
             },
         ));
+
+        if player_health.current() == 0.0 {
+            game_state.set(GameState::GameOver);
+        }
     }
 }
 
