@@ -3,10 +3,10 @@ use std::ops::{Index, IndexMut};
 use bevy::{ecs::system::EntityCommands, prelude::*};
 use rand::Rng;
 
-use crate::{game::animation::DamageText, GlobalState};
+use crate::{game::animation::DamageText, ui::UiStyle, GlobalState};
 
 use super::{
-    animation::{AllAnimations, AnimationConfig, AnimationFinishedEvent},
+    animation::{spawn_damage_text, AllAnimations, AnimationConfig, AnimationFinishedEvent},
     circle_sectors::{SectorIdx, SectorPosition, Sectors},
     hp_bar::{hp_bar_bundle, HpBarResources},
     inventory::{Inventory, InventoryUpdateEvent},
@@ -392,6 +392,7 @@ fn on_attack_finish(
 }
 
 fn enemy_take_damage(
+    ui_style: Res<UiStyle>,
     mut commands: Commands,
     mut enemy: Query<(&Transform, &Defense, &mut Health), With<BattleEnemy>>,
     mut event_reader: EventReader<DamageEnemyEvent>,
@@ -404,23 +405,13 @@ fn enemy_take_damage(
         let damage = e.damage * (1.0 - enemy_defense.0);
         enemy_health.take_damage(damage);
 
-        commands.spawn((
-            Text2dBundle {
-                text: Text::from_section(
-                    format!("{}", damage),
-                    TextStyle {
-                        font_size: 40.0,
-                        color: e.color,
-                        ..Default::default()
-                    },
-                ),
-                transform: *enemy_transform,
-                ..default()
-            },
-            DamageText {
-                direction: enemy_transform.translation.normalize(),
-            },
-        ));
+        spawn_damage_text(
+            &mut commands,
+            ui_style.as_ref(),
+            damage,
+            *enemy_transform,
+            enemy_transform.translation.normalize(),
+        );
     }
 }
 

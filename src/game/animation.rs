@@ -2,6 +2,8 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 
+use crate::{ui::UiStyle, GlobalState};
+
 use super::GameState;
 
 pub struct AnimationPlugin;
@@ -70,6 +72,31 @@ impl AnimationConfig {
     pub fn timer_from_fps(fps: u8) -> Timer {
         Timer::new(Duration::from_secs_f32(1.0 / (fps as f32)), TimerMode::Once)
     }
+}
+
+pub fn spawn_damage_text(
+    commands: &mut Commands,
+    ui_style: &UiStyle,
+    damage: f32,
+    transform: Transform,
+    direction: Vec3,
+) {
+    commands.spawn((
+        Text2dBundle {
+            text: Text::from_section(
+                format!("{}", damage),
+                TextStyle {
+                    font: ui_style.text_style.font.clone(),
+                    font_size: 30.0,
+                    color: Color::srgb(1.0, 0.0, 0.0),
+                },
+            ),
+            transform,
+            ..Default::default()
+        },
+        DamageText { direction },
+        StateScoped(GlobalState::InGame),
+    ));
 }
 
 fn run_sprite_animations(

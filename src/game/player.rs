@@ -1,9 +1,9 @@
 use bevy::{ecs::system::EntityCommands, prelude::*};
 
-use crate::{game::animation::DamageText, GlobalState};
+use crate::{game::animation::DamageText, ui::UiStyle, GlobalState};
 
 use super::{
-    animation::{AllAnimations, AnimationConfig, AnimationFinishedEvent},
+    animation::{spawn_damage_text, AllAnimations, AnimationConfig, AnimationFinishedEvent},
     chest::ChestOppenedEvent,
     enemy::{DamageEnemyEvent, EnemyDeadEvent},
     hp_bar::{hp_bar_bundle, HpBarResources},
@@ -279,6 +279,7 @@ fn on_attack_finish(
 fn player_take_damage(
     items: Res<Items>,
     inventory: Res<Inventory>,
+    ui_style: Res<UiStyle>,
     mut commands: Commands,
     mut game_state: ResMut<NextState<GameState>>,
     mut player: Query<(&Transform, &Defense, &mut Health), With<Player>>,
@@ -305,23 +306,13 @@ fn player_take_damage(
         let damage = e.0 * (1.0 - player_defense);
         player_health.take_damage(damage);
 
-        commands.spawn((
-            Text2dBundle {
-                text: Text::from_section(
-                    format!("{}", damage),
-                    TextStyle {
-                        font_size: 40.0,
-                        color: Color::srgb(1.0, 0.0, 0.0),
-                        ..Default::default()
-                    },
-                ),
-                transform: *player_transform,
-                ..default()
-            },
-            DamageText {
-                direction: player_transform.translation.normalize(),
-            },
-        ));
+        spawn_damage_text(
+            &mut commands,
+            ui_style.as_ref(),
+            damage,
+            *player_transform,
+            player_transform.translation.normalize(),
+        );
 
         if player_health.current() == 0.0 {
             game_state.set(GameState::GameOver);
