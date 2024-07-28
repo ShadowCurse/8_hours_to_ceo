@@ -1,11 +1,12 @@
 use std::ops::{Index, IndexMut};
 
-use bevy::{ecs::system::EntityCommands, prelude::*, sprite::MaterialMesh2dBundle};
+use bevy::{ecs::system::EntityCommands, prelude::*};
 use rand::Rng;
 
 use crate::GlobalState;
 
 use super::{
+    animation::{AllAnimations, AnimationConfig, AnimationFinishedEvent},
     circle_sectors::{SectorIdx, SectorPosition, Sectors},
     inventory::{Inventory, InventoryUpdateEvent},
     items::{ItemIdx, Items},
@@ -19,16 +20,21 @@ impl Plugin for ChestsPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<ChestOppenedEvent>()
             .add_systems(Startup, prepare_chest_resources)
-            .add_systems(Update, chest_open_check.run_if(in_state(GameState::Pickup)));
+            .add_systems(
+                Update,
+                (chest_open_check, on_chest_open_finish).run_if(in_state(GameState::Pickup)),
+            );
     }
 }
 
 #[derive(Event, Debug, Clone, PartialEq)]
 pub struct ChestOppenedEvent;
 
-#[derive(Resource, Debug, Clone, PartialEq, Eq)]
+#[derive(Resource, Debug, Clone)]
 pub struct ChestResources {
-    pub mesh_default: Handle<Mesh>,
+    pub texture: Handle<Image>,
+    pub animation_config: AnimationConfig,
+    pub texture_atlas: TextureAtlas,
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -42,7 +48,6 @@ pub struct InteractedChest;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ChestInfo {
-    pub material: Handle<ColorMaterial>,
     pub spawn_rate: f32,
     pub items: Vec<ItemIdx>,
     pub spells: Vec<SpellIdx>,
@@ -66,22 +71,28 @@ impl IndexMut<ChestIdx> for Chests {
 }
 
 fn prepare_chest_resources(
+    asset_server: Res<AssetServer>,
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
-    let material_default = materials.add(Color::srgb(0.7, 0.7, 0.7));
-    let material_green = materials.add(Color::srgb(0.2, 0.8, 0.2));
-    let material_red = materials.add(Color::srgb(0.8, 0.2, 0.2));
-    let material_orange = materials.add(Color::srgb(0.8, 0.4, 0.2));
-    let mesh_default = meshes.add(Rectangle::new(20.0, 10.0));
-
-    commands.insert_resource(ChestResources { mesh_default });
+    let chest_texture = asset_server.load("chest/chest.png");
+    let chest_animation_config =
+        AnimationConfig::new(0, 1, 5, AllAnimations::ChestOpen, true, false);
+    let texture_layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 2, 1, None, None);
+    let atlas_handle = texture_atlas_layouts.add(texture_layout);
+    let texture_atlas = TextureAtlas {
+        layout: atlas_handle,
+        index: 0,
+    };
+    commands.insert_resource(ChestResources {
+        texture: chest_texture,
+        animation_config: chest_animation_config,
+        texture_atlas,
+    });
 
     let mut chests = Chests(vec![]);
     // Default
     chests.0.push(ChestInfo {
-        material: material_default,
         spawn_rate: 0.3,
         items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
         spells: vec![
@@ -95,7 +106,6 @@ fn prepare_chest_resources(
     });
     // Green
     chests.0.push(ChestInfo {
-        material: material_green,
         spawn_rate: 0.3,
         items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
         spells: vec![
@@ -109,7 +119,6 @@ fn prepare_chest_resources(
     });
     // Red
     chests.0.push(ChestInfo {
-        material: material_red,
         spawn_rate: 0.3,
         items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
         spells: vec![
@@ -123,7 +132,6 @@ fn prepare_chest_resources(
     });
     // Orange
     chests.0.push(ChestInfo {
-        material: material_orange,
         spawn_rate: 0.3,
         items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(2)],
         spells: vec![
@@ -140,20 +148,18 @@ fn prepare_chest_resources(
 
 pub fn spawn_chest<'a>(
     commands: &'a mut Commands,
-    chests: &Chests,
     chest_resources: &ChestResources,
     chest_idx: ChestIdx,
     sector_id: SectorPosition,
     transform: Transform,
 ) -> EntityCommands<'a> {
-    let material = chests.0[chest_idx.0].material.clone();
     commands.spawn((
-        MaterialMesh2dBundle {
-            mesh: chest_resources.mesh_default.clone().into(),
-            material,
+        SpriteBundle {
             transform,
-            ..default()
+            texture: chest_resources.texture.clone(),
+            ..Default::default()
         },
+        chest_resources.texture_atlas.clone(),
         Chest,
         sector_id,
         chest_idx,
@@ -162,6 +168,23 @@ pub fn spawn_chest<'a>(
 }
 
 fn chest_open_check(
+    chest_resources: Res<ChestResources>,
+    chest: Query<Entity, (With<InteractedChest>, Without<AnimationConfig>)>,
+    mut commands: Commands,
+) {
+    let Ok(chest_entity) = chest.get_single() else {
+        return;
+    };
+
+    let Some(mut e) = commands.get_entity(chest_entity) else {
+        return;
+    };
+
+    // This start the chest animation.
+    e.insert(chest_resources.animation_config.clone());
+}
+
+fn on_chest_open_finish(
     items: Res<Items>,
     chests: Res<Chests>,
     spells: Res<Spells>,
@@ -171,46 +194,53 @@ fn chest_open_check(
     mut inventory: ResMut<Inventory>,
     mut inventory_update_event: EventWriter<InventoryUpdateEvent>,
     mut chest_openned_event: EventWriter<ChestOppenedEvent>,
+    mut event_reader: EventReader<AnimationFinishedEvent>,
 ) {
-    let Ok((chest_entity, chest_idx)) = chest.get_single() else {
-        return;
-    };
+    for e in event_reader.read() {
+        if e.0 == AllAnimations::ChestOpen {
+            let Ok((chest_entity, chest_idx)) = chest.get_single() else {
+                return;
+            };
 
-    commands
-        .get_entity(chest_entity)
-        .unwrap()
-        .despawn_recursive();
+            commands
+                .get_entity(chest_entity)
+                .unwrap()
+                .despawn_recursive();
 
-    let chest_info = &chests[*chest_idx];
+            let chest_info = &chests[*chest_idx];
 
-    let mut thread_rng = rand::thread_rng();
+            let mut thread_rng = rand::thread_rng();
 
-    if !chest_info.items.is_empty() {
-        let random_item_idx = chest_info.items[thread_rng.gen_range(0..chest_info.items.len())];
-        let item = &items[random_item_idx];
-        if thread_rng.gen_bool(item.drop_rate as f64) {
-            inventory.backpack_items.push(random_item_idx);
+            if !chest_info.items.is_empty() {
+                let random_item_idx =
+                    chest_info.items[thread_rng.gen_range(0..chest_info.items.len())];
+                let item = &items[random_item_idx];
+                if thread_rng.gen_bool(item.drop_rate as f64) {
+                    inventory.backpack_items.push(random_item_idx);
+                }
+            }
+
+            if !chest_info.spells.is_empty() {
+                let random_spell_idx =
+                    chest_info.spells[thread_rng.gen_range(0..chest_info.spells.len())];
+                let spell = &spells[random_spell_idx];
+                if thread_rng.gen_bool(spell.drop_rate as f64) {
+                    inventory.backpack_spells.push(random_spell_idx);
+                }
+            }
+
+            if !chest_info.sectors.is_empty() {
+                let random_sector_idx =
+                    chest_info.sectors[thread_rng.gen_range(0..chest_info.sectors.len())];
+                let sector = &sectors[random_sector_idx];
+                if thread_rng.gen_bool(sector.drop_rate as f64) {
+                    inventory.backpack_sectors.push(random_sector_idx);
+                }
+            }
+
+            info!("chest open event");
+            inventory_update_event.send(InventoryUpdateEvent);
+            chest_openned_event.send(ChestOppenedEvent);
         }
     }
-
-    if !chest_info.spells.is_empty() {
-        let random_spell_idx = chest_info.spells[thread_rng.gen_range(0..chest_info.spells.len())];
-        let spell = &spells[random_spell_idx];
-        if thread_rng.gen_bool(spell.drop_rate as f64) {
-            inventory.backpack_spells.push(random_spell_idx);
-        }
-    }
-
-    if !chest_info.sectors.is_empty() {
-        let random_sector_idx =
-            chest_info.sectors[thread_rng.gen_range(0..chest_info.sectors.len())];
-        let sector = &sectors[random_sector_idx];
-        if thread_rng.gen_bool(sector.drop_rate as f64) {
-            inventory.backpack_sectors.push(random_sector_idx);
-        }
-    }
-
-    info!("chest open event");
-    inventory_update_event.send(InventoryUpdateEvent);
-    chest_openned_event.send(ChestOppenedEvent);
 }

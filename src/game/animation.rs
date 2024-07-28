@@ -43,6 +43,7 @@ pub enum AllAnimations {
     BossRun,
     BossAttack,
     BossDead,
+    ChestOpen,
 }
 
 #[derive(Component, Debug, Clone)]

@@ -698,12 +698,11 @@ fn sector_spawn_things(
                     if thread_rng.gen_bool(chest_info.spawn_rate as f64) {
                         slots.0[empty_slot_position] = Some(SlotType::Item);
 
-                        let mut t = Transform::from_xyz(0.0, CIRCLE_RADIUS + 5.0, Z_CHEST);
+                        let mut t = Transform::from_xyz(0.0, CIRCLE_RADIUS + 15.0, Z_CHEST);
                         t.rotate_around(Vec3::ZERO, Quat::from_rotation_z(-angle));
 
                         spawn_chest(
                             &mut commands,
-                            chests.as_ref(),
                             chest_resources.as_ref(),
                             random_chest_idx,
                             *id,
