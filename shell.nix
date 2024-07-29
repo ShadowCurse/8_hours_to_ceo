@@ -9,6 +9,7 @@ pkgs.mkShell {
   ]}"'';
   buildInputs = with pkgs; [
     zip
+    binaryen
     wayland
     mold
     pkg-config
