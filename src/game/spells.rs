@@ -143,7 +143,7 @@ fn prepare_spells(asset_server: Res<AssetServer>, mut commands: Commands) {
 
     // 0 marker
     spells.0.push(SpellInfo {
-        description: "Throw 2 markers at the coworker. Each deals 5 damage.",
+        description: "Coworker's face === white board. Deals 2 hist, 5 damage each.",
         image: asset_server.load("spells/spell_marker.png"),
         drop_rate: 0.8,
         cooldown: Timer::from_seconds(2.0, TimerMode::Once),
@@ -157,7 +157,7 @@ fn prepare_spells(asset_server: Res<AssetServer>, mut commands: Commands) {
     });
     // 1 keyboard
     spells.0.push(SpellInfo {
-        description: "Slams keyboard into coworker face. Deals 50 damage.",
+        description: "Print mounthly report with coworker's face. Deals 50 damage.",
         image: asset_server.load("spells/spell_keyboard.png"),
         drop_rate: 0.7,
         cooldown: Timer::from_seconds(5.0, TimerMode::Once),
@@ -173,7 +173,7 @@ fn prepare_spells(asset_server: Res<AssetServer>, mut commands: Commands) {
     spells.0.push(SpellInfo {
         description: "50% chance to layoff coworker and deal 100 damage",
         image: asset_server.load("spells/spell_punch.png"),
-        drop_rate: 0.1,
+        drop_rate: 0.2,
         cooldown: Timer::from_seconds(15.0, TimerMode::Once),
         spell: Spell::Damage(DamageSpellInfo {
             strikes: 1,

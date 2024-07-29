@@ -108,21 +108,21 @@ fn prepare_items(asset_server: Res<AssetServer>, mut commands: Commands) {
     });
     // 3 scissors
     items.0.push(ItemInfo {
-        description: "Scissors to cut through your opponent's arguments. Add 11 damage.",
+        description: "Scissors for cutting pay. Adds 11 damage.",
         image: asset_server.load("items/item_scissors.png"),
         drop_rate: 0.9,
         item: Item::Scissiors,
     });
     // 4 stapler
     items.0.push(ItemInfo {
-        description: "Stapler for closing your oppenent arguments. Adds 22 damage.",
+        description: "Stapler for closing your oppenent's arguments. Adds 22 damage.",
         image: asset_server.load("items/item_stapler.png"),
         drop_rate: 0.9,
         item: Item::Stapler,
     });
     // 5 stickynotes
     items.0.push(ItemInfo {
-        description: "With stickynotes you never forget about deadlines. +10% defence.",
+        description: "With stickynotes you never forget about deadlines. Adds +10% defence.",
         image: asset_server.load("items/item_stickynotes.png"),
         drop_rate: 0.9,
         item: Item::Stickynotes,
