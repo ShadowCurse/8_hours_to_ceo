@@ -122,7 +122,7 @@ fn prepare_chest_resources(
     });
     // 3 Grey
     chests.0.push(ChestInfo {
-        spawn_rate: 0.2,
+        spawn_rate: 0.3,
         // Coffee, Paperclip, Scissors
         items: vec![ItemIdx(0), ItemIdx(1), ItemIdx(3)],
         // Marker, Keyboard, Powerpoint
@@ -131,11 +131,11 @@ fn prepare_chest_resources(
     });
     // 4 Brown
     chests.0.push(ChestInfo {
-        spawn_rate: 0.2,
+        spawn_rate: 0.3,
         // Coffee, Scissors, Stapler
         items: vec![ItemIdx(0), ItemIdx(3), ItemIdx(4)],
         spells: vec![SpellIdx(2), SpellIdx(3), SpellIdx(4)],
-        sectors: vec![SectorIdx(0), SectorIdx(3), SectorIdx(4)],
+        sectors: vec![SectorIdx(3), SectorIdx(4)],
     });
     commands.insert_resource(chests);
 }
