@@ -171,6 +171,32 @@ fn prepare_enemy_resources(
         layout: atlas_handle,
         index: 1,
     };
+    // 1
+    enemies.0.push(EnemyInfo {
+        idle_texture: idle_texture.clone(),
+        idle_animation_config: idle_animation_config.clone(),
+
+        attack_texture: attack_texture.clone(),
+        attack_animation_config: attack_animation_config.clone(),
+
+        dead_texture: dead_texture.clone(),
+        dead_animation_config: dead_animation_config.clone(),
+
+        texture_atlas: texture_atlas.clone(),
+
+        spawn_rate: 0.3,
+
+        // Plant, Stickynotes
+        items: vec![ItemIdx(2), ItemIdx(5)],
+        // Marker, Lunchbox
+        spells: vec![SpellIdx(0), SpellIdx(3)],
+        sectors: vec![SectorIdx(1), SectorIdx(2)],
+
+        hp: 50.0,
+        damage: 3.0,
+    });
+
+    // 2
     enemies.0.push(EnemyInfo {
         idle_texture,
         idle_animation_config,
@@ -185,14 +211,14 @@ fn prepare_enemy_resources(
 
         spawn_rate: 0.3,
 
-        // Plant, Stickynotes
-        items: vec![ItemIdx(2), ItemIdx(5)],
-        // Marker
-        spells: vec![SpellIdx(0), SpellIdx(3)],
-        sectors: vec![SectorIdx(1), SectorIdx(2)],
+        // Coffee, Plant, Stickynotes
+        items: vec![ItemIdx(0), ItemIdx(2), ItemIdx(5)],
+        // Marker, Keyboard
+        spells: vec![SpellIdx(0), SpellIdx(1)],
+        sectors: vec![SectorIdx(3), SectorIdx(4)],
 
-        hp: 50.0,
-        damage: 3.0,
+        hp: 75.0,
+        damage: 5.0,
     });
 
     // Orange
@@ -214,6 +240,30 @@ fn prepare_enemy_resources(
         layout: atlas_handle,
         index: 1,
     };
+    // 3
+    enemies.0.push(EnemyInfo {
+        idle_texture: idle_texture.clone(),
+        idle_animation_config: idle_animation_config.clone(),
+
+        attack_texture: attack_texture.clone(),
+        attack_animation_config: attack_animation_config.clone(),
+
+        dead_texture: dead_texture.clone(),
+        dead_animation_config: dead_animation_config.clone(),
+
+        texture_atlas: texture_atlas.clone(),
+
+        spawn_rate: 0.3,
+        // Paperclip, Scissors, Stickynotes
+        items: vec![ItemIdx(1), ItemIdx(3), ItemIdx(5)],
+        spells: vec![],
+        sectors: vec![SectorIdx(2), SectorIdx(3)],
+
+        hp: 120.0,
+        damage: 8.0,
+    });
+
+    // 4
     enemies.0.push(EnemyInfo {
         idle_texture,
         idle_animation_config,
@@ -227,12 +277,13 @@ fn prepare_enemy_resources(
         texture_atlas,
 
         spawn_rate: 0.3,
-        items: vec![ItemIdx(1), ItemIdx(3), ItemIdx(5)],
-        spells: vec![],
-        sectors: vec![SectorIdx(2), SectorIdx(3)],
+        // Plant, Stapler
+        items: vec![ItemIdx(2), ItemIdx(4)],
+        spells: vec![SpellIdx(2)],
+        sectors: vec![SectorIdx(4)],
 
-        hp: 120.0,
-        damage: 8.0,
+        hp: 140.0,
+        damage: 10.0,
     });
 
     commands.insert_resource(enemies);

@@ -257,7 +257,7 @@ fn prepare_sector_resources(
         background: asset_server.load("sectors/zone_green_bent.png"),
         card: asset_server.load("sectors_cards/zone_green_card.png"),
         drop_rate: 0.4,
-        enemies: vec![EnemyIdx(1), EnemyIdx(2)],
+        enemies: vec![EnemyIdx(1), EnemyIdx(3)],
         chests: vec![ChestIdx(1)],
     });
     sectors.0.push(SectorInfo {
@@ -266,7 +266,7 @@ fn prepare_sector_resources(
         background: asset_server.load("sectors/zone_yellow_bent.png"),
         card: asset_server.load("sectors_cards/zone_yellow_card.png"),
         drop_rate: 0.3,
-        enemies: vec![EnemyIdx(1), EnemyIdx(2)],
+        enemies: vec![EnemyIdx(1), EnemyIdx(3)],
         chests: vec![ChestIdx(2)],
     });
     sectors.0.push(SectorInfo {
@@ -275,7 +275,7 @@ fn prepare_sector_resources(
         background: asset_server.load("sectors/zone_grey_bent.png"),
         card: asset_server.load("sectors_cards/zone_grey_card.png"),
         drop_rate: 0.2,
-        enemies: vec![EnemyIdx(2)],
+        enemies: vec![EnemyIdx(2), EnemyIdx(3)],
         chests: vec![ChestIdx(3)],
     });
     sectors.0.push(SectorInfo {
@@ -284,7 +284,7 @@ fn prepare_sector_resources(
         background: asset_server.load("sectors/zone_brown_bent.png"),
         card: asset_server.load("sectors_cards/zone_brown_card.png"),
         drop_rate: 0.2,
-        enemies: vec![EnemyIdx(2)],
+        enemies: vec![EnemyIdx(2), EnemyIdx(4)],
         chests: vec![ChestIdx(4)],
     });
     commands.insert_resource(sectors);
