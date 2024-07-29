@@ -554,9 +554,13 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                                 width: Val::Percent(100.0 / 3.0),
                                 align_items: AlignItems::Center,
                                 justify_content: JustifyContent::Center,
+                                border: UiRect::all(Val::Percent(0.5)),
                                 ..Default::default()
                             },
-                            ..default()
+                            border_color: BorderColor(Color::BLACK),
+                            border_radius: BorderRadius::all(Val::Percent(2.0)),
+                            background_color: TOOLTIP_BACKGROUND_COLOR.into(),
+                            ..Default::default()
                         })
                         .with_children(|builder| {
                             // Cycles text
@@ -579,9 +583,13 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                                 width: Val::Percent(100.0 / 3.0),
                                 align_items: AlignItems::Center,
                                 justify_content: JustifyContent::Center,
+                                border: UiRect::all(Val::Percent(0.5)),
                                 ..Default::default()
                             },
-                            ..default()
+                            border_color: BorderColor(Color::BLACK),
+                            border_radius: BorderRadius::all(Val::Percent(2.0)),
+                            background_color: TOOLTIP_BACKGROUND_COLOR.into(),
+                            ..Default::default()
                         })
                         .with_children(|builder| {
                             // Pause state text
@@ -600,9 +608,6 @@ fn in_game_setup(mut commands: Commands, ui_style: Res<UiStyle>) {
                             style: Style {
                                 width: Val::Percent(100.0 / 3.0),
                                 flex_direction: FlexDirection::Row,
-                                // align_items: AlignItems::Center,
-                                // justify_items: JustifyItems::Start,
-                                // justify_content: JustifyContent::Start,
                                 ..Default::default()
                             },
                             ..default()
