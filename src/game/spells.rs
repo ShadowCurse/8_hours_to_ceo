@@ -143,7 +143,7 @@ fn prepare_spells(asset_server: Res<AssetServer>, mut commands: Commands) {
 
     // 0 marker
     spells.0.push(SpellInfo {
-        description: "Coworker's face === white board. Deals 2 hits, 5 damage each.",
+        description: "Use coworker's face as a white board. Draw 2 lines, 5 damage each.",
         image: asset_server.load("spells/spell_marker.png"),
         drop_rate: 0.8,
         cooldown: Timer::from_seconds(2.0, TimerMode::Once),
